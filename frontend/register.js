@@ -3,7 +3,7 @@
  * Pure Vanilla JavaScript
  */
 
-function initRegisterPage() {
+document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('registerForm');
   const nameInput = document.getElementById('fullName');
   const emailInput = document.getElementById('email');
@@ -294,333 +294,76 @@ function initRegisterPage() {
       btnLabel.textContent = 'Create Account';
     }
   }
-}
 
-// Resilient initialization
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initRegisterPage);
-} else {
-  initRegisterPage();
-}
-
-// Run interactive grid immediately
-initInteractiveGrid();
-
-/**
- * High-Performance Interactive Grid Canvas with Glowing Cursor Spotlight, Vertex Bloom & Click Ripples
- */
-function initInteractiveGrid() {
-  const canvas = document.getElementById('interactiveGridCanvas');
-  const spotlight = document.getElementById('cursorSpotlight');
+  // --------------------------------------------------------------------------
+  // Dynamic Mouse Following Glow Spotlight Effect
+  // --------------------------------------------------------------------------
+  const mouseGlow = document.getElementById('mouseGlow');
+  const bgGridHighlight = document.getElementById('bgGridHighlight');
   const registerCard = document.getElementById('registerCard');
-  if (!canvas) return;
 
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
+  let currentMouseX = window.innerWidth / 2;
+  let currentMouseY = window.innerHeight / 2;
+  let targetMouseX = currentMouseX;
+  let targetMouseY = currentMouseY;
+  let isMouseActive = false;
+  let animFrameId = null;
 
-  let width = window.innerWidth;
-  let height = window.innerHeight;
-  let dpr = window.devicePixelRatio || 1;
-  const gridSize = 36;
+  function renderMouseGlow() {
+    currentMouseX += (targetMouseX - currentMouseX) * 0.18;
+    currentMouseY += (targetMouseY - currentMouseY) * 0.18;
 
-  const mouse = {
-    x: -1000,
-    y: -1000,
-    targetX: -1000,
-    targetY: -1000,
-    radius: 220,
-    active: false
-  };
+    const xStr = `${currentMouseX.toFixed(2)}px`;
+    const yStr = `${currentMouseY.toFixed(2)}px`;
 
-  const hoveredTiles = new Map();
-  const ripples = [];
-  const linePulses = [];
-
-  function resizeCanvas() {
-    dpr = window.devicePixelRatio || 1;
-    width = window.innerWidth;
-    height = window.innerHeight;
-
-    canvas.width = Math.floor(width * dpr);
-    canvas.height = Math.floor(height * dpr);
-    canvas.style.width = `${width}px`;
-    canvas.style.height = `${height}px`;
-  }
-
-  window.addEventListener('resize', resizeCanvas);
-  resizeCanvas();
-
-  window.addEventListener('pointermove', (e) => {
-    if (!mouse.active || mouse.x < -500) {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
-    }
-    mouse.targetX = e.clientX;
-    mouse.targetY = e.clientY;
-    mouse.active = true;
-
-    if (spotlight) {
-      spotlight.classList.add('active');
-    }
-
-    const cellCol = Math.floor(e.clientX / gridSize);
-    const cellRow = Math.floor(e.clientY / gridSize);
-    const key = `${cellCol}_${cellRow}`;
-    hoveredTiles.set(key, { col: cellCol, row: cellRow, alpha: 1.0 });
+    document.documentElement.style.setProperty('--mouse-x', xStr);
+    document.documentElement.style.setProperty('--mouse-y', yStr);
 
     if (registerCard) {
       const rect = registerCard.getBoundingClientRect();
-      const cardX = ((e.clientX - rect.left) / rect.width) * 100;
-      const cardY = ((e.clientY - rect.top) / rect.height) * 100;
-      registerCard.style.setProperty('--card-glow-x', `${cardX}%`);
-      registerCard.style.setProperty('--card-glow-y', `${cardY}%`);
+      const cardX = targetMouseX - rect.left;
+      const cardY = targetMouseY - rect.top;
+      registerCard.style.setProperty('--card-mouse-x', `${cardX.toFixed(2)}px`);
+      registerCard.style.setProperty('--card-mouse-y', `${cardY.toFixed(2)}px`);
     }
-  });
 
-  window.addEventListener('pointerleave', () => {
-    mouse.active = false;
-    mouse.targetX = -1000;
-    mouse.targetY = -1000;
-    if (spotlight) {
-      spotlight.classList.remove('active');
-    }
-  });
+    const deltaX = Math.abs(targetMouseX - currentMouseX);
+    const deltaY = Math.abs(targetMouseY - currentMouseY);
 
-  window.addEventListener('pointerdown', (e) => {
-    if (e.target.closest('.register-card')) return;
-
-    ripples.push({
-      x: e.clientX,
-      y: e.clientY,
-      radius: 12,
-      maxRadius: 300,
-      alpha: 1.0,
-      speed: 8
-    });
-  });
-
-  setInterval(() => {
-    if (document.hidden) return;
-    const isHorizontal = Math.random() > 0.5;
-    if (isHorizontal) {
-      const row = Math.floor(Math.random() * (height / gridSize));
-      linePulses.push({
-        type: 'h',
-        y: row * gridSize,
-        x: -100,
-        length: 160,
-        speed: 5 + Math.random() * 3,
-        alpha: 0.85
-      });
+    if (deltaX > 0.1 || deltaY > 0.1) {
+      animFrameId = requestAnimationFrame(renderMouseGlow);
     } else {
-      const col = Math.floor(Math.random() * (width / gridSize));
-      linePulses.push({
-        type: 'v',
-        x: col * gridSize,
-        y: -100,
-        length: 160,
-        speed: 5 + Math.random() * 3,
-        alpha: 0.85
-      });
+      animFrameId = null;
     }
-  }, 1600);
-
-  function render() {
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.scale(dpr, dpr);
-
-    if (mouse.active) {
-      const dx = mouse.targetX - mouse.x;
-      const dy = mouse.targetY - mouse.y;
-      mouse.x += dx * 0.16;
-      mouse.y += dy * 0.16;
-
-      if (spotlight) {
-        spotlight.style.setProperty('--spotlight-x', `${mouse.x}px`);
-        spotlight.style.setProperty('--spotlight-y', `${mouse.y}px`);
-      }
-    }
-
-    const numCols = Math.ceil(width / gridSize) + 1;
-    const numRows = Math.ceil(height / gridSize) + 1;
-
-    hoveredTiles.forEach((tile, key) => {
-      ctx.fillStyle = `rgba(37, 99, 235, ${tile.alpha * 0.14})`;
-      ctx.fillRect(tile.col * gridSize, tile.row * gridSize, gridSize, gridSize);
-
-      ctx.strokeStyle = `rgba(56, 189, 248, ${tile.alpha * 0.45})`;
-      ctx.lineWidth = 1;
-      ctx.strokeRect(tile.col * gridSize, tile.row * gridSize, gridSize, gridSize);
-
-      tile.alpha *= 0.94;
-      if (tile.alpha <= 0.01) {
-        hoveredTiles.delete(key);
-      }
-    });
-
-    ctx.lineWidth = 1;
-
-    for (let c = 0; c <= numCols; c++) {
-      const lineX = c * gridSize;
-      ctx.beginPath();
-      ctx.strokeStyle = 'rgba(203, 213, 225, 0.75)';
-      ctx.moveTo(lineX, 0);
-      ctx.lineTo(lineX, height);
-      ctx.stroke();
-    }
-
-    for (let r = 0; r <= numRows; r++) {
-      const lineY = r * gridSize;
-      ctx.beginPath();
-      ctx.strokeStyle = 'rgba(203, 213, 225, 0.75)';
-      ctx.moveTo(0, lineY);
-      ctx.lineTo(width, lineY);
-      ctx.stroke();
-    }
-
-    if (mouse.active && mouse.x >= 0 && mouse.y >= 0 && mouse.x <= width && mouse.y <= height) {
-      const startCol = Math.max(0, Math.floor((mouse.x - mouse.radius) / gridSize));
-      const endCol = Math.min(numCols, Math.ceil((mouse.x + mouse.radius) / gridSize));
-      const startRow = Math.max(0, Math.floor((mouse.y - mouse.radius) / gridSize));
-      const endRow = Math.min(numRows, Math.ceil((mouse.y + mouse.radius) / gridSize));
-
-      for (let c = startCol; c <= endCol; c++) {
-        const lineX = c * gridSize;
-        const distX = Math.abs(lineX - mouse.x);
-        if (distX < mouse.radius) {
-          const span = Math.sqrt(mouse.radius * mouse.radius - distX * distX);
-          const y1 = Math.max(0, mouse.y - span);
-          const y2 = Math.min(height, mouse.y + span);
-
-          const grad = ctx.createLinearGradient(lineX, y1, lineX, y2);
-          const intensity = 1 - (distX / mouse.radius);
-          grad.addColorStop(0, 'rgba(37, 99, 235, 0)');
-          grad.addColorStop(0.5, `rgba(37, 99, 235, ${intensity * 0.85})`);
-          grad.addColorStop(1, 'rgba(37, 99, 235, 0)');
-
-          ctx.beginPath();
-          ctx.strokeStyle = grad;
-          ctx.lineWidth = 1.8;
-          ctx.moveTo(lineX, y1);
-          ctx.lineTo(lineX, y2);
-          ctx.stroke();
-        }
-      }
-
-      for (let r = startRow; r <= endRow; r++) {
-        const lineY = r * gridSize;
-        const distY = Math.abs(lineY - mouse.y);
-        if (distY < mouse.radius) {
-          const span = Math.sqrt(mouse.radius * mouse.radius - distY * distY);
-          const x1 = Math.max(0, mouse.x - span);
-          const x2 = Math.min(width, mouse.x + span);
-
-          const grad = ctx.createLinearGradient(x1, lineY, x2, lineY);
-          const intensity = 1 - (distY / mouse.radius);
-          grad.addColorStop(0, 'rgba(37, 99, 235, 0)');
-          grad.addColorStop(0.5, `rgba(56, 189, 248, ${intensity * 0.95})`);
-          grad.addColorStop(1, 'rgba(37, 99, 235, 0)');
-
-          ctx.beginPath();
-          ctx.strokeStyle = grad;
-          ctx.lineWidth = 1.8;
-          ctx.moveTo(x1, lineY);
-          ctx.lineTo(x2, lineY);
-          ctx.stroke();
-        }
-      }
-
-      for (let c = startCol; c <= endCol; c++) {
-        for (let r = startRow; r <= endRow; r++) {
-          const vx = c * gridSize;
-          const vy = r * gridSize;
-          const d = Math.hypot(vx - mouse.x, vy - mouse.y);
-          if (d < mouse.radius) {
-            const intensity = Math.pow(1 - (d / mouse.radius), 1.5);
-            
-            ctx.beginPath();
-            ctx.arc(vx, vy, 4.5 * intensity + 1, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(56, 189, 248, ${intensity * 0.6})`;
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.arc(vx, vy, 2 * intensity + 0.8, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255, 255, 255, ${intensity * 0.95})`;
-            ctx.fill();
-
-            if (intensity > 0.4) {
-              ctx.strokeStyle = `rgba(56, 189, 248, ${intensity * 0.7})`;
-              ctx.lineWidth = 1.2;
-              ctx.beginPath();
-              ctx.moveTo(vx - 4, vy); ctx.lineTo(vx + 4, vy);
-              ctx.moveTo(vx, vy - 4); ctx.lineTo(vx, vy + 4);
-              ctx.stroke();
-            }
-          }
-        }
-      }
-    }
-
-    for (let i = linePulses.length - 1; i >= 0; i--) {
-      const pulse = linePulses[i];
-      if (pulse.type === 'h') {
-        pulse.x += pulse.speed;
-        const grad = ctx.createLinearGradient(pulse.x - pulse.length, pulse.y, pulse.x, pulse.y);
-        grad.addColorStop(0, 'rgba(56, 189, 248, 0)');
-        grad.addColorStop(0.8, `rgba(56, 189, 248, ${pulse.alpha * 0.7})`);
-        grad.addColorStop(1, `rgba(255, 255, 255, ${pulse.alpha * 0.95})`);
-
-        ctx.beginPath();
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 2;
-        ctx.moveTo(pulse.x - pulse.length, pulse.y);
-        ctx.lineTo(pulse.x, pulse.y);
-        ctx.stroke();
-
-        if (pulse.x - pulse.length > width) {
-          linePulses.splice(i, 1);
-        }
-      } else {
-        pulse.y += pulse.speed;
-        const grad = ctx.createLinearGradient(pulse.x, pulse.y - pulse.length, pulse.x, pulse.y);
-        grad.addColorStop(0, 'rgba(37, 99, 235, 0)');
-        grad.addColorStop(0.8, `rgba(37, 99, 235, ${pulse.alpha * 0.7})`);
-        grad.addColorStop(1, `rgba(255, 255, 255, ${pulse.alpha * 0.95})`);
-
-        ctx.beginPath();
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 2;
-        ctx.moveTo(pulse.x, pulse.y - pulse.length);
-        ctx.lineTo(pulse.x, pulse.y);
-        ctx.stroke();
-
-        if (pulse.y - pulse.length > height) {
-          linePulses.splice(i, 1);
-        }
-      }
-    }
-
-    for (let i = ripples.length - 1; i >= 0; i--) {
-      const rip = ripples[i];
-      rip.radius += rip.speed;
-      rip.alpha *= 0.95;
-
-      ctx.beginPath();
-      ctx.arc(rip.x, rip.y, rip.radius, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(56, 189, 248, ${rip.alpha * 0.8})`;
-      ctx.lineWidth = 2.4;
-      ctx.stroke();
-
-      if (rip.radius >= rip.maxRadius || rip.alpha <= 0.02) {
-        ripples.splice(i, 1);
-      }
-    }
-
-    ctx.restore();
-    requestAnimationFrame(render);
   }
 
-  requestAnimationFrame(render);
-}
+  function handleMouseMove(e) {
+    targetMouseX = e.clientX;
+    targetMouseY = e.clientY;
+
+    if (!isMouseActive) {
+      isMouseActive = true;
+      if (mouseGlow) mouseGlow.classList.add('active');
+      if (bgGridHighlight) bgGridHighlight.classList.add('active');
+    }
+
+    if (!animFrameId) {
+      animFrameId = requestAnimationFrame(renderMouseGlow);
+    }
+  }
+
+  window.addEventListener('mousemove', handleMouseMove, { passive: true });
+
+  window.addEventListener('mouseleave', () => {
+    if (mouseGlow) mouseGlow.classList.remove('active');
+    if (bgGridHighlight) bgGridHighlight.classList.remove('active');
+    isMouseActive = false;
+  });
+
+  // Initialize center glow coordinates on page load
+  document.documentElement.style.setProperty('--mouse-x', `${window.innerWidth / 2}px`);
+  document.documentElement.style.setProperty('--mouse-y', `${window.innerHeight / 2}px`);
+  if (mouseGlow) mouseGlow.classList.add('active');
+  if (bgGridHighlight) bgGridHighlight.classList.add('active');
+  isMouseActive = true;
+});

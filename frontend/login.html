@@ -14,14 +14,11 @@
   <link rel="stylesheet" href="login.css">
 </head>
 <body>
-  <!-- Interactive Grid Background & Dynamic Glowing Orbs -->
-  <div class="interactive-grid-container" id="gridContainer" aria-hidden="true">
-    <canvas id="interactiveGridCanvas"></canvas>
-    <div class="ambient-glow orb-1"></div>
-    <div class="ambient-glow orb-2"></div>
-    <div class="ambient-glow orb-3"></div>
-    <div class="cursor-spotlight" id="cursorSpotlight"></div>
-  </div>
+  <!-- Interactive Mouse-Tracking Spotlight Glow & Graph Grid -->
+  <div class="bg-pattern" aria-hidden="true"></div>
+  <div class="bg-grid-highlight" id="bgGridHighlight" aria-hidden="true"></div>
+  <div class="mouse-glow" id="mouseGlow" aria-hidden="true"></div>
+  <div class="bg-glow" aria-hidden="true"></div>
 
   <!-- Main Container -->
   <main class="login-wrapper">
