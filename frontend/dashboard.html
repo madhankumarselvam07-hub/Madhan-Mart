@@ -415,11 +415,27 @@
         <button type="button" class="btn-secondary" id="clearCartBtn">Clear Cart</button>
         <button type="button" class="btn-primary" id="checkoutBtn" disabled>Place Order (Supabase)</button>
       </div>
+  <!-- Invoice / Bill Modal -->
+  <div class="modal-overlay" id="invoiceModal" role="dialog" aria-modal="true" aria-labelledby="invoiceModalTitle">
+    <div class="modal-card invoice-modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="invoiceModalTitle">🧾 Tax Invoice & Bill</h3>
+        <button type="button" class="btn-modal-close" id="closeInvoiceBtn" aria-label="Close Invoice">✕</button>
+      </div>
+      <div class="modal-body invoice-modal-body" id="invoiceModalBody">
+        <!-- Live Invoice Preview Paper Content inserted via JS -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" id="printInvoiceBtn">🖨️ Print</button>
+        <button type="button" class="btn-primary" id="downloadInvoicePdfBtn">📥 Download Bill PDF</button>
+      </div>
     </div>
   </div>
 
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <script src="supabase-client.js"></script>
   <script src="dashboard.js"></script>
 </body>
