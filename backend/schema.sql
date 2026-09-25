@@ -52,11 +52,15 @@ CREATE TABLE IF NOT EXISTS public.orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     order_code VARCHAR(50) UNIQUE NOT NULL,
     user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
+    user_email VARCHAR(255),
     total_amount NUMERIC(10, 2) NOT NULL,
     status VARCHAR(50) DEFAULT 'Delivered',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Ensure user_email column exists on already created orders tables
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS user_email VARCHAR(255);
+CREATE INDEX IF NOT EXISTS idx_orders_user_email ON public.orders(user_email);
 CREATE INDEX IF NOT EXISTS idx_orders_user_id ON public.orders(user_id);
 
 -- 6. Order Items Table

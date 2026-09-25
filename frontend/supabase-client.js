@@ -215,34 +215,68 @@ window.MadhanMartSupabase = {
   },
 
   // --------------------------------------------------------------------------
-  // 3. Orders Database Queries
+  // 3. Orders Database Queries (User-Specific Isolation)
   // --------------------------------------------------------------------------
-  async createOrder(items, totalAmount) {
+  async createOrder(items, totalAmount, targetUser = null) {
     const sb = getSupabase();
     if (!sb) throw new Error('Supabase client is not initialized.');
 
-    const localUser = localStorage.getItem('madhan_mart_current_user');
     let userId = null;
-    if (localUser) {
-      try {
-        userId = JSON.parse(localUser).id;
-      } catch (e) {}
+    let userEmail = 'guest@madhanmart.com';
+
+    if (targetUser && targetUser.email) {
+      userEmail = targetUser.email.trim().toLowerCase();
+      userId = targetUser.id;
+    } else {
+      const localUser = localStorage.getItem('madhan_mart_current_user');
+      if (localUser) {
+        try {
+          const parsed = JSON.parse(localUser);
+          if (parsed.email) userEmail = parsed.email.trim().toLowerCase();
+          if (parsed.id) userId = parsed.id;
+        } catch (e) {}
+      }
     }
 
     const orderCode = '#MM-' + Math.floor(10000 + Math.random() * 90000);
 
-    // 1. Insert into orders table
+    // 1. Insert into orders table with user_email and user_id
+    const orderPayload = {
+      order_code: orderCode,
+      user_email: userEmail,
+      total_amount: totalAmount,
+      status: 'Delivered'
+    };
+
+    // Include valid UUID if present
+    if (userId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
+      orderPayload.user_id = userId;
+    }
+
     const { data: orderData, error: orderError } = await sb
       .from('orders')
-      .insert([{
-        order_code: orderCode,
-        total_amount: totalAmount,
-        status: 'Delivered'
-      }])
+      .insert([orderPayload])
       .select()
       .single();
 
-    if (orderError) throw orderError;
+    if (orderError) {
+      console.warn('[SUPABASE] Order insert error (retrying without user_id):', orderError);
+      // Fallback if foreign key constraint on users table
+      const fallbackPayload = {
+        order_code: orderCode,
+        user_email: userEmail,
+        total_amount: totalAmount,
+        status: 'Delivered'
+      };
+      const { data: retryData, error: retryError } = await sb
+        .from('orders')
+        .insert([fallbackPayload])
+        .select()
+        .single();
+
+      if (retryError) throw retryError;
+      return retryData;
+    }
 
     // 2. Insert into order_items table
     if (items && items.length > 0 && orderData) {
@@ -265,16 +299,40 @@ window.MadhanMartSupabase = {
     return orderData;
   },
 
-  async getUserOrders() {
+  async getUserOrders(targetUser = null) {
     const sb = getSupabase();
     if (!sb) return [];
 
+    let userEmail = null;
+    let userId = null;
+
+    if (targetUser && targetUser.email) {
+      userEmail = targetUser.email.trim().toLowerCase();
+      userId = targetUser.id;
+    } else {
+      const localUser = localStorage.getItem('madhan_mart_current_user');
+      if (localUser) {
+        try {
+          const parsed = JSON.parse(localUser);
+          if (parsed.email) userEmail = parsed.email.trim().toLowerCase();
+          if (parsed.id) userId = parsed.id;
+        } catch (e) {}
+      }
+    }
+
+    // If no user is logged in, do not return any other customer's orders!
+    if (!userEmail && !userId) {
+      return [];
+    }
+
     try {
-      const { data, error } = await sb
+      let query = sb
         .from('orders')
         .select(`
           id,
           order_code,
+          user_id,
+          user_email,
           total_amount,
           status,
           created_at,
@@ -283,11 +341,19 @@ window.MadhanMartSupabase = {
             quantity,
             unit_price
           )
-        `)
-        .order('created_at', { ascending: false });
+        `);
+
+      // Filter specifically by user_email OR user_id
+      if (userId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
+        query = query.or(`user_id.eq.${userId},user_email.eq.${userEmail}`);
+      } else if (userEmail) {
+        query = query.eq('user_email', userEmail);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) {
-        console.warn('[SUPABASE] Error fetching orders:', error);
+        console.warn('[SUPABASE] Orders query warning:', error);
         return [];
       }
       return data || [];

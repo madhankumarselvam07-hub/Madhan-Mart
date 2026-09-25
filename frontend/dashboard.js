@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (window.MadhanMartSupabase) {
           try {
-            const createdOrder = await window.MadhanMartSupabase.createOrder(cart, totalAmount);
+            const createdOrder = await window.MadhanMartSupabase.createOrder(cart, totalAmount, currentUser);
             if (createdOrder && createdOrder.order_code) {
               orderCode = createdOrder.order_code;
             }
@@ -281,6 +281,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let orderCount = 0;
 
+  // Reset default state
+  if (statOrdersCount) statOrdersCount.textContent = '0';
+  if (statRewardsXp) statRewardsXp.textContent = '0 XP';
+  if (emptyOrdersWrap) emptyOrdersWrap.style.display = 'flex';
+  if (ordersTableWrap) ordersTableWrap.style.display = 'none';
+  if (ordersTableBody) ordersTableBody.innerHTML = '';
+
   function addOrderToRecentOrdersTable(order) {
     if (emptyOrdersWrap) emptyOrdersWrap.style.display = 'none';
     if (ordersTableWrap) ordersTableWrap.style.display = 'block';
@@ -304,10 +311,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (statRewardsXp) statRewardsXp.textContent = `${orderCount * 250} XP`;
   }
 
-  // Fetch past orders from Supabase on load
-  if (window.MadhanMartSupabase) {
+  // Fetch past orders from Supabase specifically for CURRENT logged-in user
+  if (window.MadhanMartSupabase && currentUser) {
     try {
-      const pastOrders = await window.MadhanMartSupabase.getUserOrders();
+      const pastOrders = await window.MadhanMartSupabase.getUserOrders(currentUser);
       if (pastOrders && pastOrders.length > 0) {
         pastOrders.forEach(ord => {
           const itemsText = ord.order_items && ord.order_items.length > 0
