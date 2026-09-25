@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="MADHAN MART Customer Dashboard - Shop Smart. Live Better.">
+  <title>Dashboard - MADHAN MART</title>
+  
+  <!-- Modern Clean Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+  <!-- Header / Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+      
+      <!-- Brand Logo -->
+      <a href="dashboard.html" class="brand-logo" aria-label="MADHAN MART Dashboard">
+        <div class="logo-icon-wrap">
+          <svg class="logo-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="32" height="32" rx="8" fill="currentColor" fill-opacity="0.1"/>
+            <path d="M8 10.5C8 9.67157 8.67157 9 9.5 9H22.5C23.3284 9 24 9.67157 24 10.5V23.5C24 24.3284 23.3284 25 22.5 25H9.5C8.67157 25 8 24.3284 8 23.5V10.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 9V7C12 4.79086 13.7909 3 16 3V3C18.2091 3 20 4.79086 20 7V9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M11 14H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <path d="M16 14V20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">MADHAN <span class="brand-highlight">MART</span></span>
+          <span class="brand-tagline">Shop Smart. Live Better.</span>
+        </div>
+      </a>
+
+      <!-- Search Input -->
+      <div class="nav-search">
+        <svg class="search-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.6"/>
+          <path d="M13.5 13.5L17.5 17.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <input type="text" id="searchInput" placeholder="Search gaming gear, consoles, RGB peripherals..." aria-label="Search products">
+      </div>
+
+      <!-- Nav Actions -->
+      <div class="nav-actions">
+        <!-- Cart Button -->
+        <button type="button" class="nav-btn" id="cartBtn" aria-label="View Shopping Cart">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 3H5L6.68 14.39C6.77 15.02 7.31 15.5 7.95 15.5H18.5C19.12 15.5 19.65 15.05 19.75 14.43L21 6.5H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="9" cy="20" r="1.5" fill="currentColor"/>
+            <circle cx="18" cy="20" r="1.5" fill="currentColor"/>
+          </svg>
+          <span class="badge" id="cartBadge">0</span>
+        </button>
+
+        <!-- User Profile Dropdown -->
+        <div class="user-profile-menu">
+          <button type="button" class="user-profile-btn" id="userMenuBtn" aria-expanded="false" aria-haspopup="true">
+            <div class="user-avatar" id="userAvatar">M</div>
+            <div class="user-info-text">
+              <span class="user-name" id="navUserName">Madhan Kumar</span>
+              <span class="user-role">Customer</span>
+            </div>
+            <svg class="chevron-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+
+          <!-- Dropdown Menu -->
+          <div class="dropdown-menu" id="userDropdown" role="menu">
+            <div class="dropdown-header">
+              <p class="dropdown-name" id="menuFullName">Madhan Kumar</p>
+              <p class="dropdown-email" id="menuEmail">madhan@example.com</p>
+            </div>
+            <hr class="dropdown-divider">
+            <a href="#profile" class="dropdown-item">My Profile</a>
+            <a href="#orders" class="dropdown-item">My Orders</a>
+            <a href="#settings" class="dropdown-item">Settings</a>
+            <hr class="dropdown-divider">
+            <button type="button" class="dropdown-item logout-item" id="logoutBtn">
+              <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12.5 14.1667L16.6667 10M16.6667 10L12.5 5.83334M16.6667 10H7.5M7.5 3.33334H5.83333C4.45262 3.33334 3.33333 4.45263 3.33333 5.83334V14.1667C3.33333 15.5474 4.45262 16.6667 5.83333 16.6667H7.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>Logout</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="dashboard-main">
+    <div class="content-container">
+
+      <!-- Toast Container -->
+      <div id="dashboardToast" class="toast-popup" role="alert" aria-live="polite"></div>
+
+      <!-- Welcome Hero Banner -->
+      <section class="welcome-banner">
+        <div class="banner-content">
+          <div class="badge-tag">MADHAN MART GAMING ZONE</div>
+          <h1 class="banner-title">Welcome back, <span id="heroUserName">Madhan</span>! 👋</h1>
+          <p class="banner-sub">Level up your battlestation with next-gen consoles, esports peripherals, high-speed gear & exclusive deals.</p>
+        </div>
+        <div class="banner-action">
+          <a href="#products" class="btn-shop-now">Explore Gaming Gear</a>
+        </div>
+      </section>
+
+      <!-- Metric Stats Grid -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon-wrap icon-blue">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16 11V7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7V11M5 9H19L20 21H4L5 9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="stat-data">
+            <span class="stat-number">0</span>
+            <span class="stat-label">Total Orders</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon-wrap icon-green">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 21.35L10.55 20.03C5.4 15.36 2 12.28 2 8.5C2 5.42 4.42 3 7.5 3C9.24 3 10.91 3.81 12 5.09C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.42 22 8.5C22 12.28 18.6 15.36 13.45 20.04L12 21.35Z" fill="none" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="stat-data">
+            <span class="stat-number">0</span>
+            <span class="stat-label">Wishlist Items</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon-wrap icon-purple">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 1V23M17 5H9.5C8.57174 5 7.6815 5.36875 7.02513 6.02513C6.36875 6.6815 6 7.57174 6 8.5C6 9.42826 6.36875 10.3185 7.02513 10.9749C7.6815 11.6313 8.57174 12 9.5 12H14.5C15.4283 12 16.3185 12.3687 16.9749 13.0251C17.6313 13.6815 18 14.5717 18 15.5C18 16.4283 17.6313 17.3185 16.9749 17.9749C16.3185 18.6313 15.4283 19 14.5 19H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="stat-data">
+            <span class="stat-number">₹0</span>
+            <span class="stat-label">Total Saved</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon-wrap icon-amber">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="stat-data">
+            <span class="stat-number">0 XP</span>
+            <span class="stat-label">Gamer Rewards</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Featured Products Section -->
+      <section class="products-section" id="products">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Popular Gaming Gear</h2>
+            <p class="section-sub">Curated pro esports gear, next-gen consoles & RGB peripherals</p>
+          </div>
+          <div class="category-filters">
+            <button class="filter-btn active" data-cat="all">All</button>
+            <button class="filter-btn" data-cat="consoles">Consoles</button>
+            <button class="filter-btn" data-cat="peripherals">Peripherals</button>
+            <button class="filter-btn" data-cat="audio">Audio</button>
+            <button class="filter-btn" data-cat="accessories">Accessories</button>
+            <button class="filter-btn" data-cat="hardware">Hardware</button>
+          </div>
+        </div>
+
+        <!-- Product Grid -->
+        <div class="products-grid" id="productsGrid">
+          
+          <!-- Product Card 1: Console Controller -->
+          <article class="product-card" data-cat="consoles">
+            <div class="product-img-box">
+              <span class="product-badge badge-popular">Bestseller</span>
+              <div class="product-emoji">🎮</div>
+            </div>
+            <div class="product-details">
+              <span class="product-category">Consoles & Controllers</span>
+              <h3 class="product-name">PlayStation 5 DualSense Wireless Controller</h3>
+              <div class="product-rating">
+                <span class="stars">★★★★★</span>
+                <span class="rating-num">(4.9)</span>
+              </div>
+              <div class="product-price-row">
+                <div class="price-wrap">
+                  <span class="price-current">₹5,790</span>
+                  <span class="price-original">₹6,490</span>
+                </div>
+                <button type="button" class="btn-add-cart" data-name="PS5 DualSense Controller">Add +</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- Product Card 2: Gaming Keyboard -->
+          <article class="product-card" data-cat="peripherals">
+            <div class="product-img-box">
+              <span class="product-badge badge-sale">20% OFF</span>
+              <div class="product-emoji">⌨️</div>
+            </div>
+            <div class="product-details">
+              <span class="product-category">RGB Keyboards</span>
+              <h3 class="product-name">Razer Huntsman Mini 60% Optical Keyboard</h3>
+              <div class="product-rating">
+                <span class="stars">★★★★★</span>
+                <span class="rating-num">(4.8)</span>
+              </div>
+              <div class="product-price-row">
+                <div class="price-wrap">
+                  <span class="price-current">₹7,999</span>
+                  <span class="price-original">₹9,999</span>
+                </div>
+                <button type="button" class="btn-add-cart" data-name="Razer Huntsman Mini Keyboard">Add +</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- Product Card 3: Gaming Headset -->
+          <article class="product-card" data-cat="audio">
+            <div class="product-img-box">
+              <span class="product-badge badge-new">New</span>
+              <div class="product-emoji">🎧</div>
+            </div>
+            <div class="product-details">
+              <span class="product-category">Audio & Headsets</span>
+              <h3 class="product-name">HyperX Cloud Alpha Wireless 7.1 Gaming Headset</h3>
+              <div class="product-rating">
+                <span class="stars">★★★★★</span>
+                <span class="rating-num">(4.9)</span>
+              </div>
+              <div class="product-price-row">
+                <div class="price-wrap">
+                  <span class="price-current">₹12,499</span>
+                  <span class="price-original">₹15,999</span>
+                </div>
+                <button type="button" class="btn-add-cart" data-name="HyperX Cloud Alpha Headset">Add +</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- Product Card 4: Gaming Mouse -->
+          <article class="product-card" data-cat="peripherals">
+            <div class="product-img-box">
+              <span class="product-badge badge-sale">15% OFF</span>
+              <div class="product-emoji">🖱️</div>
+            </div>
+            <div class="product-details">
+              <span class="product-category">Precision Mice</span>
+              <h3 class="product-name">Logitech G502 X PLUS Wireless RGB Gaming Mouse</h3>
+              <div class="product-rating">
+                <span class="stars">★★★★☆</span>
+                <span class="rating-num">(4.7)</span>
+              </div>
+              <div class="product-price-row">
+                <div class="price-wrap">
+                  <span class="price-current">₹8,495</span>
+                  <span class="price-original">₹9,995</span>
+                </div>
+                <button type="button" class="btn-add-cart" data-name="Logitech G502 X PLUS Mouse">Add +</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- Product Card 5: Gaming Monitor -->
+          <article class="product-card" data-cat="hardware">
+            <div class="product-img-box">
+              <span class="product-badge badge-sale">Hot Deal</span>
+              <div class="product-emoji">🖥️</div>
+            </div>
+            <div class="product-details">
+              <span class="product-category">Monitors & Displays</span>
+              <h3 class="product-name">ROG Swift OLED 27" 240Hz 0.03ms Gaming Monitor</h3>
+              <div class="product-rating">
+                <span class="stars">★★★★★</span>
+                <span class="rating-num">(5.0)</span>
+              </div>
+              <div class="product-price-row">
+                <div class="price-wrap">
+                  <span class="price-current">₹64,990</span>
+                  <span class="price-original">₹74,990</span>
+                </div>
+                <button type="button" class="btn-add-cart" data-name="ROG Swift OLED Monitor">Add +</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- Product Card 6: VR Headset -->
+          <article class="product-card" data-cat="consoles">
+            <div class="product-img-box">
+              <span class="product-badge badge-popular">Trending</span>
+              <div class="product-emoji">🥽</div>
+            </div>
+            <div class="product-details">
+              <span class="product-category">VR & Next-Gen Gear</span>
+              <h3 class="product-name">Meta Quest 3 128GB All-In-One VR Headset</h3>
+              <div class="product-rating">
+                <span class="stars">★★★★★</span>
+                <span class="rating-num">(4.8)</span>
+              </div>
+              <div class="product-price-row">
+                <div class="price-wrap">
+                  <span class="price-current">₹46,990</span>
+                  <span class="price-original">₹52,990</span>
+                </div>
+                <button type="button" class="btn-add-cart" data-name="Meta Quest 3 VR Headset">Add +</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- Product Card 7: Gaming Chair -->
+          <article class="product-card" data-cat="accessories">
+            <div class="product-img-box">
+              <span class="product-badge badge-popular">Top Rated</span>
+              <div class="product-emoji">💺</div>
+            </div>
+            <div class="product-details">
+              <span class="product-category">Gaming Comfort</span>
+              <h3 class="product-name">Secretlab TITAN Evo Ergonomic Gaming Chair</h3>
+              <div class="product-rating">
+                <span class="stars">★★★★★</span>
+                <span class="rating-num">(4.9)</span>
+              </div>
+              <div class="product-price-row">
+                <div class="price-wrap">
+                  <span class="price-current">₹34,999</span>
+                  <span class="price-original">₹41,999</span>
+                </div>
+                <button type="button" class="btn-add-cart" data-name="Secretlab TITAN Chair">Add +</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- Product Card 8: Stream Deck / Macro Controller -->
+          <article class="product-card" data-cat="accessories">
+            <div class="product-img-box">
+              <span class="product-badge badge-new">Creator Pick</span>
+              <div class="product-emoji">🕹️</div>
+            </div>
+            <div class="product-details">
+              <span class="product-category">Streaming Gear</span>
+              <h3 class="product-name">Elgato Stream Deck MK.2 – 15 Macro RGB Keys</h3>
+              <div class="product-rating">
+                <span class="stars">★★★★★</span>
+                <span class="rating-num">(4.9)</span>
+              </div>
+              <div class="product-price-row">
+                <div class="price-wrap">
+                  <span class="price-current">₹13,499</span>
+                  <span class="price-original">₹15,999</span>
+                </div>
+                <button type="button" class="btn-add-cart" data-name="Elgato Stream Deck MK.2">Add +</button>
+              </div>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- Recent Orders Section -->
+      <section class="orders-section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">Recent Orders</h2>
+            <p class="section-sub">Track your live gaming gear shipments and past purchases</p>
+          </div>
+        </div>
+
+        <!-- Empty Orders State -->
+        <div class="empty-orders-wrap">
+          <div class="empty-orders-icon">📦</div>
+          <h3 class="empty-orders-title">No orders placed yet</h3>
+          <p class="empty-orders-sub">Your order history will appear here once you place your first order.</p>
+          <a href="#products" class="btn-empty-shop">Explore Products</a>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Script -->
+  <script src="dashboard.js"></script>
+</body>
+</html>

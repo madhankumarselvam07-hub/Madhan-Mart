@@ -1,0 +1,689 @@
+/* ==========================================================================
+   MADHAN MART - Modern EduTutorials-Inspired Login Stylesheet
+   Pure CSS3 with Custom Properties (Variables), Responsive Layout & Micro-interactions
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Design System Tokens & CSS Variables
+   -------------------------------------------------------------------------- */
+:root {
+  /* Brand & Theme Colors (EduTutorials Soft Blue Palette) */
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-active: #1e40af;
+  --primary-light: #eff6ff;
+  --primary-glow: rgba(37, 99, 235, 0.15);
+  
+  /* Accent Colors */
+  --accent: #3b82f6;
+  --accent-soft: #dbeafe;
+  
+  /* Neutral Slate Palette */
+  --bg-page: #f8fafc;
+  --card-bg: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-subtle: #94a3b8;
+  --border-color: #e2e8f0;
+  --border-focus: #3b82f6;
+  --border-hover: #cbd5e1;
+  
+  /* Status Colors */
+  --error: #ef4444;
+  --error-bg: #fef2f2;
+  --error-border: #fca5a5;
+  --success: #10b981;
+  --success-bg: #ecfdf5;
+  --success-border: #a7f3d0;
+  
+  /* Geometry & Metrics */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-card: 16px;
+  --input-height: 52px;
+  --card-max-width: 440px;
+  
+  /* Shadows & Depth */
+  --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --shadow-card: 0 4px 6px -1px rgba(15, 23, 42, 0.04), 
+                 0 10px 25px -3px rgba(15, 23, 42, 0.07),
+                 0 0 0 1px rgba(226, 232, 240, 0.8);
+  --shadow-focus: 0 0 0 4px var(--primary-glow);
+  --shadow-button: 0 4px 14px 0 rgba(37, 99, 235, 0.25);
+  --shadow-button-hover: 0 6px 20px 0 rgba(37, 99, 235, 0.35);
+
+  /* Typography */
+  --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* --------------------------------------------------------------------------
+   2. Reset & Global Styles
+   -------------------------------------------------------------------------- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  min-height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-page);
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow-x: hidden;
+  padding: 24px 16px;
+}
+
+/* --------------------------------------------------------------------------
+   3. Pure CSS Subtle Educational Background Pattern
+   -------------------------------------------------------------------------- */
+.bg-pattern {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  /* Clean subtle educational graph/grid pattern */
+  background-image: 
+    linear-gradient(to right, rgba(226, 232, 240, 0.6) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(226, 232, 240, 0.6) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, #000 40%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, #000 40%, transparent 100%);
+}
+
+.bg-glow {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 650px;
+  height: 450px;
+  background: radial-gradient(circle, rgba(219, 234, 254, 0.6) 0%, rgba(248, 250, 252, 0) 70%);
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(40px);
+}
+
+/* --------------------------------------------------------------------------
+   4. Main Wrapper & Login Card
+   -------------------------------------------------------------------------- */
+.login-wrapper {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: var(--card-max-width);
+  margin: auto;
+}
+
+.login-card {
+  background: var(--card-bg);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 40px 36px;
+  width: 100%;
+  transition: box-shadow var(--transition-normal);
+}
+
+/* --------------------------------------------------------------------------
+   5. Brand Header & Tagline
+   -------------------------------------------------------------------------- */
+.brand-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.brand-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text-main);
+  transition: transform var(--transition-fast);
+}
+
+.brand-logo:hover {
+  transform: translateY(-1px);
+}
+
+.logo-icon-wrap {
+  width: 36px;
+  height: 36px;
+  background: var(--primary-light);
+  color: var(--primary);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--accent-soft);
+}
+
+.logo-icon {
+  width: 22px;
+  height: 22px;
+}
+
+.brand-name {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+}
+
+.brand-highlight {
+  color: var(--primary);
+}
+
+.brand-tagline {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-top: 4px;
+  letter-spacing: 0.01em;
+}
+
+/* --------------------------------------------------------------------------
+   6. Welcome Headings
+   -------------------------------------------------------------------------- */
+.login-title-section {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.login-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.login-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+  font-weight: 400;
+}
+
+/* --------------------------------------------------------------------------
+   7. Alert Messages (Toast/Inline)
+   -------------------------------------------------------------------------- */
+.form-alert {
+  display: none;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.84rem;
+  margin-bottom: 18px;
+  animation: slideDown 0.2s ease forwards;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form-alert.alert-error {
+  display: flex;
+  align-items: center;
+  background-color: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: var(--error);
+}
+
+.form-alert.alert-success {
+  display: flex;
+  align-items: center;
+  background-color: var(--success-bg);
+  border: 1px solid var(--success-border);
+  color: var(--success);
+}
+
+/* --------------------------------------------------------------------------
+   8. Form Groups & Input Fields
+   -------------------------------------------------------------------------- */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-icon {
+  position: absolute;
+  left: 16px;
+  width: 18px;
+  height: 18px;
+  color: var(--text-subtle);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition-fast);
+}
+
+.form-input {
+  width: 100%;
+  height: var(--input-height);
+  padding: 0 46px 0 44px;
+  font-family: var(--font-family);
+  font-size: 0.9375rem;
+  color: var(--text-main);
+  background-color: #ffffff;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+}
+
+.form-input::placeholder {
+  color: var(--text-subtle);
+  font-weight: 400;
+}
+
+/* Input Focus State */
+.form-input:focus {
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-focus);
+}
+
+.form-input:focus + .input-icon,
+.input-wrapper:focus-within .input-icon {
+  color: var(--primary);
+}
+
+/* Error State on Form Group */
+.form-group.has-error .form-input {
+  border-color: var(--error);
+  background-color: #fffbfa;
+}
+
+.form-group.has-error .form-input:focus {
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+}
+
+.form-group.has-error .input-icon {
+  color: var(--error);
+}
+
+.error-text {
+  font-size: 0.775rem;
+  color: var(--error);
+  font-weight: 500;
+  display: none;
+  margin-top: 2px;
+  padding-left: 2px;
+}
+
+.form-group.has-error .error-text {
+  display: block;
+}
+
+/* --------------------------------------------------------------------------
+   9. Password Visibility Toggle Button
+   -------------------------------------------------------------------------- */
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition-fast), background-color var(--transition-fast);
+}
+
+.password-toggle-btn:hover {
+  color: var(--text-main);
+  background-color: var(--primary-light);
+}
+
+.password-toggle-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.eye-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.eye-closed {
+  display: none;
+}
+
+.password-toggle-btn.is-active .eye-open {
+  display: none;
+}
+
+.password-toggle-btn.is-active .eye-closed {
+  display: block;
+}
+
+/* --------------------------------------------------------------------------
+   10. Options: Remember Me & Forgot Password
+   -------------------------------------------------------------------------- */
+.form-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+.checkbox-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-container input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.custom-checkbox {
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--border-hover);
+  border-radius: 5px;
+  background-color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.custom-checkbox svg {
+  width: 11px;
+  height: 11px;
+  color: #ffffff;
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.checkbox-container input:checked + .custom-checkbox {
+  background-color: var(--primary);
+  border-color: var(--primary);
+}
+
+.checkbox-container input:checked + .custom-checkbox svg {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.checkbox-container input:focus-visible + .custom-checkbox {
+  box-shadow: var(--shadow-focus);
+}
+
+.checkbox-label {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.forgot-password-link {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.forgot-password-link:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+.forgot-password-link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* --------------------------------------------------------------------------
+   11. Primary Login Button & Loading Spinner
+   -------------------------------------------------------------------------- */
+.btn-login {
+  position: relative;
+  width: 100%;
+  height: var(--input-height);
+  background-color: var(--primary);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: var(--font-family);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-button);
+  transition: background-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+  margin-top: 4px;
+}
+
+.btn-login:hover {
+  background-color: var(--primary-hover);
+  box-shadow: var(--shadow-button-hover);
+  transform: translateY(-1px);
+}
+
+.btn-login:active {
+  background-color: var(--primary-active);
+  transform: translateY(0);
+}
+
+.btn-login:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus), var(--shadow-button);
+}
+
+/* Loading state */
+.btn-login.is-loading {
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.btn-login .spinner {
+  display: none;
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin-left: 8px;
+}
+
+.btn-login.is-loading .spinner {
+  display: inline-block;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   12. Divider
+   -------------------------------------------------------------------------- */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 22px 0 18px;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background-color: var(--border-color);
+}
+
+.divider-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-subtle);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* --------------------------------------------------------------------------
+   13. Google OAuth Button
+   -------------------------------------------------------------------------- */
+.btn-google {
+  width: 100%;
+  height: var(--input-height);
+  background-color: #ffffff;
+  color: var(--text-main);
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-family: var(--font-family);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+
+.btn-google:hover {
+  background-color: #f8fafc;
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+
+.btn-google:active {
+  background-color: #f1f5f9;
+  transform: translateY(0);
+}
+
+.btn-google:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.google-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* --------------------------------------------------------------------------
+   14. Card Footer (Create Account)
+   -------------------------------------------------------------------------- */
+.card-footer {
+  text-align: center;
+  margin-top: 24px;
+}
+
+.signup-prompt {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.create-account-link {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.create-account-link:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+.create-account-link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* --------------------------------------------------------------------------
+   15. Responsive Design (Mobile & Small Tablets)
+   -------------------------------------------------------------------------- */
+@media (max-width: 480px) {
+  body {
+    padding: 16px 12px;
+    align-items: flex-start;
+  }
+
+  .login-card {
+    padding: 28px 20px;
+    border-radius: 14px;
+  }
+
+  .login-title {
+    font-size: 1.35rem;
+  }
+
+  .brand-name {
+    font-size: 1.15rem;
+  }
+
+  :root {
+    --input-height: 48px;
+  }
+
+  .form-options {
+    flex-direction: row;
+    gap: 8px;
+  }
+}
