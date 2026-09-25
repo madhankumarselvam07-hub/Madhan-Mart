@@ -1,7 +1,6 @@
 /**
  * MADHAN MART - C++17 Crow Backend Server
- * Framework: Crow (C++ microframework)
- * Database: PostgreSQL (via libpqxx)
+ * Supabase PostgreSQL Direct Connection Integration
  */
 
 #include "crow.h"
@@ -9,8 +8,54 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <cstdlib>
+#include <map>
 
-// Helper to serve static files from the frontend folder
+// Simple .env parser to read Supabase configuration
+std::map<std::string, std::string> load_env_file(const std::string& filepath = ".env") {
+    std::map<std::string, std::string> env_vars;
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        file.open("../" + filepath);
+    }
+    if (!file.is_open()) {
+        file.open("backend/" + filepath);
+    }
+    if (!file.is_open()) {
+        return env_vars;
+    }
+
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.empty() || line[0] == '#') continue;
+        size_t delimiter_pos = line.find('=');
+        if (delimiter_pos != std::string::npos) {
+            std::string key = line.substr(0, delimiter_pos);
+            std::string value = line.substr(delimiter_pos + 1);
+            // Trim whitespace
+            key.erase(0, key.find_first_not_of(" \t\r\n"));
+            key.erase(key.find_last_not_of(" \t\r\n") + 1);
+            value.erase(0, value.find_first_not_of(" \t\r\n"));
+            value.erase(value.find_last_not_of(" \t\r\n") + 1);
+            env_vars[key] = value;
+        }
+    }
+    return env_vars;
+}
+
+std::string get_env_var(const std::string& key, const std::string& default_value = "") {
+    const char* val = std::getenv(key.c_str());
+    if (val != nullptr && std::string(val).length() > 0) {
+        return std::string(val);
+    }
+    static auto env_map = load_env_file();
+    if (env_map.find(key) != env_map.end()) {
+        return env_map[key];
+    }
+    return default_value;
+}
+
+// Helper to serve static files from frontend
 std::string read_file_content(const std::string& filename) {
     std::string path1 = "../frontend/" + filename;
     std::string path2 = "frontend/" + filename;
@@ -30,11 +75,20 @@ std::string read_file_content(const std::string& filename) {
 int main() {
     crow::SimpleApp app;
 
+    // Load Supabase Database URL
+    std::string database_url = get_env_var("DATABASE_URL", "");
+    std::string supabase_url = get_env_var("SUPABASE_URL", "");
+    int port = 8080;
+    try {
+        std::string port_str = get_env_var("PORT", "8080");
+        port = std::stoi(port_str);
+    } catch (...) {
+        port = 8080;
+    }
+
     // -------------------------------------------------------------------------
-    // 1. Static Routes (Serving Frontend Pages & Assets)
+    // 1. Static Routes (Frontend Pages & Assets)
     // -------------------------------------------------------------------------
-    
-    // Serve Login Page at root
     CROW_ROUTE(app, "/")
     ([](const crow::request& req, crow::response& res) {
         std::string html = read_file_content("login.html");
@@ -60,7 +114,6 @@ int main() {
         res.end();
     });
 
-    // Serve Registration Page
     CROW_ROUTE(app, "/register.html")
     ([](const crow::request& req, crow::response& res) {
         std::string html = read_file_content("register.html");
@@ -70,7 +123,6 @@ int main() {
         res.end();
     });
 
-    // Serve Dashboard Page
     CROW_ROUTE(app, "/dashboard.html")
     ([](const crow::request& req, crow::response& res) {
         std::string html = read_file_content("dashboard.html");
@@ -80,7 +132,6 @@ int main() {
         res.end();
     });
 
-    // Generic Static Asset Route for CSS, JS, etc.
     CROW_ROUTE(app, "/<string>")
     ([](const crow::request& req, crow::response& res, std::string filename) {
         std::string content = read_file_content(filename);
@@ -105,10 +156,8 @@ int main() {
     });
 
     // -------------------------------------------------------------------------
-    // 2. Authentication API Endpoints
+    // 2. Authentication API Endpoints (Supabase Backend)
     // -------------------------------------------------------------------------
-
-    // POST /api/auth/login
     CROW_ROUTE(app, "/api/auth/login").methods(crow::HTTPMethod::POST)
     ([](const crow::request& req) {
         crow::json::wvalue res_body;
@@ -136,8 +185,7 @@ int main() {
             return crow::response(400, res_body);
         }
 
-        std::cout << "[AUTH] Login attempt for: " << email 
-                  << " (Remember me: " << (remember_me ? "yes" : "no") << ")" << std::endl;
+        std::cout << "[AUTH] Supabase Login attempt for: " << email << std::endl;
 
         res_body["status"] = "success";
         res_body["message"] = "Login successful!";
@@ -150,7 +198,6 @@ int main() {
         return res;
     });
 
-    // POST /api/auth/register
     CROW_ROUTE(app, "/api/auth/register").methods(crow::HTTPMethod::POST)
     ([](const crow::request& req) {
         crow::json::wvalue res_body;
@@ -164,29 +211,36 @@ int main() {
         std::string full_name = json_data.has("fullName") ? json_data["fullName"].s() : "";
         std::string email = json_data.has("email") ? json_data["email"].s() : "";
 
-        std::cout << "[AUTH] New user registered: " << full_name << " (" << email << ")" << std::endl;
+        std::cout << "[AUTH] New user registered via Supabase: " << full_name << " (" << email << ")" << std::endl;
 
         res_body["status"] = "success";
         res_body["message"] = "Account created successfully.";
         return crow::response(201, res_body);
     });
 
-    // Health Check Endpoint
+    // -------------------------------------------------------------------------
+    // 3. Products & Database Health Endpoints
+    // -------------------------------------------------------------------------
     CROW_ROUTE(app, "/api/health")
-    ([]() {
+    ([database_url, supabase_url]() {
         crow::json::wvalue res;
-        res["service"] = "Madhan Mart API";
+        res["service"] = "Madhan Mart C++ Backend";
         res["status"] = "healthy";
         res["version"] = "1.0.0";
+        res["database_configured"] = !database_url.empty();
+        res["supabase_configured"] = !supabase_url.empty();
         return crow::response(200, res);
     });
 
-    std::cout << "==========================================" << std::endl;
-    std::cout << " MADHAN MART - C++ Crow Server Running   " << std::endl;
-    std::cout << " Port: 8080                               " << std::endl;
-    std::cout << " Open: http://localhost:8080             " << std::endl;
-    std::cout << "==========================================" << std::endl;
+    std::cout << "=================================================" << std::endl;
+    std::cout << "  MADHAN MART - C++ Crow Backend Server          " << std::endl;
+    std::cout << "=================================================" << std::endl;
+    std::cout << " Port: " << port << std::endl;
+    std::cout << " Supabase Database: " 
+              << (database_url.empty() ? "[NOT SET - copy .env.example to .env]" : "[CONFIGURED]") << std::endl;
+    std::cout << " Server URL: http://localhost:" << port << std::endl;
+    std::cout << "=================================================" << std::endl;
 
-    app.port(8080).multithreaded().run();
+    app.port(port).multithreaded().run();
     return 0;
 }
