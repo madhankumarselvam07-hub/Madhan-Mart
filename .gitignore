@@ -1,0 +1,16 @@
+# Environment variables and secrets
+.env
+backend/.env
+*.env
+
+# Build directories
+build/
+backend/build/
+bin/
+obj/
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
