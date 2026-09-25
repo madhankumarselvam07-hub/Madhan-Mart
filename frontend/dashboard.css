@@ -617,47 +617,64 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+  transition: transform 0.28s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.28s cubic-bezier(0.2, 0, 0, 1), border-color 0.28s ease;
+  will-change: transform, box-shadow;
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .product-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-hover);
+  transform: translateY(-4px) translateZ(0);
+  box-shadow: 0 12px 24px -4px rgba(15, 23, 42, 0.1), 0 4px 8px -2px rgba(15, 23, 42, 0.04);
   border-color: var(--border-hover);
 }
 
 .product-img-box {
-  background: #ffffff;
-  height: 185px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: #f1f5f9;
+  height: 190px;
+  width: 100%;
   position: relative;
   border-bottom: 1px solid var(--border-color);
   overflow: hidden;
-  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 .product-img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform: scale(1) translateZ(0);
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
   user-select: none;
 }
 
 .product-card:hover .product-img {
-  transform: scale(1.08);
+  transform: scale(1.06) translateZ(0);
 }
 
 .product-badge {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  font-size: 0.7rem;
+  top: 12px;
+  left: 12px;
+  z-index: 10;
+  font-size: 0.72rem;
   font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  letter-spacing: 0.02em;
 }
 
 .badge-sale { background: #fee2e2; color: #dc2626; }
