@@ -1123,7 +1123,225 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   8. Invoice Preview Modal & Printable Bill
+   8. Checkout & Payment Modal Styles
+   -------------------------------------------------------------------------- */
+.checkout-modal-card {
+  max-width: 620px;
+  width: 95%;
+}
+
+.checkout-modal-body {
+  max-height: 72vh;
+  padding: 20px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.checkout-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #f8fafc;
+  padding: 16px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+}
+
+.checkout-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 2px;
+}
+
+.checkout-step-badge {
+  width: 22px;
+  height: 22px;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkout-section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.checkout-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.checkout-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.checkout-label .req {
+  color: #ef4444;
+}
+
+.checkout-input {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 0.88rem;
+  font-family: var(--font-family);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  color: var(--text-main);
+  transition: all var(--transition);
+}
+
+.checkout-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: 1.2fr 1.2fr 0.8fr;
+  gap: 12px;
+}
+
+.payment-methods-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.payment-method-card {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  background: #ffffff;
+  border: 1.5px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+}
+
+.payment-method-card input[type="radio"] {
+  margin-right: 8px;
+  accent-color: var(--primary);
+}
+
+.payment-method-card:hover {
+  border-color: var(--primary);
+  background: #f0f7ff;
+}
+
+.payment-method-card.active {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.payment-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.payment-icon-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.pay-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.payment-details-box {
+  margin-top: 4px;
+  background: #ffffff;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border-color);
+}
+
+.input-with-badge {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.upi-verified-badge {
+  position: absolute;
+  right: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--success-text);
+  background: var(--success-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.cod-notice {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.checkout-summary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #eff6ff;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent-soft);
+}
+
+.checkout-total-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.checkout-total-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.checkout-total-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.checkout-security-tag {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #15803d;
+}
+
+/* --------------------------------------------------------------------------
+   9. Invoice Preview Modal & Printable Bill
    -------------------------------------------------------------------------- */
 .invoice-modal-card {
   max-width: 680px;

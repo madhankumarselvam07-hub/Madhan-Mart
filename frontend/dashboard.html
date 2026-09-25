@@ -413,8 +413,186 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn-secondary" id="clearCartBtn">Clear Cart</button>
-        <button type="button" class="btn-primary" id="checkoutBtn" disabled>Place Order (Supabase)</button>
+        <button type="button" class="btn-primary" id="checkoutBtn" disabled>Proceed to Checkout →</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Checkout & Delivery Details Modal -->
+  <div class="modal-overlay" id="checkoutModal" role="dialog" aria-modal="true" aria-labelledby="checkoutModalTitle">
+    <div class="modal-card checkout-modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="checkoutModalTitle">⚡ Checkout & Payment</h3>
+        <button type="button" class="btn-modal-close" id="closeCheckoutBtn" aria-label="Close Checkout">✕</button>
+      </div>
+      <form id="checkoutForm" class="checkout-form" novalidate>
+        <div class="modal-body checkout-modal-body">
+          
+          <!-- Section 1: Delivery Address & Location -->
+          <div class="checkout-section">
+            <div class="checkout-section-header">
+              <span class="checkout-step-badge">1</span>
+              <h4 class="checkout-section-title">📍 Delivery Address & Location</h4>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="checkout-field">
+                <label for="shippingFullName" class="checkout-label">Recipient Name <span class="req">*</span></label>
+                <input type="text" id="shippingFullName" class="checkout-input" placeholder="e.g. Madhan Kumar" required>
+              </div>
+              <div class="checkout-field">
+                <label for="shippingPhone" class="checkout-label">Phone Number <span class="req">*</span></label>
+                <input type="tel" id="shippingPhone" class="checkout-input" placeholder="e.g. +91 98765 43210" required>
+              </div>
+            </div>
+
+            <div class="checkout-field">
+              <label for="shippingAddress" class="checkout-label">House No., Street & Landmark <span class="req">*</span></label>
+              <input type="text" id="shippingAddress" class="checkout-input" placeholder="e.g. No. 42, Anna Salai, Guindy" required>
+            </div>
+
+            <div class="form-grid-3">
+              <div class="checkout-field">
+                <label for="shippingCity" class="checkout-label">City <span class="req">*</span></label>
+                <input type="text" id="shippingCity" class="checkout-input" placeholder="Chennai" value="Chennai" required>
+              </div>
+              <div class="checkout-field">
+                <label for="shippingState" class="checkout-label">State <span class="req">*</span></label>
+                <input type="text" id="shippingState" class="checkout-input" placeholder="Tamil Nadu" value="Tamil Nadu" required>
+              </div>
+              <div class="checkout-field">
+                <label for="shippingPin" class="checkout-label">PIN Code <span class="req">*</span></label>
+                <input type="text" id="shippingPin" class="checkout-input" placeholder="600025" value="600025" maxlength="6" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Payment Method Selection -->
+          <div class="checkout-section">
+            <div class="checkout-section-header">
+              <span class="checkout-step-badge">2</span>
+              <h4 class="checkout-section-title">💳 Payment Method</h4>
+            </div>
+
+            <div class="payment-methods-grid">
+              
+              <!-- Option 1: Google Pay / UPI -->
+              <label class="payment-method-card active" for="payGpay">
+                <input type="radio" id="payGpay" name="paymentMethod" value="Google Pay / UPI" checked>
+                <div class="payment-card-content">
+                  <div class="payment-icon-title">
+                    <span class="pay-icon">📱</span>
+                    <span class="pay-name">Google Pay / UPI</span>
+                  </div>
+                  <span class="pay-badge">Instant 0% Fee</span>
+                </div>
+              </label>
+
+              <!-- Option 2: Credit / Debit Card -->
+              <label class="payment-method-card" for="payCard">
+                <input type="radio" id="payCard" name="paymentMethod" value="Credit / Debit Card">
+                <div class="payment-card-content">
+                  <div class="payment-icon-title">
+                    <span class="pay-icon">💳</span>
+                    <span class="pay-name">Debit / Credit Card</span>
+                  </div>
+                  <span class="pay-badge">Visa / Master / RuPay</span>
+                </div>
+              </label>
+
+              <!-- Option 3: Net Banking -->
+              <label class="payment-method-card" for="payNetbanking">
+                <input type="radio" id="payNetbanking" name="paymentMethod" value="Net Banking">
+                <div class="payment-card-content">
+                  <div class="payment-icon-title">
+                    <span class="pay-icon">🏦</span>
+                    <span class="pay-name">Net Banking</span>
+                  </div>
+                  <span class="pay-badge">All Major Banks</span>
+                </div>
+              </label>
+
+              <!-- Option 4: Cash on Delivery -->
+              <label class="payment-method-card" for="payCod">
+                <input type="radio" id="payCod" name="paymentMethod" value="Cash on Delivery">
+                <div class="payment-card-content">
+                  <div class="payment-icon-title">
+                    <span class="pay-icon">💵</span>
+                    <span class="pay-name">Cash on Delivery</span>
+                  </div>
+                  <span class="pay-badge">Pay at Doorstep</span>
+                </div>
+              </label>
+
+            </div>
+
+            <!-- Dynamic Payment Sub-fields -->
+            <div id="paymentDetailsBox" class="payment-details-box">
+              <!-- UPI Details (Default) -->
+              <div id="upiFields" class="payment-subfield">
+                <label for="upiId" class="checkout-label">Enter UPI ID / VPA <span class="req">*</span></label>
+                <div class="input-with-badge">
+                  <input type="text" id="upiId" class="checkout-input" placeholder="e.g. yourname@okaxis / 9876543210@paytm" value="madhan@okaxis">
+                  <span class="upi-verified-badge">✓ GPay Ready</span>
+                </div>
+              </div>
+
+              <!-- Card Details (Hidden by default) -->
+              <div id="cardFields" class="payment-subfield" style="display: none;">
+                <div class="checkout-field">
+                  <label for="cardNumber" class="checkout-label">Card Number <span class="req">*</span></label>
+                  <input type="text" id="cardNumber" class="checkout-input" placeholder="4532 •••• •••• 8820" maxlength="19" value="4532 8920 1120 8820">
+                </div>
+                <div class="form-grid-2">
+                  <div class="checkout-field">
+                    <label for="cardExpiry" class="checkout-label">Expiry (MM/YY) <span class="req">*</span></label>
+                    <input type="text" id="cardExpiry" class="checkout-input" placeholder="12/28" maxlength="5" value="12/28">
+                  </div>
+                  <div class="checkout-field">
+                    <label for="cardCvv" class="checkout-label">CVV <span class="req">*</span></label>
+                    <input type="password" id="cardCvv" class="checkout-input" placeholder="•••" maxlength="4" value="882">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Netbanking details (Hidden by default) -->
+              <div id="netbankingFields" class="payment-subfield" style="display: none;">
+                <label for="bankSelect" class="checkout-label">Select Your Bank <span class="req">*</span></label>
+                <select id="bankSelect" class="checkout-input">
+                  <option value="HDFC Bank">HDFC Bank</option>
+                  <option value="State Bank of India">State Bank of India (SBI)</option>
+                  <option value="ICICI Bank">ICICI Bank</option>
+                  <option value="Axis Bank">Axis Bank</option>
+                  <option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option>
+                </select>
+              </div>
+
+              <!-- COD Notice (Hidden by default) -->
+              <div id="codFields" class="payment-subfield" style="display: none;">
+                <p class="cod-notice">💵 Please keep exact cash or UPI ready at the time of delivery.</p>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Section 3: Summary Bar -->
+          <div class="checkout-summary-bar">
+            <div class="checkout-total-info">
+              <span class="checkout-total-label">Total Payable:</span>
+              <span class="checkout-total-value" id="checkoutModalTotal">₹0</span>
+            </div>
+            <span class="checkout-security-tag">🔒 256-Bit SSL Encrypted & Verified</span>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="backToCartBtn">← Back to Cart</button>
+          <button type="submit" class="btn-primary" id="confirmOrderBtn">
+            <span class="btn-label" id="confirmOrderBtnLabel">Confirm & Place Order</span>
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 

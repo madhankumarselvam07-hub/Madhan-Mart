@@ -241,23 +241,165 @@ document.addEventListener('DOMContentLoaded', async () => {
   attachAddToCartListeners();
 
   // --------------------------------------------------------------------------
-  // 5. Place Order (Direct Supabase Insertion)
+  // 5. Place Order & Checkout Flow (Address, Location & Payment Selection)
   // --------------------------------------------------------------------------
-  if (checkoutBtn) {
-    checkoutBtn.addEventListener('click', async () => {
-      if (cart.length === 0) return;
+  const checkoutModal = document.getElementById('checkoutModal');
+  const closeCheckoutBtn = document.getElementById('closeCheckoutBtn');
+  const backToCartBtn = document.getElementById('backToCartBtn');
+  const checkoutForm = document.getElementById('checkoutForm');
+  const checkoutModalTotal = document.getElementById('checkoutModalTotal');
+  const confirmOrderBtn = document.getElementById('confirmOrderBtn');
+  const confirmOrderBtnLabel = document.getElementById('confirmOrderBtnLabel');
 
-      checkoutBtn.disabled = true;
-      checkoutBtn.textContent = 'Saving to Supabase...';
+  const shippingFullNameInput = document.getElementById('shippingFullName');
+  const shippingPhoneInput = document.getElementById('shippingPhone');
+  const shippingAddressInput = document.getElementById('shippingAddress');
+  const shippingCityInput = document.getElementById('shippingCity');
+  const shippingStateInput = document.getElementById('shippingState');
+  const shippingPinInput = document.getElementById('shippingPin');
+
+  const paymentMethodRadios = document.querySelectorAll('input[name="paymentMethod"]');
+  const upiFields = document.getElementById('upiFields');
+  const cardFields = document.getElementById('cardFields');
+  const netbankingFields = document.getElementById('netbankingFields');
+  const codFields = document.getElementById('codFields');
+  const upiIdInput = document.getElementById('upiId');
+  const cardNumberInput = document.getElementById('cardNumber');
+  const cardExpiryInput = document.getElementById('cardExpiry');
+  const cardCvvInput = document.getElementById('cardCvv');
+  const bankSelect = document.getElementById('bankSelect');
+
+  // Step 1: Open Checkout Modal when clicking "Proceed to Checkout" from Cart Modal
+  if (checkoutBtn) {
+    checkoutBtn.addEventListener('click', () => {
+      if (cart.length === 0) {
+        showToast('Your cart is empty.');
+        return;
+      }
+
+      // Hide Cart Modal
+      if (cartModal) cartModal.classList.remove('show');
+
+      // Pre-populate name
+      if (shippingFullNameInput && !shippingFullNameInput.value) {
+        shippingFullNameInput.value = currentUser?.fullName || 'Madhan Kumar';
+      }
+
+      // Populate Total Amount in Checkout Modal
+      const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      if (checkoutModalTotal) {
+        checkoutModalTotal.textContent = `₹${totalAmount.toLocaleString('en-IN')}`;
+      }
+      if (confirmOrderBtnLabel) {
+        confirmOrderBtnLabel.textContent = `Confirm & Pay ₹${totalAmount.toLocaleString('en-IN')}`;
+      }
+
+      // Show Checkout Modal
+      if (checkoutModal) {
+        checkoutModal.classList.add('show');
+      }
+    });
+  }
+
+  // Close Checkout Modal handlers
+  if (closeCheckoutBtn && checkoutModal) {
+    closeCheckoutBtn.addEventListener('click', () => {
+      checkoutModal.classList.remove('show');
+    });
+    checkoutModal.addEventListener('click', (e) => {
+      if (e.target === checkoutModal) {
+        checkoutModal.classList.remove('show');
+      }
+    });
+  }
+
+  // Back to Cart button
+  if (backToCartBtn && checkoutModal && cartModal) {
+    backToCartBtn.addEventListener('click', () => {
+      checkoutModal.classList.remove('show');
+      renderCartModal();
+      cartModal.classList.add('show');
+    });
+  }
+
+  // Payment Method Radio Change Handler
+  paymentMethodRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      document.querySelectorAll('.payment-method-card').forEach(card => card.classList.remove('active'));
+      const parentCard = radio.closest('.payment-method-card');
+      if (parentCard) parentCard.classList.add('active');
+
+      const selected = radio.value;
+      if (upiFields) upiFields.style.display = selected === 'Google Pay / UPI' ? 'block' : 'none';
+      if (cardFields) cardFields.style.display = selected === 'Credit / Debit Card' ? 'block' : 'none';
+      if (netbankingFields) netbankingFields.style.display = selected === 'Net Banking' ? 'block' : 'none';
+      if (codFields) codFields.style.display = selected === 'Cash on Delivery' ? 'block' : 'none';
+    });
+  });
+
+  // Step 2: Confirm Order & Submit Checkout Form
+  if (checkoutForm) {
+    checkoutForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (cart.length === 0) {
+        showToast('Cart is empty.');
+        return;
+      }
+
+      const nameVal = shippingFullNameInput ? shippingFullNameInput.value.trim() : 'Madhan Kumar';
+      const phoneVal = shippingPhoneInput ? shippingPhoneInput.value.trim() : '';
+      const addressVal = shippingAddressInput ? shippingAddressInput.value.trim() : '';
+      const cityVal = shippingCityInput ? shippingCityInput.value.trim() : 'Chennai';
+      const stateVal = shippingStateInput ? shippingStateInput.value.trim() : 'Tamil Nadu';
+      const pinVal = shippingPinInput ? shippingPinInput.value.trim() : '600025';
+
+      if (!nameVal || !phoneVal || !addressVal || !cityVal || !pinVal) {
+        showToast('⚠️ Please fill in all required delivery details.');
+        return;
+      }
+
+      // Determine selected payment method and extra detail
+      let selectedMethod = 'Google Pay / UPI';
+      const activeRadio = document.querySelector('input[name="paymentMethod"]:checked');
+      if (activeRadio) selectedMethod = activeRadio.value;
+
+      let paymentDetailsStr = selectedMethod;
+      if (selectedMethod === 'Google Pay / UPI') {
+        const upi = upiIdInput ? upiIdInput.value.trim() : 'madhan@okaxis';
+        paymentDetailsStr = `Google Pay / UPI (${upi || 'GPay Verified'})`;
+      } else if (selectedMethod === 'Credit / Debit Card') {
+        const cardNum = cardNumberInput ? cardNumberInput.value.trim().slice(-4) : '8820';
+        paymentDetailsStr = `Credit Card (ending in ${cardNum || '8820'})`;
+      } else if (selectedMethod === 'Net Banking') {
+        const bank = bankSelect ? bankSelect.value : 'HDFC Bank';
+        paymentDetailsStr = `Net Banking (${bank})`;
+      } else if (selectedMethod === 'Cash on Delivery') {
+        paymentDetailsStr = 'Cash on Delivery (Pay on doorstep)';
+      }
 
       const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+      // Set button loading state
+      if (confirmOrderBtn) {
+        confirmOrderBtn.disabled = true;
+        confirmOrderBtnLabel.textContent = '🔒 Processing payment & saving order...';
+      }
 
       try {
         let orderCode = '#MM-' + Math.floor(10000 + Math.random() * 90000);
 
+        const orderDetailsPayload = {
+          shipping_address: `${addressVal}, ${cityVal}, ${stateVal} - ${pinVal}`,
+          phone_number: phoneVal,
+          city: cityVal,
+          pincode: pinVal,
+          payment_method: paymentDetailsStr
+        };
+
         if (window.MadhanMartSupabase) {
           try {
-            const createdOrder = await window.MadhanMartSupabase.createOrder(cart, totalAmount, currentUser);
+            const createdOrder = await window.MadhanMartSupabase.createOrder(cart, totalAmount, currentUser, orderDetailsPayload);
             if (createdOrder && createdOrder.order_code) {
               orderCode = createdOrder.order_code;
             }
@@ -271,7 +413,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           ? `${cart[0].name} (x${cart[0].quantity})`
           : `${cart[0].name} + ${cart.length - 1} more item(s)`;
 
-        // Keep a snapshot of ordered items for the invoice
+        // Keep snapshot of ordered items for the invoice
         const orderedItemsSnapshot = JSON.parse(JSON.stringify(cart));
 
         // Add to local orders list & update DOM
@@ -281,22 +423,36 @@ document.addEventListener('DOMContentLoaded', async () => {
           items: itemsSummary,
           rawItems: orderedItemsSnapshot,
           amount: `₹${totalAmount.toLocaleString('en-IN')}`,
-          status: 'Confirmed'
+          status: 'Confirmed',
+          shipping_address: orderDetailsPayload.shipping_address,
+          phone_number: phoneVal,
+          city: cityVal,
+          pincode: pinVal,
+          payment_method: paymentDetailsStr,
+          customer_name: nameVal
         });
 
         // Reset Cart and clear persistent storage for this user
         cart = [];
         saveUserCart(cart);
         updateCartBadge();
-        if (cartModal) cartModal.classList.remove('show');
-        showToast(`🎉 Order ${orderCode} placed successfully in Supabase!`);
+        
+        if (checkoutModal) checkoutModal.classList.remove('show');
+        showToast(`🎉 Order ${orderCode} placed successfully via ${selectedMethod}!`);
+
+        // Automatically open the tax invoice modal for the newly placed order!
+        setTimeout(() => {
+          openInvoiceModal(orderCode);
+        }, 400);
 
       } catch (err) {
         console.error('Order creation error:', err);
         showToast('Error saving order. Please try again.');
       } finally {
-        checkoutBtn.disabled = false;
-        checkoutBtn.textContent = 'Place Order (Supabase)';
+        if (confirmOrderBtn) {
+          confirmOrderBtn.disabled = false;
+          confirmOrderBtnLabel.textContent = 'Confirm & Place Order';
+        }
       }
     });
   }
@@ -375,8 +531,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     activeInvoiceOrderCode = orderCode;
 
-    const customerName = (currentUser && currentUser.fullName) || 'Valued Gamer';
+    const customerName = order.customer_name || (currentUser && currentUser.fullName) || 'Valued Gamer';
     const customerEmail = (currentUser && currentUser.email) || order.user_email || 'customer@madhanmart.com';
+    const customerPhone = order.phone_number || '+91 98765 43210';
+    const customerAddress = order.shipping_address || 'No. 42, Anna Salai, Chennai, Tamil Nadu - 600025';
+    const paymentMode = order.payment_method || 'Google Pay / UPI (Verified)';
+
     const rawTotalStr = String(order.amount || '0').replace(/[^0-9.]/g, '');
     const totalNum = parseFloat(rawTotalStr) || 0;
     const subtotalNum = Math.round(totalNum / 1.18);
@@ -427,19 +587,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           <div class="invoice-grid">
             <div>
-              <div class="invoice-col-title">Billed To (Customer)</div>
+              <div class="invoice-col-title">Billed & Shipped To</div>
               <div class="invoice-col-content">
                 <span class="invoice-customer-name">${escapeHtml(customerName)}</span><br>
-                <span>${escapeHtml(customerEmail)}</span><br>
-                <span>Payment: Online Verified</span>
+                <span>${escapeHtml(customerEmail)} • ${escapeHtml(customerPhone)}</span><br>
+                <span>📍 ${escapeHtml(customerAddress)}</span>
               </div>
             </div>
             <div>
-              <div class="invoice-col-title">Invoice Details</div>
+              <div class="invoice-col-title">Invoice & Payment Details</div>
               <div class="invoice-col-content">
                 <strong>Invoice Date:</strong> ${escapeHtml(order.date || 'Today')}<br>
-                <strong>Order Status:</strong> <span style="color: #10b981; font-weight: 700;">${escapeHtml(order.status || 'Paid & Delivered')}</span><br>
-                <strong>Place of Supply:</strong> Tamil Nadu (33)
+                <strong>Payment:</strong> <span style="color: #2563eb; font-weight: 700;">${escapeHtml(paymentMode)}</span><br>
+                <strong>Order Status:</strong> <span style="color: #10b981; font-weight: 700;">${escapeHtml(order.status || 'Paid & Delivered')}</span>
               </div>
             </div>
           </div>
@@ -566,27 +726,31 @@ document.addEventListener('DOMContentLoaded', async () => {
       // Divider line
       doc.setDrawColor(226, 232, 240);
       doc.setLineWidth(0.5);
-      doc.line(14, 63, 196, 63);
+      doc.line(14, 61, 196, 61);
 
       // Customer Info Section
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.setTextColor(...darkNavy);
-      doc.text('BILLED TO (CUSTOMER):', 14, 71);
+      doc.text('BILLED & SHIPPED TO:', 14, 69);
 
-      const customerName = (currentUser && currentUser.fullName) || 'Valued Customer';
+      const customerName = order.customer_name || (currentUser && currentUser.fullName) || 'Valued Customer';
       const customerEmail = (currentUser && currentUser.email) || order.user_email || 'customer@madhanmart.com';
+      const customerPhone = order.phone_number || '+91 98765 43210';
+      const customerAddress = order.shipping_address || 'No. 42, Anna Salai, Chennai, Tamil Nadu - 600025';
+      const paymentMode = order.payment_method || 'Google Pay / UPI (Verified)';
 
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.setTextColor(...brandBlue);
-      doc.text(customerName, 14, 77);
+      doc.text(customerName, 14, 75);
 
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
+      doc.setFontSize(8.5);
       doc.setTextColor(...textMuted);
-      doc.text(`Email: ${customerEmail}`, 14, 83);
-      doc.text('Payment Mode: Online / UPI (Verified)', 14, 88);
+      doc.text(`Email: ${customerEmail} | Phone: ${customerPhone}`, 14, 80);
+      doc.text(`Delivery Location: ${customerAddress.slice(0, 55)}`, 14, 85);
+      doc.text(`Payment Method: ${paymentMode}`, 14, 90);
 
       // Table data
       let tableRows = [];
@@ -611,7 +775,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (typeof doc.autoTable === 'function') {
         doc.autoTable({
-          startY: 95,
+          startY: 96,
           head: [['#', 'Item Description', 'Qty', 'Unit Price', 'Total']],
           body: tableRows,
           theme: 'grid',
@@ -641,7 +805,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
       }
 
-      const finalY = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 130) + 8;
+      const finalY = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 135) + 8;
       const rawTotalStr = String(order.amount || '0').replace(/[^0-9.]/g, '');
       const totalNum = parseFloat(rawTotalStr) || 0;
       const subtotalNum = Math.round(totalNum / 1.18);

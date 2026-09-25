@@ -252,9 +252,9 @@ window.MadhanMartSupabase = {
   },
 
   // --------------------------------------------------------------------------
-  // 3. Orders Database Queries (User-Specific Isolation)
+  // 3. Orders Database Queries (User-Specific Isolation & Location/Payment)
   // --------------------------------------------------------------------------
-  async createOrder(items, totalAmount, targetUser = null) {
+  async createOrder(items, totalAmount, targetUser = null, orderDetails = {}) {
     const sb = getSupabase();
     if (!sb) throw new Error('Supabase client is not initialized.');
 
@@ -277,12 +277,17 @@ window.MadhanMartSupabase = {
 
     const orderCode = '#MM-' + Math.floor(10000 + Math.random() * 90000);
 
-    // 1. Insert into orders table with user_email and user_id
+    // 1. Insert into orders table with user_email, user_id, shipping and payment info
     const orderPayload = {
       order_code: orderCode,
       user_email: userEmail,
       total_amount: totalAmount,
-      status: 'Delivered'
+      status: 'Delivered',
+      shipping_address: orderDetails.shipping_address || 'Chennai, Tamil Nadu',
+      phone_number: orderDetails.phone_number || '',
+      city: orderDetails.city || 'Chennai',
+      pincode: orderDetails.pincode || '600025',
+      payment_method: orderDetails.payment_method || 'Google Pay / UPI'
     };
 
     // Include valid UUID if present
@@ -290,15 +295,19 @@ window.MadhanMartSupabase = {
       orderPayload.user_id = userId;
     }
 
-    const { data: orderData, error: orderError } = await sb
-      .from('orders')
-      .insert([orderPayload])
-      .select()
-      .single();
+    let orderData = null;
+    try {
+      const { data, error } = await sb
+        .from('orders')
+        .insert([orderPayload])
+        .select()
+        .single();
 
-    if (orderError) {
-      console.warn('[SUPABASE] Order insert error (retrying without user_id):', orderError);
-      // Fallback if foreign key constraint on users table
+      if (error) throw error;
+      orderData = data;
+    } catch (orderError) {
+      console.warn('[SUPABASE] Order insert error (retrying base columns):', orderError);
+      // Fallback with base columns if schema not fully migrated
       const fallbackPayload = {
         order_code: orderCode,
         user_email: userEmail,
@@ -312,7 +321,7 @@ window.MadhanMartSupabase = {
         .single();
 
       if (retryError) throw retryError;
-      return retryData;
+      orderData = retryData;
     }
 
     // 2. Insert into order_items table
@@ -370,6 +379,11 @@ window.MadhanMartSupabase = {
           order_code,
           user_id,
           user_email,
+          shipping_address,
+          phone_number,
+          city,
+          pincode,
+          payment_method,
           total_amount,
           status,
           created_at,

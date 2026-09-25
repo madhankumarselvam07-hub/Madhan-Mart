@@ -60,8 +60,13 @@ CREATE TABLE IF NOT EXISTS public.orders (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Ensure user_email column exists on already created orders tables
+-- Ensure columns exist on orders tables for delivery details and payment methods
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS user_email VARCHAR(255);
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS shipping_address TEXT;
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50);
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS city VARCHAR(100);
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS pincode VARCHAR(20);
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50);
 CREATE INDEX IF NOT EXISTS idx_orders_user_email ON public.orders(user_email);
 CREATE INDEX IF NOT EXISTS idx_orders_user_id ON public.orders(user_id);
 
