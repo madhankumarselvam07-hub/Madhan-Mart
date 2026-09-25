@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS public.products (
     name VARCHAR(200) NOT NULL,
     category VARCHAR(50) NOT NULL,
     badge VARCHAR(50),
+    image_url VARCHAR(500),
     emoji VARCHAR(10),
     price NUMERIC(10, 2) NOT NULL,
     original_price NUMERIC(10, 2),
@@ -45,6 +46,7 @@ CREATE TABLE IF NOT EXISTS public.products (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS image_url VARCHAR(500);
 CREATE INDEX IF NOT EXISTS idx_products_category ON public.products(category);
 
 -- 5. Orders Table
@@ -136,14 +138,14 @@ CREATE TRIGGER on_auth_user_created
 -- =============================================================================
 -- 9. SEED INITIAL GAMING PRODUCTS
 -- =============================================================================
-INSERT INTO public.products (name, category, badge, emoji, price, original_price, rating, stock_quantity)
+INSERT INTO public.products (name, category, badge, image_url, emoji, price, original_price, rating, stock_quantity)
 VALUES
-    ('PlayStation 5 DualSense Wireless Controller', 'consoles', 'Bestseller', '🎮', 5790.00, 6490.00, 4.9, 50),
-    ('Razer Huntsman Mini 60% Optical Keyboard', 'peripherals', '20% OFF', '⌨️', 7999.00, 9999.00, 4.8, 35),
-    ('HyperX Cloud Alpha Wireless 7.1 Gaming Headset', 'audio', 'New', '🎧', 12499.00, 15999.00, 4.9, 25),
-    ('Logitech G502 X PLUS Wireless RGB Gaming Mouse', 'peripherals', '15% OFF', '🖱️', 8495.00, 9995.00, 4.7, 40),
-    ('ROG Swift OLED 27" 240Hz 0.03ms Gaming Monitor', 'hardware', 'Hot Deal', '🖥️', 64990.00, 74990.00, 5.0, 15),
-    ('Meta Quest 3 128GB All-In-One VR Headset', 'consoles', 'Trending', '🥽', 46990.00, 52990.00, 4.8, 20),
-    ('Secretlab TITAN Evo Ergonomic Gaming Chair', 'accessories', 'Top Rated', '💺', 34999.00, 41999.00, 4.9, 10),
-    ('Elgato Stream Deck MK.2 – 15 Macro RGB Keys', 'accessories', 'Creator Pick', '🕹️', 13499.00, 15999.00, 4.9, 30)
+    ('PlayStation 5 DualSense Wireless Controller', 'consoles', 'Bestseller', 'images/ps5-controller.jpg', '🎮', 5790.00, 6490.00, 4.9, 50),
+    ('Razer Huntsman Mini 60% Optical Keyboard', 'peripherals', '20% OFF', 'images/razer-keyboard.jpg', '⌨️', 7999.00, 9999.00, 4.8, 35),
+    ('HyperX Cloud Alpha Wireless 7.1 Gaming Headset', 'audio', 'New', 'images/hyperx-headset.jpg', '🎧', 12499.00, 15999.00, 4.9, 25),
+    ('Logitech G502 X PLUS Wireless RGB Gaming Mouse', 'peripherals', '15% OFF', 'images/logitech-mouse.jpg', '🖱️', 8495.00, 9995.00, 4.7, 40),
+    ('ROG Swift OLED 27" 240Hz 0.03ms Gaming Monitor', 'hardware', 'Hot Deal', 'images/rog-monitor.jpg', '🖥️', 64990.00, 74990.00, 5.0, 15),
+    ('Meta Quest 3 128GB All-In-One VR Headset', 'consoles', 'Trending', 'images/meta-quest-vr.jpg', '🥽', 46990.00, 52990.00, 4.8, 20),
+    ('Secretlab TITAN Evo Ergonomic Gaming Chair', 'accessories', 'Top Rated', 'images/gaming-chair.jpg', '💺', 34999.00, 41999.00, 4.9, 10),
+    ('Elgato Stream Deck MK.2 – 15 Macro RGB Keys', 'accessories', 'Creator Pick', 'images/stream-deck.jpg', '🕹️', 13499.00, 15999.00, 4.9, 30)
 ON CONFLICT DO NOTHING;

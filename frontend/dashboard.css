@@ -627,21 +627,26 @@ body {
 }
 
 .product-img-box {
-  background: #f8fafc;
-  height: 160px;
+  background: #ffffff;
+  height: 185px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   border-bottom: 1px solid var(--border-color);
+  overflow: hidden;
+  padding: 8px;
 }
 
-.product-emoji {
-  font-size: 4rem;
-  transition: transform var(--transition);
+.product-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
 }
 
-.product-card:hover .product-emoji {
+.product-card:hover .product-img {
   transform: scale(1.08);
 }
 
