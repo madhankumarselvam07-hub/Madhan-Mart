@@ -1124,4 +1124,259 @@ document.addEventListener('DOMContentLoaded', async () => {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
   }
+
+  // --------------------------------------------------------------------------
+  // 10. Interactive Blueprint Canvas Grid & Glowing Cursor Spotlight Engine
+  // --------------------------------------------------------------------------
+  function initInteractiveGrid() {
+    const canvas = document.getElementById('interactiveGridCanvas');
+    const glowEl = document.getElementById('ambientCursorGlow');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let width = 0;
+    let height = 0;
+    let dpr = window.devicePixelRatio || 1;
+    const gridSize = 36; // 36px square grid pitch
+
+    // Mouse coordinates with smoothing
+    const mouse = {
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 3,
+      targetX: window.innerWidth / 2,
+      targetY: window.innerHeight / 3,
+      active: true,
+      spotlightRadius: 300
+    };
+
+    // Click ripples array
+    const ripples = [];
+
+    function resize() {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      dpr = window.devicePixelRatio || 1;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+      ctx.scale(dpr, dpr);
+    }
+
+    window.addEventListener('resize', resize, { passive: true });
+    resize();
+
+    // Mouse movement tracker
+    window.addEventListener('mousemove', (e) => {
+      mouse.targetX = e.clientX;
+      mouse.targetY = e.clientY;
+      mouse.active = true;
+
+      // Update ambient radial glow element
+      if (glowEl) {
+        glowEl.style.transform = `translate(${e.clientX}px, ${e.clientY}px) translate(-50%, -50%)`;
+        glowEl.style.opacity = '1';
+      }
+    }, { passive: true });
+
+    window.addEventListener('mouseleave', () => {
+      if (glowEl) glowEl.style.opacity = '0.3';
+    });
+
+    // Touch support for mobile devices
+    window.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 0) {
+        mouse.targetX = e.touches[0].clientX;
+        mouse.targetY = e.touches[0].clientY;
+        mouse.active = true;
+        if (glowEl) {
+          glowEl.style.transform = `translate(${mouse.targetX}px, ${mouse.targetY}px) translate(-50%, -50%)`;
+        }
+      }
+    }, { passive: true });
+
+    // Click ripple trigger
+    window.addEventListener('pointerdown', (e) => {
+      ripples.push({
+        x: e.clientX,
+        y: e.clientY,
+        radius: 0,
+        maxRadius: 380,
+        opacity: 0.8,
+        speed: 8
+      });
+      if (ripples.length > 5) ripples.shift();
+    }, { passive: true });
+
+    // Animation Render Loop
+    function render() {
+      // Smooth interpolation for mouse position
+      mouse.x += (mouse.targetX - mouse.x) * 0.12;
+      mouse.y += (mouse.targetY - mouse.y) * 0.12;
+
+      ctx.clearRect(0, 0, width, height);
+
+      // Base subtle hairline grid
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(203, 213, 225, 0.45)';
+
+      const startX = 0;
+      const startY = 0;
+
+      // Draw vertical lines
+      ctx.beginPath();
+      for (let x = startX; x <= width; x += gridSize) {
+        ctx.moveTo(x + 0.5, 0);
+        ctx.lineTo(x + 0.5, height);
+      }
+      // Draw horizontal lines
+      for (let y = startY; y <= height; y += gridSize) {
+        ctx.moveTo(0, y + 0.5);
+        ctx.lineTo(width, y + 0.5);
+      }
+      ctx.stroke();
+
+      // Spotlight illuminated grid area around cursor
+      if (mouse.active) {
+        ctx.save();
+        const rad = mouse.spotlightRadius;
+
+        // Clip to spotlight circle
+        ctx.beginPath();
+        ctx.arc(mouse.x, mouse.y, rad, 0, Math.PI * 2);
+        ctx.clip();
+
+        // Glowing vertical lines near cursor
+        const minGridX = Math.floor((mouse.x - rad) / gridSize) * gridSize;
+        const maxGridX = Math.ceil((mouse.x + rad) / gridSize) * gridSize;
+        const minGridY = Math.floor((mouse.y - rad) / gridSize) * gridSize;
+        const maxGridY = Math.ceil((mouse.y + rad) / gridSize) * gridSize;
+
+        // Radiant glow gradient
+        const spotGrad = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, rad);
+        spotGrad.addColorStop(0, 'rgba(0, 240, 255, 0.7)');
+        spotGrad.addColorStop(0.3, 'rgba(37, 99, 235, 0.5)');
+        spotGrad.addColorStop(0.7, 'rgba(139, 92, 246, 0.25)');
+        spotGrad.addColorStop(1, 'transparent');
+
+        ctx.strokeStyle = spotGrad;
+        ctx.lineWidth = 1.6;
+
+        ctx.beginPath();
+        for (let x = minGridX; x <= maxGridX; x += gridSize) {
+          ctx.moveTo(x + 0.5, mouse.y - rad);
+          ctx.lineTo(x + 0.5, mouse.y + rad);
+        }
+        for (let y = minGridY; y <= maxGridY; y += gridSize) {
+          ctx.moveTo(mouse.x - rad, y + 0.5);
+          ctx.lineTo(mouse.x + rad, y + 0.5);
+        }
+        ctx.stroke();
+
+        // Draw glowing technical crosshairs '+' at grid intersections near cursor
+        const crossSize = 3.5;
+        for (let ix = minGridX; ix <= maxGridX; ix += gridSize) {
+          for (let iy = minGridY; iy <= maxGridY; iy += gridSize) {
+            const dist = Math.hypot(ix - mouse.x, iy - mouse.y);
+            if (dist < rad * 0.85) {
+              const alpha = Math.max(0, (1 - dist / (rad * 0.85)));
+              ctx.strokeStyle = `rgba(0, 240, 255, ${alpha * 0.9})`;
+              ctx.lineWidth = 1.2;
+
+              ctx.beginPath();
+              // horizontal arm
+              ctx.moveTo(ix - crossSize + 0.5, iy + 0.5);
+              ctx.lineTo(ix + crossSize + 0.5, iy + 0.5);
+              // vertical arm
+              ctx.moveTo(ix + 0.5, iy - crossSize + 0.5);
+              ctx.lineTo(ix + 0.5, iy + crossSize + 0.5);
+              ctx.stroke();
+
+              // Center glowing dot for close intersections
+              if (dist < rad * 0.4) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                ctx.beginPath();
+                ctx.arc(ix + 0.5, iy + 0.5, 1.2, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            }
+          }
+        }
+
+        ctx.restore();
+      }
+
+      // Draw Click Pulse Ripples
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const r = ripples[i];
+        r.radius += r.speed;
+        r.opacity *= 0.95;
+
+        if (r.opacity < 0.02 || r.radius > r.maxRadius) {
+          ripples.splice(i, 1);
+          continue;
+        }
+
+        ctx.save();
+        ctx.strokeStyle = `rgba(0, 240, 255, ${r.opacity})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Outer faint ring
+        ctx.strokeStyle = `rgba(37, 99, 235, ${r.opacity * 0.6})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, Math.max(0, r.radius - 12), 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      requestAnimationFrame(render);
+    }
+
+    requestAnimationFrame(render);
+  }
+
+  // --------------------------------------------------------------------------
+  // 11. Interactive Card Spotlight Coordinates Tracker
+  // --------------------------------------------------------------------------
+  function initCardSpotlight() {
+    const cards = document.querySelectorAll('.editorial-product-card, .editorial-stat-card, .editorial-hero-card');
+    cards.forEach(card => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--mouse-x', `${x}px`);
+        card.style.setProperty('--mouse-y', `${y}px`);
+      });
+    });
+  }
+
+  // --------------------------------------------------------------------------
+  // 12. Editorial Live Ticker UTC Clock
+  // --------------------------------------------------------------------------
+  function initEditorialClock() {
+    const clockEl = document.getElementById('liveUtcTime');
+    if (!clockEl) return;
+
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-GB', { hour12: false });
+      clockEl.textContent = `${timeStr} UTC+05:30`;
+    }
+
+    updateClock();
+    setInterval(updateClock, 1000);
+  }
+
+  // Initialize all editorial & interactive glow systems
+  initInteractiveGrid();
+  initCardSpotlight();
+  initEditorialClock();
 });

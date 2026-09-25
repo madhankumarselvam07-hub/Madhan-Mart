@@ -3,17 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="MADHAN MART Customer Dashboard - Shop Smart. Live Better.">
-  <title>Dashboard - MADHAN MART</title>
+  <meta name="description" content="MADHAN MART - Next-Gen Gaming Gear, Esports Peripherals & Hardware Journal">
+  <title>MADHAN MART // Editorial Gaming Hardware Journal</title>
   
-  <!-- Modern Clean Typography -->
+  <!-- Editorial & High-Tech Modern Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
   
   <link rel="stylesheet" href="dashboard.css">
 </head>
-<body>
+<body class="editorial-theme">
+  <!-- Interactive Blueprint / Editorial Canvas Grid -->
+  <canvas id="interactiveGridCanvas" class="interactive-grid-canvas" aria-hidden="true"></canvas>
+  <div id="ambientCursorGlow" class="ambient-cursor-glow" aria-hidden="true"></div>
+
+  <!-- Editorial Top Technical Ticker -->
+  <aside class="editorial-topbar" aria-label="System status bar">
+    <div class="editorial-topbar-inner">
+      <div class="ticker-left">
+        <span class="ticker-pill"><span class="pulse-dot"></span>SYS.ONLINE</span>
+        <span class="ticker-item"><span class="ticker-label">ISSUE</span> // VOL. 04 • EDITORIAL HARDWARE SPEC</span>
+        <span class="ticker-divider">/</span>
+        <span class="ticker-item"><span class="ticker-label">COORD</span> // 13.0827° N, 80.2707° E</span>
+      </div>
+      <div class="ticker-right">
+        <span class="ticker-item"><span class="ticker-label">STATION</span> // MADHAN MART PRO LABS</span>
+        <span class="ticker-divider">/</span>
+        <span class="ticker-time" id="liveUtcTime">00:00:00 UTC+05:30</span>
+      </div>
+    </div>
+  </aside>
+
   <!-- Header / Navigation -->
   <header class="navbar">
     <div class="nav-container">
@@ -22,7 +43,7 @@
       <a href="dashboard.html" class="brand-logo" aria-label="MADHAN MART Dashboard">
         <div class="logo-icon-wrap">
           <svg class="logo-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="32" height="32" rx="8" fill="currentColor" fill-opacity="0.1"/>
+            <rect width="32" height="32" rx="8" fill="currentColor" fill-opacity="0.12"/>
             <path d="M8 10.5C8 9.67157 8.67157 9 9.5 9H22.5C23.3284 9 24 9.67157 24 10.5V23.5C24 24.3284 23.3284 25 22.5 25H9.5C8.67157 25 8 24.3284 8 23.5V10.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M12 9V7C12 4.79086 13.7909 3 16 3V3C18.2091 3 20 4.79086 20 7V9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M11 14H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -31,7 +52,7 @@
         </div>
         <div class="brand-text">
           <span class="brand-name">MADHAN <span class="brand-highlight">MART</span></span>
-          <span class="brand-tagline">Shop Smart. Live Better.</span>
+          <span class="brand-tagline">HARDWARE JOURNAL // EST. 2026</span>
         </div>
       </a>
 
@@ -41,7 +62,8 @@
           <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.6"/>
           <path d="M13.5 13.5L17.5 17.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
         </svg>
-        <input type="text" id="searchInput" placeholder="Search gaming gear, consoles, RGB peripherals..." aria-label="Search products">
+        <input type="text" id="searchInput" placeholder="Search catalog: consoles, OLED displays, optical switches..." aria-label="Search products">
+        <span class="search-shortcut">[ ⌘K ]</span>
       </div>
 
       <!-- Nav Actions -->
@@ -62,7 +84,7 @@
             <div class="user-avatar" id="userAvatar">M</div>
             <div class="user-info-text">
               <span class="user-name" id="navUserName">Madhan Kumar</span>
-              <span class="user-role">Customer</span>
+              <span class="user-role">VERIFIED GAMER</span>
             </div>
             <svg class="chevron-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -98,58 +120,85 @@
       <div id="dashboardToast" class="toast-popup" role="alert" aria-live="polite"></div>
 
       <!-- Welcome Hero Banner -->
-      <section class="welcome-banner">
+      <section class="welcome-banner editorial-hero-card">
+        <div class="corner-crosshair top-left">+</div>
+        <div class="corner-crosshair top-right">+</div>
+        <div class="corner-crosshair bottom-left">+</div>
+        <div class="corner-crosshair bottom-right">+</div>
+        
         <div class="banner-content">
-          <div class="badge-tag">MADHAN MART GAMING ZONE</div>
-          <h1 class="banner-title">Welcome back, <span id="heroUserName">Madhan</span>! 👋</h1>
-          <p class="banner-sub">Level up your battlestation with next-gen consoles, esports peripherals, high-speed gear & exclusive deals.</p>
+          <div class="badge-tag"><span class="badge-accent-dot"></span>EDITION: CYBERSTEALTH // 2026 GAMING ARSENAL</div>
+          <h1 class="banner-title">Welcome back, <span id="heroUserName" class="hero-name-gradient">Madhan</span>! 👋</h1>
+          <p class="banner-sub">Curated pro esports gear, ultra-high refresh rate displays, optical peripherals & military-grade battlestation hardware.</p>
+          <div class="hero-meta-row">
+            <span class="hero-meta-item">⚡ 0% LATENCY DISPATCH</span>
+            <span class="hero-meta-dot">•</span>
+            <span class="hero-meta-item">🔒 100% GENUINE WARRANTY</span>
+            <span class="hero-meta-dot">•</span>
+            <span class="hero-meta-item">📍 EXPRESS PAN-INDIA LOGISTICS</span>
+          </div>
         </div>
         <div class="banner-action">
-          <a href="#products" class="btn-shop-now">Explore Gaming Gear</a>
+          <a href="#products" class="btn-shop-now glow-button">
+            <span>Explore Editorial Gear</span>
+            <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" class="btn-arrow-icon">
+              <path d="M4.16666 10H15.8333M15.8333 10L10.8333 5M15.8333 10L10.8333 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
         </div>
       </section>
 
       <!-- Metric Stats Grid -->
       <section class="stats-grid">
-        <div class="stat-card">
+        <div class="stat-card editorial-stat-card">
+          <div class="corner-crosshair top-left">+</div>
+          <div class="corner-crosshair top-right">+</div>
           <div class="stat-icon-wrap icon-blue">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M16 11V7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7V11M5 9H19L20 21H4L5 9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
           <div class="stat-data">
-            <span class="stat-number" id="statOrdersCount">0</span>
-            <span class="stat-label">Total Orders</span>
+            <div class="stat-tag">[ ARCHIVE_METRIC // 01 ]</div>
+            <span class="stat-number glow-stat-num" id="statOrdersCount">0</span>
+            <span class="stat-label">Total Verified Orders</span>
           </div>
         </div>
 
-        <div class="stat-card">
+        <div class="stat-card editorial-stat-card">
+          <div class="corner-crosshair top-left">+</div>
+          <div class="corner-crosshair top-right">+</div>
           <div class="stat-icon-wrap icon-amber">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
           <div class="stat-data">
-            <span class="stat-number" id="statRewardsXp">0 XP</span>
-            <span class="stat-label">Gamer Rewards</span>
+            <div class="stat-tag">[ REWARDS_STATUS // TIER-1 ]</div>
+            <span class="stat-number glow-stat-num" id="statRewardsXp">0 XP</span>
+            <span class="stat-label">Gamer Loyalty XP</span>
           </div>
         </div>
       </section>
 
       <!-- Featured Products Section -->
       <section class="products-section" id="products">
-        <div class="section-header">
+        <div class="section-header editorial-section-header">
           <div>
+            <div class="section-tag-row">
+              <span class="section-cat-tag">// 01 HARDWARE CATALOGUE</span>
+              <span class="section-spec-pill">ISSUE: VOL-04</span>
+            </div>
             <h2 class="section-title">Popular Gaming Gear</h2>
-            <p class="section-sub">Curated pro esports gear, next-gen consoles & RGB peripherals</p>
+            <p class="section-sub">Curated esports peripherals, ultra-high refresh rate OLED displays, RGB optical hardware & next-gen consoles</p>
           </div>
-          <div class="category-filters">
-            <button class="filter-btn active" data-cat="all">All</button>
-            <button class="filter-btn" data-cat="consoles">Consoles</button>
-            <button class="filter-btn" data-cat="peripherals">Peripherals</button>
-            <button class="filter-btn" data-cat="audio">Audio</button>
-            <button class="filter-btn" data-cat="accessories">Accessories</button>
-            <button class="filter-btn" data-cat="hardware">Hardware</button>
+          <div class="category-filters editorial-filters">
+            <button class="filter-btn active" data-cat="all"><span class="filter-index">[ALL]</span> All Gear</button>
+            <button class="filter-btn" data-cat="consoles"><span class="filter-index">[01]</span> Consoles</button>
+            <button class="filter-btn" data-cat="peripherals"><span class="filter-index">[02]</span> Peripherals</button>
+            <button class="filter-btn" data-cat="audio"><span class="filter-index">[03]</span> Audio</button>
+            <button class="filter-btn" data-cat="accessories"><span class="filter-index">[04]</span> Accessories</button>
+            <button class="filter-btn" data-cat="hardware"><span class="filter-index">[05]</span> Hardware</button>
           </div>
         </div>
 
@@ -157,10 +206,20 @@
         <div class="products-grid" id="productsGrid">
           
           <!-- Product Card 1: Console Controller -->
-          <article class="product-card" data-cat="consoles">
+          <article class="product-card editorial-product-card" data-cat="consoles">
+            <div class="card-crosshairs">
+              <span class="crosshair-corner ch-tl">+</span>
+              <span class="crosshair-corner ch-tr">+</span>
+              <span class="crosshair-corner ch-bl">+</span>
+              <span class="crosshair-corner ch-br">+</span>
+            </div>
             <div class="product-img-box">
-              <span class="product-badge badge-popular">Bestseller</span>
+              <div class="card-header-bar">
+                <span class="card-index-tag">[ 01 // ES-01 ]</span>
+                <span class="product-badge badge-popular">Bestseller</span>
+              </div>
               <img src="images/ps5-controller.jpg" alt="PlayStation 5 DualSense Wireless Controller" class="product-img" loading="lazy">
+              <div class="product-spec-tag">SPEC // HAPTIC FEEDBACK 2.0</div>
             </div>
             <div class="product-details">
               <span class="product-category">Consoles & Controllers</span>
@@ -168,22 +227,33 @@
               <div class="product-rating">
                 <span class="stars">★★★★★</span>
                 <span class="rating-num">(4.9)</span>
+                <span class="rating-auth">• AUTHENTICATED</span>
               </div>
               <div class="product-price-row">
                 <div class="price-wrap">
                   <span class="price-current">₹5,790</span>
                   <span class="price-original">₹6,490</span>
                 </div>
-                <button type="button" class="btn-add-cart" data-name="PS5 DualSense Controller">Add +</button>
+                <button type="button" class="btn-add-cart glow-btn-add" data-name="PS5 DualSense Controller">Add +</button>
               </div>
             </div>
           </article>
 
           <!-- Product Card 2: Gaming Keyboard -->
-          <article class="product-card" data-cat="peripherals">
+          <article class="product-card editorial-product-card" data-cat="peripherals">
+            <div class="card-crosshairs">
+              <span class="crosshair-corner ch-tl">+</span>
+              <span class="crosshair-corner ch-tr">+</span>
+              <span class="crosshair-corner ch-bl">+</span>
+              <span class="crosshair-corner ch-br">+</span>
+            </div>
             <div class="product-img-box">
-              <span class="product-badge badge-sale">20% OFF</span>
+              <div class="card-header-bar">
+                <span class="card-index-tag">[ 02 // KB-02 ]</span>
+                <span class="product-badge badge-sale">20% OFF</span>
+              </div>
               <img src="images/razer-keyboard.jpg" alt="Razer Huntsman Mini 60% Optical Keyboard" class="product-img" loading="lazy">
+              <div class="product-spec-tag">SPEC // 60% OPTICAL LINEAR</div>
             </div>
             <div class="product-details">
               <span class="product-category">RGB Keyboards</span>
@@ -191,22 +261,33 @@
               <div class="product-rating">
                 <span class="stars">★★★★★</span>
                 <span class="rating-num">(4.8)</span>
+                <span class="rating-auth">• AUTHENTICATED</span>
               </div>
               <div class="product-price-row">
                 <div class="price-wrap">
                   <span class="price-current">₹7,999</span>
                   <span class="price-original">₹9,999</span>
                 </div>
-                <button type="button" class="btn-add-cart" data-name="Razer Huntsman Mini Keyboard">Add +</button>
+                <button type="button" class="btn-add-cart glow-btn-add" data-name="Razer Huntsman Mini Keyboard">Add +</button>
               </div>
             </div>
           </article>
 
           <!-- Product Card 3: Gaming Headset -->
-          <article class="product-card" data-cat="audio">
+          <article class="product-card editorial-product-card" data-cat="audio">
+            <div class="card-crosshairs">
+              <span class="crosshair-corner ch-tl">+</span>
+              <span class="crosshair-corner ch-tr">+</span>
+              <span class="crosshair-corner ch-bl">+</span>
+              <span class="crosshair-corner ch-br">+</span>
+            </div>
             <div class="product-img-box">
-              <span class="product-badge badge-new">New</span>
+              <div class="card-header-bar">
+                <span class="card-index-tag">[ 03 // HS-03 ]</span>
+                <span class="product-badge badge-new">New</span>
+              </div>
               <img src="images/hyperx-headset.jpg" alt="HyperX Cloud Alpha Wireless 7.1 Gaming Headset" class="product-img" loading="lazy">
+              <div class="product-spec-tag">SPEC // 300HR BATTERY 7.1 DTS</div>
             </div>
             <div class="product-details">
               <span class="product-category">Audio & Headsets</span>
@@ -214,22 +295,33 @@
               <div class="product-rating">
                 <span class="stars">★★★★★</span>
                 <span class="rating-num">(4.9)</span>
+                <span class="rating-auth">• AUTHENTICATED</span>
               </div>
               <div class="product-price-row">
                 <div class="price-wrap">
                   <span class="price-current">₹12,499</span>
                   <span class="price-original">₹15,999</span>
                 </div>
-                <button type="button" class="btn-add-cart" data-name="HyperX Cloud Alpha Headset">Add +</button>
+                <button type="button" class="btn-add-cart glow-btn-add" data-name="HyperX Cloud Alpha Headset">Add +</button>
               </div>
             </div>
           </article>
 
           <!-- Product Card 4: Gaming Mouse -->
-          <article class="product-card" data-cat="peripherals">
+          <article class="product-card editorial-product-card" data-cat="peripherals">
+            <div class="card-crosshairs">
+              <span class="crosshair-corner ch-tl">+</span>
+              <span class="crosshair-corner ch-tr">+</span>
+              <span class="crosshair-corner ch-bl">+</span>
+              <span class="crosshair-corner ch-br">+</span>
+            </div>
             <div class="product-img-box">
-              <span class="product-badge badge-sale">15% OFF</span>
+              <div class="card-header-bar">
+                <span class="card-index-tag">[ 04 // MS-04 ]</span>
+                <span class="product-badge badge-sale">15% OFF</span>
+              </div>
               <img src="images/logitech-mouse.jpg" alt="Logitech G502 X PLUS Wireless RGB Gaming Mouse" class="product-img" loading="lazy">
+              <div class="product-spec-tag">SPEC // HERO 25K LIGHTSPEED</div>
             </div>
             <div class="product-details">
               <span class="product-category">Precision Mice</span>
@@ -237,22 +329,33 @@
               <div class="product-rating">
                 <span class="stars">★★★★☆</span>
                 <span class="rating-num">(4.7)</span>
+                <span class="rating-auth">• AUTHENTICATED</span>
               </div>
               <div class="product-price-row">
                 <div class="price-wrap">
                   <span class="price-current">₹8,495</span>
                   <span class="price-original">₹9,995</span>
                 </div>
-                <button type="button" class="btn-add-cart" data-name="Logitech G502 X PLUS Mouse">Add +</button>
+                <button type="button" class="btn-add-cart glow-btn-add" data-name="Logitech G502 X PLUS Mouse">Add +</button>
               </div>
             </div>
           </article>
 
           <!-- Product Card 5: Gaming Monitor -->
-          <article class="product-card" data-cat="hardware">
+          <article class="product-card editorial-product-card" data-cat="hardware">
+            <div class="card-crosshairs">
+              <span class="crosshair-corner ch-tl">+</span>
+              <span class="crosshair-corner ch-tr">+</span>
+              <span class="crosshair-corner ch-bl">+</span>
+              <span class="crosshair-corner ch-br">+</span>
+            </div>
             <div class="product-img-box">
-              <span class="product-badge badge-sale">Hot Deal</span>
+              <div class="card-header-bar">
+                <span class="card-index-tag">[ 05 // DS-05 ]</span>
+                <span class="product-badge badge-sale">Hot Deal</span>
+              </div>
               <img src="images/rog-monitor.jpg" alt="ROG Swift OLED 27 240Hz Gaming Monitor" class="product-img" loading="lazy">
+              <div class="product-spec-tag">SPEC // OLED 240HZ 0.03MS HDR</div>
             </div>
             <div class="product-details">
               <span class="product-category">Monitors & Displays</span>
@@ -260,22 +363,33 @@
               <div class="product-rating">
                 <span class="stars">★★★★★</span>
                 <span class="rating-num">(5.0)</span>
+                <span class="rating-auth">• AUTHENTICATED</span>
               </div>
               <div class="product-price-row">
                 <div class="price-wrap">
                   <span class="price-current">₹64,990</span>
                   <span class="price-original">₹74,990</span>
                 </div>
-                <button type="button" class="btn-add-cart" data-name="ROG Swift OLED Monitor">Add +</button>
+                <button type="button" class="btn-add-cart glow-btn-add" data-name="ROG Swift OLED Monitor">Add +</button>
               </div>
             </div>
           </article>
 
           <!-- Product Card 6: VR Headset -->
-          <article class="product-card" data-cat="consoles">
+          <article class="product-card editorial-product-card" data-cat="consoles">
+            <div class="card-crosshairs">
+              <span class="crosshair-corner ch-tl">+</span>
+              <span class="crosshair-corner ch-tr">+</span>
+              <span class="crosshair-corner ch-bl">+</span>
+              <span class="crosshair-corner ch-br">+</span>
+            </div>
             <div class="product-img-box">
-              <span class="product-badge badge-popular">Trending</span>
+              <div class="card-header-bar">
+                <span class="card-index-tag">[ 06 // VR-06 ]</span>
+                <span class="product-badge badge-popular">Trending</span>
+              </div>
               <img src="images/meta-quest-vr.jpg" alt="Meta Quest 3 128GB All-In-One VR Headset" class="product-img" loading="lazy">
+              <div class="product-spec-tag">SPEC // 4K+ INFINITE DISPLAY 3D</div>
             </div>
             <div class="product-details">
               <span class="product-category">VR & Next-Gen Gear</span>
@@ -283,22 +397,33 @@
               <div class="product-rating">
                 <span class="stars">★★★★★</span>
                 <span class="rating-num">(4.8)</span>
+                <span class="rating-auth">• AUTHENTICATED</span>
               </div>
               <div class="product-price-row">
                 <div class="price-wrap">
                   <span class="price-current">₹46,990</span>
                   <span class="price-original">₹52,990</span>
                 </div>
-                <button type="button" class="btn-add-cart" data-name="Meta Quest 3 VR Headset">Add +</button>
+                <button type="button" class="btn-add-cart glow-btn-add" data-name="Meta Quest 3 VR Headset">Add +</button>
               </div>
             </div>
           </article>
 
           <!-- Product Card 7: Gaming Chair -->
-          <article class="product-card" data-cat="accessories">
+          <article class="product-card editorial-product-card" data-cat="accessories">
+            <div class="card-crosshairs">
+              <span class="crosshair-corner ch-tl">+</span>
+              <span class="crosshair-corner ch-tr">+</span>
+              <span class="crosshair-corner ch-bl">+</span>
+              <span class="crosshair-corner ch-br">+</span>
+            </div>
             <div class="product-img-box">
-              <span class="product-badge badge-popular">Top Rated</span>
+              <div class="card-header-bar">
+                <span class="card-index-tag">[ 07 // CH-07 ]</span>
+                <span class="product-badge badge-popular">Top Rated</span>
+              </div>
               <img src="images/gaming-chair.jpg" alt="Secretlab TITAN Evo Ergonomic Gaming Chair" class="product-img" loading="lazy">
+              <div class="product-spec-tag">SPEC // COLD-CURE FOAM 4D ARM</div>
             </div>
             <div class="product-details">
               <span class="product-category">Gaming Comfort</span>
@@ -306,22 +431,33 @@
               <div class="product-rating">
                 <span class="stars">★★★★★</span>
                 <span class="rating-num">(4.9)</span>
+                <span class="rating-auth">• AUTHENTICATED</span>
               </div>
               <div class="product-price-row">
                 <div class="price-wrap">
                   <span class="price-current">₹34,999</span>
                   <span class="price-original">₹41,999</span>
                 </div>
-                <button type="button" class="btn-add-cart" data-name="Secretlab TITAN Chair">Add +</button>
+                <button type="button" class="btn-add-cart glow-btn-add" data-name="Secretlab TITAN Chair">Add +</button>
               </div>
             </div>
           </article>
 
           <!-- Product Card 8: Stream Deck / Macro Controller -->
-          <article class="product-card" data-cat="accessories">
+          <article class="product-card editorial-product-card" data-cat="accessories">
+            <div class="card-crosshairs">
+              <span class="crosshair-corner ch-tl">+</span>
+              <span class="crosshair-corner ch-tr">+</span>
+              <span class="crosshair-corner ch-bl">+</span>
+              <span class="crosshair-corner ch-br">+</span>
+            </div>
             <div class="product-img-box">
-              <span class="product-badge badge-new">Creator Pick</span>
+              <div class="card-header-bar">
+                <span class="card-index-tag">[ 08 // SD-08 ]</span>
+                <span class="product-badge badge-new">Creator Pick</span>
+              </div>
               <img src="images/stream-deck.jpg" alt="Elgato Stream Deck MK.2 – 15 Macro RGB Keys" class="product-img" loading="lazy">
+              <div class="product-spec-tag">SPEC // 15 CUSTOMIZABLE LCD KEYS</div>
             </div>
             <div class="product-details">
               <span class="product-category">Streaming Gear</span>
@@ -329,13 +465,14 @@
               <div class="product-rating">
                 <span class="stars">★★★★★</span>
                 <span class="rating-num">(4.9)</span>
+                <span class="rating-auth">• AUTHENTICATED</span>
               </div>
               <div class="product-price-row">
                 <div class="price-wrap">
                   <span class="price-current">₹13,499</span>
                   <span class="price-original">₹15,999</span>
                 </div>
-                <button type="button" class="btn-add-cart" data-name="Elgato Stream Deck MK.2">Add +</button>
+                <button type="button" class="btn-add-cart glow-btn-add" data-name="Elgato Stream Deck MK.2">Add +</button>
               </div>
             </div>
           </article>
@@ -344,35 +481,44 @@
       </section>
 
       <!-- Recent Orders Section -->
-      <section class="orders-section">
-        <div class="section-header">
+      <section class="orders-section editorial-orders-section">
+        <div class="section-header editorial-section-header">
           <div>
-            <h2 class="section-title">Recent Orders</h2>
-            <p class="section-sub">Track your live gaming gear shipments and past purchases</p>
+            <div class="section-tag-row">
+              <span class="section-cat-tag">// 02 LOGISTICS & ORDERS ARCHIVE</span>
+              <span class="section-spec-pill">STATUS: REAL-TIME TRACKING</span>
+            </div>
+            <h2 class="section-title">Recent Orders & Invoices</h2>
+            <p class="section-sub">Track active courier shipments, generate official tax invoices & download PDF bills</p>
           </div>
         </div>
 
         <!-- Dynamic Orders Container -->
         <div id="ordersContainer">
           <!-- Empty Orders State (Default) -->
-          <div class="empty-orders-wrap" id="emptyOrdersWrap">
-            <div class="empty-orders-icon">📦</div>
-            <h3 class="empty-orders-title">No orders placed yet</h3>
-            <p class="empty-orders-sub">Your order history will appear here once you place your first order.</p>
-            <a href="#products" class="btn-empty-shop">Explore Products</a>
+          <div class="empty-orders-wrap editorial-empty-box" id="emptyOrdersWrap">
+            <div class="corner-crosshair top-left">+</div>
+            <div class="corner-crosshair top-right">+</div>
+            <div class="empty-orders-icon glow-icon">📦</div>
+            <div class="empty-tag">[ ARCHIVE_STATUS // EMPTY ]</div>
+            <h3 class="empty-orders-title">No orders recorded in session</h3>
+            <p class="empty-orders-sub">Your hardware orders and downloadable PDF tax bills will be recorded here immediately upon checkout.</p>
+            <a href="#products" class="btn-empty-shop glow-button">Explore Editorial Hardware</a>
           </div>
 
           <!-- Orders Table (Shown when orders exist) -->
-          <div class="table-responsive" id="ordersTableWrap" style="display: none;">
+          <div class="table-responsive editorial-table-card" id="ordersTableWrap" style="display: none;">
+            <div class="corner-crosshair top-left">+</div>
+            <div class="corner-crosshair top-right">+</div>
             <table class="orders-table">
               <thead>
                 <tr>
-                  <th>Order ID</th>
-                  <th>Date</th>
-                  <th>Items</th>
+                  <th>Order Reference</th>
+                  <th>Timestamp</th>
+                  <th>Hardware Specification</th>
                   <th>Amount</th>
-                  <th>Status</th>
-                  <th>Action</th>
+                  <th>Logistics Status</th>
+                  <th>Tax Bill</th>
                 </tr>
               </thead>
               <tbody id="ordersTableBody"></tbody>
