@@ -276,8 +276,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const emptyOrdersWrap = document.getElementById('emptyOrdersWrap');
   const ordersTableWrap = document.getElementById('ordersTableWrap');
   const ordersTableBody = document.getElementById('ordersTableBody');
-  const statOrdersCount = document.querySelector('.stat-card:nth-child(1) .stat-number');
-  const statRewardsXp = document.querySelector('.stat-card:nth-child(4) .stat-number');
+  const statOrdersCount = document.getElementById('statOrdersCount');
+  const statRewardsXp = document.getElementById('statRewardsXp');
 
   let orderCount = 0;
 
