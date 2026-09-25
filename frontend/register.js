@@ -324,10 +324,10 @@ function initInteractiveGrid() {
   const gridSize = 36;
 
   const mouse = {
-    x: width / 2,
-    y: height / 2,
-    targetX: width / 2,
-    targetY: height / 2,
+    x: -1000,
+    y: -1000,
+    targetX: -1000,
+    targetY: -1000,
     radius: 220,
     active: false
   };
@@ -351,6 +351,10 @@ function initInteractiveGrid() {
   resizeCanvas();
 
   window.addEventListener('pointermove', (e) => {
+    if (!mouse.active || mouse.x < -500) {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    }
     mouse.targetX = e.clientX;
     mouse.targetY = e.clientY;
     mouse.active = true;
@@ -375,6 +379,8 @@ function initInteractiveGrid() {
 
   window.addEventListener('pointerleave', () => {
     mouse.active = false;
+    mouse.targetX = -1000;
+    mouse.targetY = -1000;
     if (spotlight) {
       spotlight.classList.remove('active');
     }
@@ -474,7 +480,7 @@ function initInteractiveGrid() {
       ctx.stroke();
     }
 
-    if (mouse.active && mouse.x > -200 && mouse.y > -200) {
+    if (mouse.active && mouse.x >= 0 && mouse.y >= 0 && mouse.x <= width && mouse.y <= height) {
       const startCol = Math.max(0, Math.floor((mouse.x - mouse.radius) / gridSize));
       const endCol = Math.min(numCols, Math.ceil((mouse.x + mouse.radius) / gridSize));
       const startRow = Math.max(0, Math.floor((mouse.y - mouse.radius) / gridSize));
