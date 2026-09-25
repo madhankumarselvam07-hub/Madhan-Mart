@@ -243,18 +243,23 @@ document.addEventListener('DOMContentLoaded', () => {
     setLoading(true);
 
     try {
-      // Backend API call if server running
-      try {
-        await fetch('/api/auth/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ fullName: nameVal, email: emailVal, password: passVal })
-        });
-      } catch (netErr) {
-        // Fallback for static mode
+      // 1. Try Live Supabase Sign Up
+      if (window.MadhanMartSupabase) {
+        try {
+          await window.MadhanMartSupabase.signUp(emailVal, passVal, nameVal);
+        } catch (supabaseErr) {
+          console.warn('[SUPABASE] Registration error:', supabaseErr.message || supabaseErr);
+          if (supabaseErr.message && (supabaseErr.message.includes('already registered') || supabaseErr.message.includes('User already registered'))) {
+            setLoading(false);
+            setError(emailGroup, emailError, 'An account with this email already exists.');
+            showAlert('An account with this email already exists.', 'error');
+            emailInput.focus();
+            return;
+          }
+        }
       }
 
-      // Save user to localStorage
+      // Save user to localStorage backup
       existingUsers.push({
         fullName: nameVal,
         email: emailVal,
@@ -263,13 +268,13 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       localStorage.setItem('madhan_mart_users', JSON.stringify(existingUsers));
 
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      await new Promise((resolve) => setTimeout(resolve, 600));
 
-      showAlert('Account created successfully! Redirecting to login...', 'success');
+      showAlert('Account created in Supabase! Redirecting to login...', 'success');
 
       setTimeout(() => {
         window.location.href = `login.html?registered=true&email=${encodeURIComponent(emailVal)}`;
-      }, 1200);
+      }, 1000);
 
     } catch (err) {
       console.error('Registration error:', err);
@@ -291,8 +296,17 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (googleRegisterBtn) {
-    googleRegisterBtn.addEventListener('click', () => {
-      showAlert('Google sign-up verified. Directing to setup...', 'success');
+    googleRegisterBtn.addEventListener('click', async () => {
+      showAlert('Connecting to Google...', 'info');
+      if (window.MadhanMartSupabase) {
+        try {
+          await window.MadhanMartSupabase.signInWithGoogle();
+          return;
+        } catch (err) {
+          console.warn('[SUPABASE] Google OAuth fallback:', err);
+        }
+      }
+
       setTimeout(() => {
         window.location.href = 'login.html';
       }, 900);

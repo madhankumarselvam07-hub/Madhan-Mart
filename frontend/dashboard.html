@@ -380,19 +380,75 @@
           </div>
         </div>
 
-        <!-- Empty Orders State -->
-        <div class="empty-orders-wrap">
-          <div class="empty-orders-icon">📦</div>
-          <h3 class="empty-orders-title">No orders placed yet</h3>
-          <p class="empty-orders-sub">Your order history will appear here once you place your first order.</p>
-          <a href="#products" class="btn-empty-shop">Explore Products</a>
+        <!-- Dynamic Orders Container -->
+        <div id="ordersContainer">
+          <!-- Empty Orders State (Default) -->
+          <div class="empty-orders-wrap" id="emptyOrdersWrap">
+            <div class="empty-orders-icon">📦</div>
+            <h3 class="empty-orders-title">No orders placed yet</h3>
+            <p class="empty-orders-sub">Your order history will appear here once you place your first order.</p>
+            <a href="#products" class="btn-empty-shop">Explore Products</a>
+          </div>
+
+          <!-- Orders Table (Shown when orders exist) -->
+          <div class="table-responsive" id="ordersTableWrap" style="display: none;">
+            <table class="orders-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Date</th>
+                  <th>Items</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="ordersTableBody"></tbody>
+            </table>
+          </div>
         </div>
       </section>
 
     </div>
   </main>
 
-  <!-- Script -->
+  <!-- Cart Modal -->
+  <div class="modal-overlay" id="cartModal" role="dialog" aria-modal="true" aria-labelledby="cartModalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="cartModalTitle">🛒 Your Gaming Cart</h3>
+        <button type="button" class="btn-modal-close" id="closeCartBtn" aria-label="Close Cart">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="cartItemsList" class="cart-items-list">
+          <p class="cart-empty-text">Your cart is empty. Add some gaming gear!</p>
+        </div>
+        <div class="cart-summary" id="cartSummary" style="display: none;">
+          <div class="summary-row">
+            <span>Subtotal</span>
+            <span id="cartSubtotal">₹0</span>
+          </div>
+          <div class="summary-row">
+            <span>Shipping</span>
+            <span class="free-badge">FREE</span>
+          </div>
+          <hr class="summary-divider">
+          <div class="summary-row total-row">
+            <span>Total</span>
+            <span id="cartTotal">₹0</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" id="clearCartBtn">Clear Cart</button>
+        <button type="button" class="btn-primary" id="checkoutBtn" disabled>Place Order (Supabase)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
   <script src="dashboard.js"></script>
 </body>
 </html>

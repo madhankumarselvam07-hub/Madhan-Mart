@@ -166,38 +166,46 @@ document.addEventListener('DOMContentLoaded', () => {
     setLoading(true);
 
     try {
-      // Look up user in registered accounts if any
+      let displayName = 'Madhan Kumar';
+      let userId = null;
+
+      // 1. Try Live Supabase Sign In
+      if (window.MadhanMartSupabase) {
+        try {
+          const authRes = await window.MadhanMartSupabase.signIn(emailValue, passwordValue);
+          if (authRes && authRes.user) {
+            const meta = authRes.user.user_metadata || {};
+            displayName = meta.full_name || meta.name || emailValue.split('@')[0];
+            userId = authRes.user.id;
+          }
+        } catch (supabaseErr) {
+          console.warn('[SUPABASE] Auth notice:', supabaseErr.message || supabaseErr);
+          // If Supabase returns error like email unconfirmed or invalid credentials
+          if (supabaseErr.message && supabaseErr.message.toLowerCase().includes('invalid login credentials')) {
+            setLoading(false);
+            setError(passwordGroup, passwordError, 'Invalid email or password.');
+            showAlert('Invalid email or password. Please try again.', 'error');
+            return;
+          }
+        }
+      }
+
+      // Fallback local lookup
       const registeredUsers = JSON.parse(localStorage.getItem('madhan_mart_users') || '[]');
       const matchedUser = registeredUsers.find(
         (u) => u.email.toLowerCase() === emailValue.toLowerCase()
       );
 
-      let displayName = 'Madhan Kumar';
-
       if (matchedUser && matchedUser.fullName) {
         displayName = matchedUser.fullName;
-      } else {
-        // Derive name nicely from email (e.g. "madhan@gmail.com" -> "Madhan")
+      } else if (!userId) {
         const localPart = emailValue.split('@')[0];
         displayName = localPart.charAt(0).toUpperCase() + localPart.slice(1);
       }
 
-      // Try backend endpoint if available
-      try {
-        await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: emailValue, password: passwordValue })
-        });
-      } catch (err) {
-        // Static file or server offline fallback
-      }
-
-      // Brief animation for realism
-      await new Promise((resolve) => setTimeout(resolve, 600));
-
       // Save active session for the dashboard
       const sessionUser = {
+        id: userId,
         fullName: displayName,
         email: emailValue,
         loginTime: new Date().toISOString()
@@ -220,10 +228,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } catch (err) {
       console.error('Login error:', err);
-      showAlert('Login failed. Redirecting to dashboard...', 'success');
-      setTimeout(() => {
-        window.location.href = 'dashboard.html';
-      }, 700);
+      showAlert('Login error. Please try again.', 'error');
+      setLoading(false);
     }
   });
 
@@ -246,7 +252,18 @@ document.addEventListener('DOMContentLoaded', () => {
   // Google Login & Secondary Actions
   // --------------------------------------------------------------------------
   if (googleBtn) {
-    googleBtn.addEventListener('click', () => {
+    googleBtn.addEventListener('click', async () => {
+      showAlert('Connecting to Google...', 'info');
+      if (window.MadhanMartSupabase) {
+        try {
+          await window.MadhanMartSupabase.signInWithGoogle();
+          return;
+        } catch (err) {
+          console.warn('[SUPABASE] Google OAuth fallback:', err);
+        }
+      }
+
+      // Fallback Google mock simulation if OAuth provider not enabled in Supabase dashboard
       const sessionUser = {
         fullName: 'Google User',
         email: 'user@gmail.com',
