@@ -90,40 +90,109 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   3. Pure CSS Subtle Educational Background Pattern
+   3. Interactive Grid Canvas & Dynamic Ambient Glows
    -------------------------------------------------------------------------- */
-.bg-pattern {
+.interactive-grid-container {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
+  width: 100vw;
+  height: 100vh;
   pointer-events: none;
   z-index: 0;
-  /* Clean subtle educational graph/grid pattern */
-  background-image: 
-    linear-gradient(to right, rgba(226, 232, 240, 0.6) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(226, 232, 240, 0.6) 1px, transparent 1px);
-  background-size: 32px 32px;
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, #000 40%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, #000 40%, transparent 100%);
+  overflow: hidden;
 }
 
-.bg-glow {
-  position: fixed;
-  top: 20%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 650px;
-  height: 450px;
-  background: radial-gradient(circle, rgba(219, 234, 254, 0.6) 0%, rgba(248, 250, 252, 0) 70%);
+#interactiveGridCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
   pointer-events: none;
-  z-index: 0;
-  filter: blur(40px);
+}
+
+/* Ambient Floating Glowing Orbs */
+.ambient-glow {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(75px);
+  opacity: 0.6;
+  transition: opacity 0.5s ease;
+}
+
+.ambient-glow.orb-1 {
+  top: -80px;
+  left: 8%;
+  width: 560px;
+  height: 560px;
+  background: radial-gradient(circle, rgba(37, 99, 235, 0.26) 0%, rgba(59, 130, 246, 0.12) 45%, transparent 75%);
+  animation: floatOrb1 18s ease-in-out infinite alternate;
+}
+
+.ambient-glow.orb-2 {
+  bottom: -100px;
+  right: 8%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.22) 0%, rgba(99, 102, 241, 0.12) 50%, transparent 75%);
+  animation: floatOrb2 22s ease-in-out infinite alternate;
+}
+
+.ambient-glow.orb-3 {
+  top: 40%;
+  right: 28%;
+  width: 420px;
+  height: 420px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.15) 0%, rgba(59, 130, 246, 0.08) 50%, transparent 75%);
+  animation: floatOrb3 16s ease-in-out infinite alternate;
+}
+
+@keyframes floatOrb1 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(60px, 40px) scale(1.08); }
+  100% { transform: translate(-30px, 80px) scale(0.95); }
+}
+
+@keyframes floatOrb2 {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-70px, -50px) scale(1.12); }
+  100% { transform: translate(40px, -70px) scale(0.92); }
+}
+
+@keyframes floatOrb3 {
+  0% { transform: translate(0, 0) scale(0.9); }
+  50% { transform: translate(50px, -40px) scale(1.15); }
+  100% { transform: translate(-50px, 30px) scale(1); }
+}
+
+/* Dynamic Cursor Glow Spotlight */
+.cursor-spotlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 480px;
+  height: 480px;
+  margin-top: -240px;
+  margin-left: -240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.10) 40%, rgba(14, 165, 233, 0.04) 60%, transparent 75%);
+  pointer-events: none;
+  filter: blur(36px);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  transform: translate3d(var(--spotlight-x, -500px), var(--spotlight-y, -500px), 0);
+  will-change: transform, opacity;
+}
+
+.cursor-spotlight.active {
+  opacity: 1;
 }
 
 /* --------------------------------------------------------------------------
-   4. Main Wrapper & Login Card
+   4. Main Wrapper & Enhanced Glowing Login Card
    -------------------------------------------------------------------------- */
 .login-wrapper {
   position: relative;
@@ -134,12 +203,53 @@ body {
 }
 
 .login-card {
-  background: var(--card-bg);
+  position: relative;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-card);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 
+    0 4px 6px -1px rgba(15, 23, 42, 0.04), 
+    0 20px 40px -6px rgba(37, 99, 235, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.8) inset;
   padding: 40px 36px;
   width: 100%;
-  transition: box-shadow var(--transition-normal);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+  overflow: hidden;
+}
+
+/* Subtle Interactive Card Glow Rim */
+.login-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: radial-gradient(
+    400px circle at var(--card-glow-x, 50%) var(--card-glow-y, 0%),
+    rgba(37, 99, 235, 0.6),
+    rgba(56, 189, 248, 0.4),
+    transparent 65%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.login-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 8px 16px -2px rgba(15, 23, 42, 0.06), 
+    0 24px 48px -4px rgba(37, 99, 235, 0.16),
+    0 0 0 1px rgba(255, 255, 255, 0.9) inset;
+}
+
+.login-card:hover::before {
+  opacity: 1;
 }
 
 /* --------------------------------------------------------------------------
