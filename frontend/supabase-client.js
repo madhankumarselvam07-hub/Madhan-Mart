@@ -83,34 +83,72 @@ window.MadhanMartSupabase = {
     return { email: cleanEmail, fullName: cleanName, id: authUserId };
   },
 
-  // Sign In with Email and Password
+  // Sign In with Email and Password (Strict Validation)
   async signIn(email, password) {
     const sb = getSupabase();
     if (!sb) throw new Error('Supabase client is not ready.');
 
     const cleanEmail = email.trim().toLowerCase();
+    const cleanPassword = password;
+
+    let authUser = null;
+    let authErrorOccurred = false;
+    let errorMessage = 'Invalid email or password.';
 
     // 1. Try Supabase Auth SignIn
-    let authUser = null;
     try {
       const { data, error } = await sb.auth.signInWithPassword({
         email: cleanEmail,
-        password: password
+        password: cleanPassword
       });
 
-      if (!error && data && data.user) {
+      if (error) {
+        authErrorOccurred = true;
+        errorMessage = error.message || 'Invalid email or password.';
+        console.warn('[SUPABASE AUTH] Sign in rejected:', errorMessage);
+      } else if (data && data.user) {
         authUser = data.user;
       }
     } catch (e) {
-      console.warn('[SUPABASE AUTH] Password login error:', e);
+      authErrorOccurred = true;
+      errorMessage = e.message || 'Invalid email or password.';
+      console.warn('[SUPABASE AUTH] Exception:', e);
     }
 
-    // 2. Fetch or verify from public.users table
+    // 2. If Supabase Auth failed, check local backup accounts for exact password match
+    if (authErrorOccurred || !authUser) {
+      const registeredUsers = JSON.parse(localStorage.getItem('madhan_mart_users') || '[]');
+      const matchedUser = registeredUsers.find(
+        (u) => u.email.toLowerCase() === cleanEmail
+      );
+
+      // Verify exact password match
+      if (matchedUser) {
+        if (matchedUser.password === cleanPassword) {
+          const sessionData = {
+            id: matchedUser.id || null,
+            email: cleanEmail,
+            fullName: matchedUser.fullName || cleanEmail.split('@')[0],
+            loginTime: new Date().toISOString()
+          };
+          localStorage.setItem('madhan_mart_current_user', JSON.stringify(sessionData));
+          return sessionData;
+        } else {
+          // Password did not match the registered password
+          throw new Error('Incorrect password. Please try again.');
+        }
+      }
+
+      // WRONG PASSWORD / USER NOT FOUND -> STRICT REJECTION
+      throw new Error(errorMessage || 'Invalid email or password. Please check your credentials and try again.');
+    }
+
+    // 3. User authenticated successfully via Supabase
     let fullName = cleanEmail.split('@')[0];
-    let userId = authUser ? authUser.id : null;
+    let userId = authUser.id;
 
     try {
-      const { data: userRow, error: userError } = await sb
+      const { data: userRow } = await sb
         .from('users')
         .select('*')
         .eq('email', cleanEmail)
@@ -118,8 +156,7 @@ window.MadhanMartSupabase = {
 
       if (userRow && userRow.full_name) {
         fullName = userRow.full_name;
-        userId = userRow.id;
-      } else if (authUser) {
+      } else {
         const meta = authUser.user_metadata || {};
         fullName = meta.full_name || meta.name || fullName;
       }

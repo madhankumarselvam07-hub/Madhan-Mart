@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --------------------------------------------------------------------------
-  // Form Submission Handler -> Redirects to Dashboard
+  // Form Submission Handler -> Redirects to Dashboard only on valid password
   // --------------------------------------------------------------------------
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -166,54 +166,19 @@ document.addEventListener('DOMContentLoaded', () => {
     setLoading(true);
 
     try {
-      let displayName = 'Madhan Kumar';
-      let userId = null;
-
-      // 1. Try Live Supabase Sign In
-      if (window.MadhanMartSupabase) {
-        try {
-          const authRes = await window.MadhanMartSupabase.signIn(emailValue, passwordValue);
-          if (authRes && authRes.user) {
-            const meta = authRes.user.user_metadata || {};
-            displayName = meta.full_name || meta.name || emailValue.split('@')[0];
-            userId = authRes.user.id;
-          }
-        } catch (supabaseErr) {
-          console.warn('[SUPABASE] Auth notice:', supabaseErr.message || supabaseErr);
-          // If Supabase returns error like email unconfirmed or invalid credentials
-          if (supabaseErr.message && supabaseErr.message.toLowerCase().includes('invalid login credentials')) {
-            setLoading(false);
-            setError(passwordGroup, passwordError, 'Invalid email or password.');
-            showAlert('Invalid email or password. Please try again.', 'error');
-            return;
-          }
-        }
+      if (!window.MadhanMartSupabase) {
+        throw new Error('Authentication service is initializing. Please try again.');
       }
 
-      // Fallback local lookup
-      const registeredUsers = JSON.parse(localStorage.getItem('madhan_mart_users') || '[]');
-      const matchedUser = registeredUsers.find(
-        (u) => u.email.toLowerCase() === emailValue.toLowerCase()
-      );
+      // Strictly verify credentials via Supabase & local account store
+      const sessionUser = await window.MadhanMartSupabase.signIn(emailValue, passwordValue);
 
-      if (matchedUser && matchedUser.fullName) {
-        displayName = matchedUser.fullName;
-      } else if (!userId) {
-        const localPart = emailValue.split('@')[0];
-        displayName = localPart.charAt(0).toUpperCase() + localPart.slice(1);
+      if (!sessionUser) {
+        throw new Error('Invalid email or password. Please try again.');
       }
-
-      // Save active session for the dashboard
-      const sessionUser = {
-        id: userId,
-        fullName: displayName,
-        email: emailValue,
-        loginTime: new Date().toISOString()
-      };
-      localStorage.setItem('madhan_mart_current_user', JSON.stringify(sessionUser));
 
       // Handle remember me
-      if (rememberMeCheckbox.checked) {
+      if (rememberMeCheckbox && rememberMeCheckbox.checked) {
         localStorage.setItem('madhan_mart_saved_email', emailValue);
       } else {
         localStorage.removeItem('madhan_mart_saved_email');
@@ -224,12 +189,15 @@ document.addEventListener('DOMContentLoaded', () => {
       // Seamless redirect to dashboard
       setTimeout(() => {
         window.location.href = 'dashboard.html';
-      }, 700);
+      }, 600);
 
     } catch (err) {
-      console.error('Login error:', err);
-      showAlert('Login error. Please try again.', 'error');
+      console.warn('Login verification failed:', err.message || err);
       setLoading(false);
+      const errMsg = err.message || 'Invalid email or password. Please try again.';
+      setError(passwordGroup, passwordError, errMsg);
+      showAlert(errMsg, 'error');
+      passwordInput.focus();
     }
   });
 
