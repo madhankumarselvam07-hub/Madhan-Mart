@@ -97,9 +97,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // --------------------------------------------------------------------------
-  // 4. Cart State & Modal Interactions
   // --------------------------------------------------------------------------
-  let cart = [];
+  // 4. User-Specific Persistent Cart State & Modal Interactions
+  // --------------------------------------------------------------------------
+  const userCartKey = `madhan_mart_cart_${currentUser.email ? currentUser.email.toLowerCase() : 'default'}`;
+
+  function loadUserCart() {
+    try {
+      const saved = localStorage.getItem(userCartKey);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveUserCart(cartData) {
+    try {
+      localStorage.setItem(userCartKey, JSON.stringify(cartData));
+    } catch (e) {}
+  }
+
+  // Load this specific customer's saved cart
+  let cart = loadUserCart();
+
   const cartBtn = document.getElementById('cartBtn');
   const cartBadge = document.getElementById('cartBadge');
   const cartModal = document.getElementById('cartModal');
@@ -110,6 +130,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const cartSummary = document.getElementById('cartSummary');
   const cartSubtotal = document.getElementById('cartSubtotal');
   const cartTotal = document.getElementById('cartTotal');
+
+  // Initialize cart badge from saved user cart
+  updateCartBadge();
 
   // Open / Close Cart Modal
   if (cartBtn && cartModal) {
@@ -134,6 +157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (clearCartBtn) {
     clearCartBtn.addEventListener('click', () => {
       cart = [];
+      saveUserCart(cart);
       updateCartBadge();
       renderCartModal();
       showToast('Cart cleared.');
@@ -183,6 +207,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       btn.addEventListener('click', () => {
         const idx = parseInt(btn.getAttribute('data-index'), 10);
         cart.splice(idx, 1);
+        saveUserCart(cart);
         updateCartBadge();
         renderCartModal();
       });
@@ -206,6 +231,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           cart.push({ name: productName, price: price, quantity: 1 });
         }
 
+        saveUserCart(cart);
         updateCartBadge();
         showToast(`🛒 Added "${productName}" to cart!`);
       };
@@ -254,8 +280,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           status: 'Confirmed'
         });
 
-        // Reset Cart
+        // Reset Cart and clear persistent storage for this user
         cart = [];
+        saveUserCart(cart);
         updateCartBadge();
         if (cartModal) cartModal.classList.remove('show');
         showToast(`🎉 Order ${orderCode} placed successfully in Supabase!`);
