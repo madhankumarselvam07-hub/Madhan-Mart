@@ -294,22 +294,4 @@ document.addEventListener('DOMContentLoaded', () => {
       btnLabel.textContent = 'Create Account';
     }
   }
-
-  if (googleRegisterBtn) {
-    googleRegisterBtn.addEventListener('click', async () => {
-      showAlert('Connecting to Google...', 'info');
-      if (window.MadhanMartSupabase) {
-        try {
-          await window.MadhanMartSupabase.signInWithGoogle();
-          return;
-        } catch (err) {
-          console.warn('[SUPABASE] Google OAuth fallback:', err);
-        }
-      }
-
-      setTimeout(() => {
-        window.location.href = 'login.html';
-      }, 900);
-    });
-  }
 });

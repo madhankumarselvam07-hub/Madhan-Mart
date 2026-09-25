@@ -249,34 +249,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --------------------------------------------------------------------------
-  // Google Login & Secondary Actions
+  // Secondary Actions
   // --------------------------------------------------------------------------
-  if (googleBtn) {
-    googleBtn.addEventListener('click', async () => {
-      showAlert('Connecting to Google...', 'info');
-      if (window.MadhanMartSupabase) {
-        try {
-          await window.MadhanMartSupabase.signInWithGoogle();
-          return;
-        } catch (err) {
-          console.warn('[SUPABASE] Google OAuth fallback:', err);
-        }
-      }
-
-      // Fallback Google mock simulation if OAuth provider not enabled in Supabase dashboard
-      const sessionUser = {
-        fullName: 'Google User',
-        email: 'user@gmail.com',
-        loginTime: new Date().toISOString()
-      };
-      localStorage.setItem('madhan_mart_current_user', JSON.stringify(sessionUser));
-      showAlert('Google sign-in verified. Redirecting...', 'success');
-      setTimeout(() => {
-        window.location.href = 'dashboard.html';
-      }, 700);
-    });
-  }
-
   if (forgotPasswordLink) {
     forgotPasswordLink.addEventListener('click', (e) => {
       e.preventDefault();

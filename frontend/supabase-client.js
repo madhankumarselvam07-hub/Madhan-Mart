@@ -138,55 +138,6 @@ window.MadhanMartSupabase = {
     return sessionData;
   },
 
-  // Google OAuth Sign In
-  async signInWithGoogle() {
-    const sb = getSupabase();
-    if (!sb) throw new Error('Supabase client is not initialized.');
-
-    // Construct redirect URL
-    const origin = window.location.origin;
-    const redirectUrl = `${origin}/dashboard.html`;
-
-    try {
-      const { data, error } = await sb.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: redirectUrl
-        }
-      });
-
-      if (error) {
-        throw error;
-      }
-      return data;
-    } catch (oauthErr) {
-      console.warn('[SUPABASE OAUTH] Google OAuth error:', oauthErr.message || oauthErr);
-      
-      // Fallback: If Google provider is not enabled yet in Supabase Dashboard,
-      // create and save a Google account directly into public.users table!
-      const googleEmail = 'madhankumar.google@gmail.com';
-      const googleName = 'Madhan Kumar (Google)';
-
-      try {
-        await sb.from('users').upsert([{
-          full_name: googleName,
-          email: googleEmail,
-          password_hash: 'google_oauth_provider'
-        }], { onConflict: 'email' });
-      } catch (dbErr) {
-        console.warn('[SUPABASE DB] Google user insert notice:', dbErr);
-      }
-
-      const googleUser = {
-        fullName: googleName,
-        email: googleEmail,
-        loginTime: new Date().toISOString()
-      };
-      localStorage.setItem('madhan_mart_current_user', JSON.stringify(googleUser));
-      return { user: googleUser, fallback: true };
-    }
-  },
-
   // Sign Out
   async signOut() {
     localStorage.removeItem('madhan_mart_current_user');
