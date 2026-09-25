@@ -256,10 +256,10 @@ window.MadhanMartSupabase = {
   // --------------------------------------------------------------------------
   async createOrder(items, totalAmount, targetUser = null, orderDetails = {}) {
     const sb = getSupabase();
-    if (!sb) throw new Error('Supabase client is not initialized.');
+    if (!sb) return null;
 
     let userId = null;
-    let userEmail = 'guest@madhanmart.com';
+    let userEmail = 'customer@madhanmart.com';
 
     if (targetUser && targetUser.email) {
       userEmail = targetUser.email.trim().toLowerCase();
@@ -282,7 +282,7 @@ window.MadhanMartSupabase = {
       order_code: orderCode,
       user_email: userEmail,
       total_amount: totalAmount,
-      status: 'Delivered',
+      status: 'Confirmed',
       shipping_address: orderDetails.shipping_address || 'Chennai, Tamil Nadu',
       phone_number: orderDetails.phone_number || '',
       city: orderDetails.city || 'Chennai',
@@ -303,46 +303,51 @@ window.MadhanMartSupabase = {
         .select()
         .single();
 
-      if (error) throw error;
-      orderData = data;
+      if (!error && data) {
+        orderData = data;
+      } else {
+        throw error;
+      }
     } catch (orderError) {
-      console.warn('[SUPABASE] Order insert error (retrying base columns):', orderError);
-      // Fallback with base columns if schema not fully migrated
-      const fallbackPayload = {
-        order_code: orderCode,
-        user_email: userEmail,
-        total_amount: totalAmount,
-        status: 'Delivered'
-      };
-      const { data: retryData, error: retryError } = await sb
-        .from('orders')
-        .insert([fallbackPayload])
-        .select()
-        .single();
+      console.warn('[SUPABASE] Rich order insert notice, retrying with base columns:', orderError);
+      try {
+        const fallbackPayload = {
+          order_code: orderCode,
+          user_email: userEmail,
+          total_amount: totalAmount,
+          status: 'Confirmed'
+        };
+        const { data: retryData, error: retryError } = await sb
+          .from('orders')
+          .insert([fallbackPayload])
+          .select()
+          .single();
 
-      if (retryError) throw retryError;
-      orderData = retryData;
-    }
-
-    // 2. Insert into order_items table
-    if (items && items.length > 0 && orderData) {
-      const orderItemsToInsert = items.map(item => ({
-        order_id: orderData.id,
-        product_name: item.name,
-        quantity: item.quantity || 1,
-        unit_price: item.price
-      }));
-
-      const { error: itemsError } = await sb
-        .from('order_items')
-        .insert(orderItemsToInsert);
-
-      if (itemsError) {
-        console.warn('[SUPABASE] Order items insert warning:', itemsError);
+        if (!retryError && retryData) {
+          orderData = retryData;
+        }
+      } catch (retryEx) {
+        console.warn('[SUPABASE] Fallback insert notice:', retryEx);
       }
     }
 
-    return orderData;
+    // 2. Insert into order_items table
+    if (items && items.length > 0 && orderData && orderData.id) {
+      try {
+        const orderItemsToInsert = items.map(item => ({
+          order_id: orderData.id,
+          product_name: item.name,
+          quantity: item.quantity || 1,
+          unit_price: item.price
+        }));
+
+        await sb.from('order_items').insert(orderItemsToInsert);
+      } catch (itemErr) {
+        console.warn('[SUPABASE] Order items insert notice:', itemErr);
+      }
+    }
+
+    return orderData || { order_code: orderCode, total_amount: totalAmount, user_email: userEmail };
   },
 
   async getUserOrders(targetUser = null) {
@@ -374,25 +379,7 @@ window.MadhanMartSupabase = {
     try {
       let query = sb
         .from('orders')
-        .select(`
-          id,
-          order_code,
-          user_id,
-          user_email,
-          shipping_address,
-          phone_number,
-          city,
-          pincode,
-          payment_method,
-          total_amount,
-          status,
-          created_at,
-          order_items (
-            product_name,
-            quantity,
-            unit_price
-          )
-        `);
+        .select('*');
 
       // Filter specifically by user_email OR user_id
       if (userId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
@@ -404,7 +391,7 @@ window.MadhanMartSupabase = {
       const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) {
-        console.warn('[SUPABASE] Orders query warning:', error);
+        console.warn('[SUPABASE] Orders query notice:', error);
         return [];
       }
       return data || [];

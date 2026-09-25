@@ -5,31 +5,29 @@
 
 document.addEventListener('DOMContentLoaded', async () => {
   // --------------------------------------------------------------------------
-  // 1. Authentication Check & User Profile Hydration
+  // 1. Immediate Synchronous Authentication Check & User Profile Hydration
   // --------------------------------------------------------------------------
   let currentUser = null;
 
-  // 1a. Check for active Supabase OAuth / Session (e.g. returning from Google Sign-In)
-  if (window.MadhanMartSupabase) {
+  // 1a. Fast Instant Local Session Load (0ms)
+  const sessionData = localStorage.getItem('madhan_mart_current_user');
+  if (sessionData) {
+    try {
+      currentUser = JSON.parse(sessionData);
+    } catch (e) {
+      currentUser = null;
+    }
+  }
+
+  // 1b. If no local session found, check live Supabase OAuth / Session
+  if (!currentUser && window.MadhanMartSupabase) {
     try {
       const liveSessionUser = await window.MadhanMartSupabase.getCurrentSession();
       if (liveSessionUser) {
         currentUser = liveSessionUser;
       }
     } catch (e) {
-      console.warn('[SUPABASE] Session hydration notice:', e);
-    }
-  }
-
-  // 1b. Fallback to localStorage session
-  if (!currentUser) {
-    const sessionData = localStorage.getItem('madhan_mart_current_user');
-    if (sessionData) {
-      try {
-        currentUser = JSON.parse(sessionData);
-      } catch (e) {
-        currentUser = null;
-      }
+      console.warn('[SUPABASE] Session check notice:', e);
     }
   }
 
@@ -429,8 +427,9 @@ document.addEventListener('DOMContentLoaded', async () => {
           city: cityVal,
           pincode: pinVal,
           payment_method: paymentDetailsStr,
-          customer_name: nameVal
-        });
+          customer_name: nameVal,
+          user_email: (currentUser && currentUser.email) ? currentUser.email.toLowerCase() : 'customer@madhanmart.com'
+        }, true);
 
         // Reset Cart and clear persistent storage for this user
         cart = [];
@@ -458,7 +457,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // --------------------------------------------------------------------------
-  // 6. Recent Orders Table Helpers & Supabase Orders Fetch
+  // 6. Recent Orders Table Helpers & Persistent Multi-Layer Order Storage
   // --------------------------------------------------------------------------
   const emptyOrdersWrap = document.getElementById('emptyOrdersWrap');
   const ordersTableWrap = document.getElementById('ordersTableWrap');
@@ -476,22 +475,148 @@ document.addEventListener('DOMContentLoaded', async () => {
   const downloadInvoicePdfBtn = document.getElementById('downloadInvoicePdfBtn');
   const invoiceModalBody = document.getElementById('invoiceModalBody');
 
-  let orderCount = 0;
+  // User storage keys
+  function getSanitizedUserKey(email) {
+    if (!email) return 'madhan_mart_orders_default';
+    return `madhan_mart_orders_${email.toLowerCase().replace(/[^a-z0-9_]/g, '_')}`;
+  }
 
-  // Reset default state
-  if (statOrdersCount) statOrdersCount.textContent = '0';
-  if (statRewardsXp) statRewardsXp.textContent = '0 XP';
-  if (emptyOrdersWrap) emptyOrdersWrap.style.display = 'flex';
-  if (ordersTableWrap) ordersTableWrap.style.display = 'none';
-  if (ordersTableBody) ordersTableBody.innerHTML = '';
+  function updateOrderStatsAndVisibility() {
+    const totalOrdersCount = orderRegistry.size;
+    if (statOrdersCount) {
+      statOrdersCount.textContent = totalOrdersCount;
+    }
+    if (statRewardsXp) {
+      statRewardsXp.textContent = `${totalOrdersCount * 250} XP`;
+    }
 
-  function addOrderToRecentOrdersTable(order) {
+    if (totalOrdersCount > 0) {
+      if (emptyOrdersWrap) emptyOrdersWrap.style.display = 'none';
+      if (ordersTableWrap) ordersTableWrap.style.display = 'block';
+    } else {
+      if (emptyOrdersWrap) emptyOrdersWrap.style.display = 'flex';
+      if (ordersTableWrap) ordersTableWrap.style.display = 'none';
+    }
+  }
+
+  function loadAllUserOrders(email) {
+    const primaryKey = getSanitizedUserKey(email);
+    const rawKey = email ? `madhan_mart_orders_${email.toLowerCase()}` : 'madhan_mart_orders_default';
+    const foundOrders = new Map();
+
+    // 1. Check primary sanitized user key
+    try {
+      const saved = localStorage.getItem(primaryKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          parsed.forEach(o => {
+            if (o && o.order_code) foundOrders.set(o.order_code, o);
+          });
+        }
+      }
+    } catch (e) {}
+
+    // 2. Check raw email key if different
+    if (rawKey !== primaryKey) {
+      try {
+        const saved = localStorage.getItem(rawKey);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            parsed.forEach(o => {
+              if (o && o.order_code && !foundOrders.has(o.order_code)) {
+                foundOrders.set(o.order_code, o);
+              }
+            });
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 3. Check shared/master order store
+    try {
+      const masterSaved = localStorage.getItem('madhan_mart_orders');
+      if (masterSaved) {
+        const parsed = JSON.parse(masterSaved);
+        if (Array.isArray(parsed)) {
+          parsed.forEach(o => {
+            if (o && o.order_code) {
+              const matchesUser = !o.user_email || !email || o.user_email.toLowerCase() === email.toLowerCase();
+              if (matchesUser && !foundOrders.has(o.order_code)) {
+                foundOrders.set(o.order_code, o);
+              }
+            }
+          });
+        }
+      }
+    } catch (e) {}
+
+    // 4. Default fallback key if user has no orders registered under email yet
+    if (foundOrders.size === 0) {
+      try {
+        const defSaved = localStorage.getItem('madhan_mart_orders_default');
+        if (defSaved) {
+          const parsed = JSON.parse(defSaved);
+          if (Array.isArray(parsed)) {
+            parsed.forEach(o => {
+              if (o && o.order_code && !foundOrders.has(o.order_code)) {
+                foundOrders.set(o.order_code, o);
+              }
+            });
+          }
+        }
+      } catch (e) {}
+    }
+
+    return Array.from(foundOrders.values());
+  }
+
+  function persistUserOrders(email, ordersList) {
+    if (!ordersList) return;
+    const cleanEmail = email ? email.toLowerCase() : 'default';
+    const primaryKey = getSanitizedUserKey(cleanEmail);
+
+    try {
+      // 1. Save to user-specific key
+      localStorage.setItem(primaryKey, JSON.stringify(ordersList));
+
+      // 2. Synchronize to global master orders list with user tag
+      const masterSaved = localStorage.getItem('madhan_mart_orders');
+      let masterList = masterSaved ? JSON.parse(masterSaved) : [];
+      if (!Array.isArray(masterList)) masterList = [];
+
+      ordersList.forEach(order => {
+        const idx = masterList.findIndex(m => m.order_code === order.order_code);
+        const orderToSync = { ...order, user_email: cleanEmail };
+        if (idx >= 0) {
+          masterList[idx] = { ...masterList[idx], ...orderToSync };
+        } else {
+          masterList.push(orderToSync);
+        }
+      });
+
+      localStorage.setItem('madhan_mart_orders', JSON.stringify(masterList));
+    } catch (e) {
+      console.warn('[STORAGE] Order persistence notice:', e);
+    }
+  }
+
+  function addOrderToRecentOrdersTable(order, shouldSaveLocal = true) {
+    if (!order || !order.order_code) return;
+
+    // If order already present, merge any updated details without creating duplicate rows
+    if (orderRegistry.has(order.order_code)) {
+      const existing = orderRegistry.get(order.order_code);
+      orderRegistry.set(order.order_code, { ...existing, ...order });
+      updateOrderStatsAndVisibility();
+      return;
+    }
+
     orderRegistry.set(order.order_code, order);
 
-    if (emptyOrdersWrap) emptyOrdersWrap.style.display = 'none';
-    if (ordersTableWrap) ordersTableWrap.style.display = 'block';
-
     const row = document.createElement('tr');
+    row.setAttribute('data-order-code', order.order_code);
     row.innerHTML = `
       <td class="order-id">${escapeHtml(order.order_code)}</td>
       <td>${escapeHtml(order.date || 'Today')}</td>
@@ -514,10 +639,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       ordersTableBody.prepend(row);
     }
 
-    orderCount += 1;
-    if (statOrdersCount) statOrdersCount.textContent = orderCount;
-    if (statRewardsXp) statRewardsXp.textContent = `${orderCount * 250} XP`;
+    updateOrderStatsAndVisibility();
+
+    if (shouldSaveLocal) {
+      const ordersArray = Array.from(orderRegistry.values());
+      persistUserOrders(currentUser?.email, ordersArray);
+    }
   }
+
+  // Load and hydrate orders IMMEDIATELY on page load so count NEVER resets or vanishes on refresh!
+  const initialSavedOrders = loadAllUserOrders(currentUser?.email);
+  if (initialSavedOrders && initialSavedOrders.length > 0) {
+    initialSavedOrders.forEach(ord => {
+      addOrderToRecentOrdersTable(ord, false);
+    });
+  }
+  updateOrderStatsAndVisibility();
 
   // --------------------------------------------------------------------------
   // 6b. Invoice Modal Display & PDF Generation
@@ -881,29 +1018,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Fetch past orders from Supabase specifically for CURRENT logged-in user
+  // Fetch past orders from Supabase specifically for CURRENT logged-in user in background
   if (window.MadhanMartSupabase && currentUser) {
     try {
       const pastOrders = await window.MadhanMartSupabase.getUserOrders(currentUser);
       if (pastOrders && pastOrders.length > 0) {
         pastOrders.forEach(ord => {
-          const itemsText = ord.order_items && ord.order_items.length > 0
-            ? ord.order_items.map(i => i.product_name).join(', ')
-            : 'Gaming Hardware';
+          const itemsText = ord.items 
+            || (ord.order_items && ord.order_items.length > 0 ? ord.order_items.map(i => i.product_name).join(', ') : 'Gaming Hardware Package');
 
-          const dateStr = ord.created_at ? new Date(ord.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent';
+          const dateStr = ord.date || (ord.created_at ? new Date(ord.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Recent');
+          const rawAmount = ord.amount || ord.total_amount || 0;
+          const formattedAmount = String(rawAmount).startsWith('₹') 
+            ? rawAmount 
+            : `₹${parseFloat(rawAmount || 0).toLocaleString('en-IN')}`;
+
           addOrderToRecentOrdersTable({
             order_code: ord.order_code,
             date: dateStr,
             items: itemsText,
-            rawItems: ord.order_items || [],
-            amount: `₹${parseFloat(ord.total_amount || 0).toLocaleString('en-IN')}`,
-            status: ord.status || 'Delivered'
-          });
+            rawItems: ord.order_items || ord.rawItems || [],
+            amount: formattedAmount,
+            status: ord.status || 'Confirmed',
+            shipping_address: ord.shipping_address || 'Chennai, Tamil Nadu',
+            phone_number: ord.phone_number || '',
+            payment_method: ord.payment_method || 'Google Pay / UPI'
+          }, false);
         });
+        
+        // Persist the combined orders list
+        persistUserOrders(currentUser?.email, Array.from(orderRegistry.values()));
+        updateOrderStatsAndVisibility();
       }
     } catch (e) {
-      console.warn('[SUPABASE] Past orders fetch error:', e);
+      console.warn('[SUPABASE] Past orders fetch notice:', e);
     }
   }
 
