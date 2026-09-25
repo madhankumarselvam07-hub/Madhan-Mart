@@ -342,8 +342,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       <td>${escapeHtml(order.items || 'Gaming Gear')}</td>
       <td>${escapeHtml(order.amount || '₹0.00')}</td>
       <td><span class="status-badge status-delivered">${escapeHtml(order.status || 'Confirmed')}</span></td>
-      <td><button type="button" class="btn-table-action" onclick="openInvoiceModal('${escapeHtml(order.order_code)}')">🧾 View Invoice</button></td>
+      <td><button type="button" class="btn-table-action" data-code="${escapeHtml(order.order_code)}">🧾 View Invoice</button></td>
     `;
+
+    const viewBtn = row.querySelector('.btn-table-action');
+    if (viewBtn) {
+      viewBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openInvoiceModal(order.order_code);
+      });
+    }
 
     if (ordersTableBody) {
       ordersTableBody.prepend(row);
