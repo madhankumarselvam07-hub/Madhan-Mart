@@ -231,75 +231,71 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --------------------------------------------------------------------------
-  // Dynamic Mouse Following Glow Spotlight Effect
+  // Instant & Fluid Mouse-Following Glow Effect
   // --------------------------------------------------------------------------
-  const mouseGlow = document.getElementById('mouseGlow');
-  const bgGridHighlight = document.getElementById('bgGridHighlight');
+  const cursorHalo = document.getElementById('cursorGlowHalo');
+  const cursorBeam = document.getElementById('cursorGlowBeam');
   const loginCard = document.getElementById('loginCard');
 
-  let currentMouseX = window.innerWidth / 2;
-  let currentMouseY = window.innerHeight / 2;
-  let targetMouseX = currentMouseX;
-  let targetMouseY = currentMouseY;
-  let isMouseActive = false;
-  let animFrameId = null;
+  let targetX = window.innerWidth / 2;
+  let targetY = window.innerHeight / 2;
+  let currentX = targetX;
+  let currentY = targetY;
+  let rafPending = false;
 
-  function renderMouseGlow() {
-    // Smooth lerp (linear interpolation) for a fluid 60fps tracking experience
-    currentMouseX += (targetMouseX - currentMouseX) * 0.18;
-    currentMouseY += (targetMouseY - currentMouseY) * 0.18;
+  function updateGlowTransform() {
+    // Responsive smooth lerp for fluid tracking
+    currentX += (targetX - currentX) * 0.35;
+    currentY += (targetY - currentY) * 0.35;
 
-    const xStr = `${currentMouseX.toFixed(2)}px`;
-    const yStr = `${currentMouseY.toFixed(2)}px`;
+    const transformStr = `translate3d(${currentX.toFixed(1)}px, ${currentY.toFixed(1)}px, 0) translate(-50%, -50%)`;
 
-    document.documentElement.style.setProperty('--mouse-x', xStr);
-    document.documentElement.style.setProperty('--mouse-y', yStr);
+    if (cursorHalo) cursorHalo.style.transform = transformStr;
+    if (cursorBeam) cursorBeam.style.transform = transformStr;
 
     if (loginCard) {
       const rect = loginCard.getBoundingClientRect();
-      const cardX = targetMouseX - rect.left;
-      const cardY = targetMouseY - rect.top;
-      loginCard.style.setProperty('--card-mouse-x', `${cardX.toFixed(2)}px`);
-      loginCard.style.setProperty('--card-mouse-y', `${cardY.toFixed(2)}px`);
+      const cardX = targetX - rect.left;
+      const cardY = targetY - rect.top;
+      loginCard.style.setProperty('--card-mouse-x', `${cardX.toFixed(1)}px`);
+      loginCard.style.setProperty('--card-mouse-y', `${cardY.toFixed(1)}px`);
     }
 
-    const deltaX = Math.abs(targetMouseX - currentMouseX);
-    const deltaY = Math.abs(targetMouseY - currentMouseY);
-
-    if (deltaX > 0.1 || deltaY > 0.1) {
-      animFrameId = requestAnimationFrame(renderMouseGlow);
+    if (Math.abs(targetX - currentX) > 0.1 || Math.abs(targetY - currentY) > 0.1) {
+      requestAnimationFrame(updateGlowTransform);
     } else {
-      animFrameId = null;
+      rafPending = false;
     }
   }
 
-  function handleMouseMove(e) {
-    targetMouseX = e.clientX;
-    targetMouseY = e.clientY;
+  function handlePointerMove(e) {
+    targetX = e.clientX;
+    targetY = e.clientY;
 
-    if (!isMouseActive) {
-      isMouseActive = true;
-      if (mouseGlow) mouseGlow.classList.add('active');
-      if (bgGridHighlight) bgGridHighlight.classList.add('active');
-    }
+    if (cursorHalo && cursorHalo.style.opacity === '0') cursorHalo.style.opacity = '1';
+    if (cursorBeam && cursorBeam.style.opacity === '0') cursorBeam.style.opacity = '1';
 
-    if (!animFrameId) {
-      animFrameId = requestAnimationFrame(renderMouseGlow);
+    if (!rafPending) {
+      rafPending = true;
+      requestAnimationFrame(updateGlowTransform);
     }
   }
 
-  window.addEventListener('mousemove', handleMouseMove, { passive: true });
+  window.addEventListener('pointermove', handlePointerMove, { passive: true });
+  window.addEventListener('mousemove', handlePointerMove, { passive: true });
 
   window.addEventListener('mouseleave', () => {
-    if (mouseGlow) mouseGlow.classList.remove('active');
-    if (bgGridHighlight) bgGridHighlight.classList.remove('active');
-    isMouseActive = false;
+    if (cursorHalo) cursorHalo.style.opacity = '0';
+    if (cursorBeam) cursorBeam.style.opacity = '0';
   });
 
-  // Initialize center glow coordinates on page load
-  document.documentElement.style.setProperty('--mouse-x', `${window.innerWidth / 2}px`);
-  document.documentElement.style.setProperty('--mouse-y', `${window.innerHeight / 2}px`);
-  if (mouseGlow) mouseGlow.classList.add('active');
-  if (bgGridHighlight) bgGridHighlight.classList.add('active');
-  isMouseActive = true;
+  window.addEventListener('mouseenter', () => {
+    if (cursorHalo) cursorHalo.style.opacity = '1';
+    if (cursorBeam) cursorBeam.style.opacity = '1';
+  });
+
+  // Set initial position
+  const initialTransform = `translate3d(${targetX}px, ${targetY}px, 0) translate(-50%, -50%)`;
+  if (cursorHalo) cursorHalo.style.transform = initialTransform;
+  if (cursorBeam) cursorBeam.style.transform = initialTransform;
 });
