@@ -721,7 +721,172 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   15. Responsive Design (Mobile & Small Tablets)
+   14. 3-Role Interactive Selector & Quick Demo Banner
+   -------------------------------------------------------------------------- */
+.role-selector-container {
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.role-selector-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.role-toggle-group {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.role-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+
+.role-tab:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.role-tab.active {
+  background: #ffffff;
+  color: var(--primary);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+  font-weight: 700;
+}
+
+.role-tab[data-role="buyer"].active {
+  color: #2563eb;
+}
+
+.role-tab[data-role="seller"].active {
+  color: #ea580c;
+}
+
+.role-tab[data-role="admin"].active {
+  color: #7c3aed;
+}
+
+.role-tab-icon {
+  font-size: 1rem;
+}
+
+/* Quick 1-Click Demo Login Banner */
+.quick-demo-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1px dashed var(--border-color);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  margin-bottom: 18px;
+  transition: all var(--transition-normal);
+}
+
+.quick-demo-banner:hover {
+  background: #f1f5f9;
+  border-color: var(--border-hover);
+}
+
+.demo-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.demo-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--primary);
+}
+
+.demo-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.btn-quick-demo {
+  background: var(--primary-light);
+  color: var(--primary);
+  border: 1px solid var(--accent-soft);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.btn-quick-demo:hover {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+/* --------------------------------------------------------------------------
+   15. Card Footer (Create Account)
+   -------------------------------------------------------------------------- */
+.card-footer {
+  text-align: center;
+  margin-top: 24px;
+}
+
+.signup-prompt {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.create-account-link {
+  color: var(--primary);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.create-account-link:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+.create-account-link:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* --------------------------------------------------------------------------
+   16. Responsive Design (Mobile & Small Tablets)
    -------------------------------------------------------------------------- */
 @media (max-width: 480px) {
   body {
@@ -730,7 +895,7 @@ body {
   }
 
   .login-card {
-    padding: 28px 20px;
+    padding: 24px 18px;
     border-radius: 14px;
   }
 
@@ -750,4 +915,16 @@ body {
     flex-direction: row;
     gap: 8px;
   }
+
+  .quick-demo-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .btn-quick-demo {
+    width: 100%;
+    text-align: center;
+  }
 }
+

@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Sign in to your Madhan Mart account. Shop Smart. Live Better.">
-  <title>Login - MADHAN MART</title>
+  <meta name="description" content="Sign in to your Madhan Mart account. Multi-role access for Buyers, Sellers, and Admins.">
+  <title>Login - MADHAN MART (3-Role System)</title>
   
   <!-- Modern Clean Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="login.css?v=3">
+  <link rel="stylesheet" href="login.css?v=4">
 </head>
 <body>
   <!-- Interactive Mouse-Tracking Spotlight Glow & Crisp Grid -->
@@ -37,13 +37,43 @@
           </div>
           <span class="brand-name">MADHAN <span class="brand-highlight">MART</span></span>
         </a>
-        <p class="brand-tagline">Shop Smart. Live Better.</p>
+        <p class="brand-tagline">Multi-Role Commerce Platform</p>
       </header>
+
+      <!-- 3-Role Interactive Switcher -->
+      <div class="role-selector-container">
+        <span class="role-selector-label">Choose Your Role</span>
+        <div class="role-toggle-group" role="tablist" aria-label="Select Login Role">
+          <button type="button" class="role-tab active" data-role="buyer" id="roleTabBuyer" role="tab" aria-selected="true">
+            <span class="role-tab-icon">🛒</span>
+            <span class="role-tab-title">Buyer</span>
+          </button>
+          <button type="button" class="role-tab" data-role="seller" id="roleTabSeller" role="tab" aria-selected="false">
+            <span class="role-tab-icon">🏪</span>
+            <span class="role-tab-title">Seller</span>
+          </button>
+          <button type="button" class="role-tab" data-role="admin" id="roleTabAdmin" role="tab" aria-selected="false">
+            <span class="role-tab-icon">🛡️</span>
+            <span class="role-tab-title">Admin</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick 1-Click Demo Login Bar -->
+      <div class="quick-demo-banner" id="quickDemoBanner">
+        <div class="demo-info">
+          <span class="demo-badge" id="demoBadge">Buyer Access</span>
+          <span class="demo-hint" id="demoHint">Instant test login with 1 click</span>
+        </div>
+        <button type="button" class="btn-quick-demo" id="btnQuickDemo">
+          ⚡ 1-Click Demo
+        </button>
+      </div>
 
       <!-- Welcome Headings -->
       <div class="login-title-section">
-        <h1 class="login-title">Welcome Back</h1>
-        <p class="login-subtitle">Login to continue to Madhan Mart</p>
+        <h1 class="login-title" id="loginTitle">Buyer Sign In</h1>
+        <p class="login-subtitle" id="loginSubtitle">Enter your credentials to browse & place orders</p>
       </div>
 
       <!-- Alert Message Box (for feedback/errors) -->
@@ -67,7 +97,7 @@
               id="email" 
               name="email" 
               class="form-input" 
-              placeholder="name@example.com" 
+              placeholder="buyer@madhanmart.com" 
               autocomplete="email" 
               required 
               aria-describedby="emailError"
@@ -104,12 +134,10 @@
               aria-label="Show password" 
               aria-pressed="false"
             >
-              <!-- Eye Open Icon (Visible by default) -->
               <svg class="eye-icon eye-open" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M1.66666 10C1.66666 10 4.99999 4.16667 10 4.16667C15 4.16667 18.3333 10 18.3333 10C18.3333 10 15 15.8333 10 15.8333C4.99999 15.8333 1.66666 10 1.66666 10Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                 <path d="M10 12.5C11.3807 12.5 12.5 11.3807 12.5 10C12.5 8.61929 11.3807 7.5 10 7.5C8.61928 7.5 7.49999 8.61929 7.49999 10C7.49999 11.3807 8.61928 12.5 10 12.5Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
               </svg>
-              <!-- Eye Closed Icon (Hidden initially) -->
               <svg class="eye-icon eye-closed" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M2.5 2.5L17.5 17.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                 <path d="M8.70834 8.70834C8.30327 9.11341 8.07548 9.66286 8.07548 10.2358C8.07548 10.8087 8.30327 11.3582 8.70834 11.7632C9.11341 12.1683 9.66286 12.3961 10.2358 12.3961C10.8087 12.3961 11.3582 12.1683 11.7632 11.7632" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -138,7 +166,7 @@
 
         <!-- Submit Button -->
         <button type="submit" id="loginBtn" class="btn-login">
-          <span class="btn-label">Login</span>
+          <span class="btn-label">Login as Buyer</span>
           <span class="spinner" aria-hidden="true"></span>
         </button>
 
@@ -146,9 +174,9 @@
 
       <!-- Card Footer -->
       <footer class="card-footer">
-        <p class="signup-prompt">
+        <p class="signup-prompt" id="signupPromptContainer">
           Don’t have an account? 
-          <a href="register.html" class="create-account-link" id="createAccountLink">Create Account</a>
+          <a href="register.html?role=buyer" class="create-account-link" id="createAccountLink">Create Buyer Account</a>
         </p>
       </footer>
 
@@ -158,6 +186,6 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js"></script>
-  <script src="login.js?v=3"></script>
+  <script src="login.js?v=4"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 /**
  * MADHAN MART - Registration Script
- * Pure Vanilla JavaScript
+ * Pure Vanilla JavaScript (Buyer & Seller Role Registration)
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -10,6 +10,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const passwordInput = document.getElementById('password');
   const confirmPasswordInput = document.getElementById('confirmPassword');
   const agreeTermsCheckbox = document.getElementById('agreeTerms');
+  const storeGroup = document.getElementById('storeGroup');
+  const storeNameInput = document.getElementById('storeName');
 
   const nameGroup = document.getElementById('nameGroup');
   const emailGroup = document.getElementById('emailGroup');
@@ -27,7 +29,73 @@ document.addEventListener('DOMContentLoaded', () => {
   const registerBtn = document.getElementById('registerBtn');
   const btnLabel = registerBtn.querySelector('.btn-label');
   const formAlert = document.getElementById('formAlert');
-  const googleRegisterBtn = document.getElementById('googleRegisterBtn');
+
+  // Role Selection Elements
+  const regRoleBtns = document.querySelectorAll('.reg-role-btn');
+  const regTitle = document.getElementById('regTitle');
+  const regSubtitle = document.getElementById('regSubtitle');
+  const regRoleHint = document.getElementById('regRoleHint');
+  const nameLabel = document.getElementById('nameLabel');
+
+  let selectedRole = 'buyer';
+
+  const ROLE_REG_CONFIGS = {
+    buyer: {
+      title: 'Register as Buyer',
+      subtitle: 'Create your profile to start ordering',
+      hint: 'Shop products, manage cart & place instant orders',
+      btnText: 'Create Buyer Account',
+      nameLabel: 'Full Name',
+      namePlaceholder: 'e.g. Madhan Kumar',
+      showStore: false
+    },
+    seller: {
+      title: 'Register as Seller',
+      subtitle: 'Open your merchant store on Madhan Mart',
+      hint: 'Add & manage products, inventory & view orders received',
+      btnText: 'Create Seller Account',
+      nameLabel: 'Owner Full Name',
+      namePlaceholder: 'e.g. Madhan Selvam',
+      showStore: true
+    }
+  };
+
+  function setRegRole(role) {
+    selectedRole = role;
+    const config = ROLE_REG_CONFIGS[role] || ROLE_REG_CONFIGS.buyer;
+
+    regRoleBtns.forEach(btn => {
+      const isMatch = btn.getAttribute('data-role') === role;
+      btn.classList.toggle('active', isMatch);
+    });
+
+    if (regTitle) regTitle.textContent = config.title;
+    if (regSubtitle) regSubtitle.textContent = config.subtitle;
+    if (regRoleHint) regRoleHint.textContent = config.hint;
+    if (btnLabel) btnLabel.textContent = config.btnText;
+    if (nameLabel) nameLabel.textContent = config.nameLabel;
+    if (nameInput) nameInput.placeholder = config.namePlaceholder;
+
+    if (storeGroup) {
+      storeGroup.style.display = config.showStore ? 'block' : 'none';
+    }
+  }
+
+  regRoleBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const r = btn.getAttribute('data-role');
+      setRegRole(r);
+    });
+  });
+
+  // Check URL query param for role
+  const urlParams = new URLSearchParams(window.location.search);
+  const paramRole = urlParams.get('role');
+  if (paramRole && ROLE_REG_CONFIGS[paramRole]) {
+    setRegRole(paramRole);
+  } else {
+    setRegRole('buyer');
+  }
 
   // --------------------------------------------------------------------------
   // Password Visibility Toggles
@@ -125,9 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
     formAlert.style.display = 'none';
   }
 
-  // --------------------------------------------------------------------------
   // Live Input Validation Clearing
-  // --------------------------------------------------------------------------
   nameInput.addEventListener('input', () => {
     if (nameGroup.classList.contains('has-error')) {
       const res = validateName(nameInput.value);
@@ -177,6 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const emailVal = emailInput.value.trim();
     const passVal = passwordInput.value;
     const confirmVal = confirmPasswordInput.value;
+    const storeVal = storeNameInput ? storeNameInput.value.trim() : '';
 
     const nameCheck = validateName(nameVal);
     const emailCheck = validateEmail(emailVal);
@@ -243,12 +310,12 @@ document.addEventListener('DOMContentLoaded', () => {
     setLoading(true);
 
     try {
-      // 1. Try Live Supabase Sign Up
+      // 1. Live Supabase Sign Up with Role
       if (window.MadhanMartSupabase) {
         try {
-          await window.MadhanMartSupabase.signUp(emailVal, passVal, nameVal);
+          await window.MadhanMartSupabase.signUp(emailVal, passVal, nameVal, selectedRole);
         } catch (supabaseErr) {
-          console.warn('[SUPABASE] Registration error:', supabaseErr.message || supabaseErr);
+          console.warn('[SUPABASE] Registration notice:', supabaseErr.message || supabaseErr);
           if (supabaseErr.message && (supabaseErr.message.includes('already registered') || supabaseErr.message.includes('User already registered'))) {
             setLoading(false);
             setError(emailGroup, emailError, 'An account with this email already exists.');
@@ -259,22 +326,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
 
-      // Save user to localStorage backup
+      // Save user to localStorage backup with role
       existingUsers.push({
         fullName: nameVal,
         email: emailVal,
         password: passVal,
+        role: selectedRole,
+        storeName: storeVal,
         createdAt: new Date().toISOString()
       });
       localStorage.setItem('madhan_mart_users', JSON.stringify(existingUsers));
 
-      await new Promise((resolve) => setTimeout(resolve, 600));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-      showAlert('Account created in Supabase! Redirecting to login...', 'success');
+      showAlert(`Account created as ${selectedRole.toUpperCase()}! Redirecting to login...`, 'success');
 
       setTimeout(() => {
-        window.location.href = `login.html?registered=true&email=${encodeURIComponent(emailVal)}`;
-      }, 1000);
+        window.location.href = `login.html?role=${selectedRole}&registered=true&email=${encodeURIComponent(emailVal)}`;
+      }, 900);
 
     } catch (err) {
       console.error('Registration error:', err);
@@ -284,6 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function setLoading(isLoading) {
+    const config = ROLE_REG_CONFIGS[selectedRole] || ROLE_REG_CONFIGS.buyer;
     if (isLoading) {
       registerBtn.classList.add('is-loading');
       registerBtn.disabled = true;
@@ -291,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       registerBtn.classList.remove('is-loading');
       registerBtn.disabled = false;
-      btnLabel.textContent = 'Create Account';
+      btnLabel.textContent = config.btnText;
     }
   }
 
@@ -358,7 +428,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cursorBeam) cursorBeam.style.opacity = '1';
   });
 
-  // Set initial position
   const initialTransform = `translate3d(${targetX}px, ${targetY}px, 0) translate(-50%, -50%)`;
   if (cursorHalo) cursorHalo.style.transform = initialTransform;
   if (cursorBeam) cursorBeam.style.transform = initialTransform;

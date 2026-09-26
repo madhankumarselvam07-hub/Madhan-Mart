@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="MADHAN MART Customer Dashboard - Shop Smart. Live Better.">
-  <title>Dashboard - MADHAN MART</title>
+  <meta name="description" content="MADHAN MART Multi-Role Commerce Dashboard - Buyer, Seller, and Admin Control.">
+  <title>Dashboard - MADHAN MART (3-Role System)</title>
   
   <!-- Modern Clean Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="dashboard.css">
+  <link rel="stylesheet" href="dashboard.css?v=4">
 </head>
 <body>
   <!-- Header / Navigation -->
@@ -35,18 +35,34 @@
         </div>
       </a>
 
-      <!-- Search Input -->
-      <div class="nav-search">
+      <!-- 1-Click Role Switcher in Top Navigation -->
+      <div class="nav-role-switcher" role="tablist" aria-label="Switch Role View">
+        <button type="button" class="nav-role-btn active" data-role="buyer" id="navRoleBuyer">
+          <span class="role-btn-icon">🛒</span>
+          <span class="role-btn-text">Buyer View</span>
+        </button>
+        <button type="button" class="nav-role-btn" data-role="seller" id="navRoleSeller">
+          <span class="role-btn-icon">🏪</span>
+          <span class="role-btn-text">Seller Center</span>
+        </button>
+        <button type="button" class="nav-role-btn" data-role="admin" id="navRoleAdmin">
+          <span class="role-btn-icon">🛡️</span>
+          <span class="role-btn-text">Admin Panel</span>
+        </button>
+      </div>
+
+      <!-- Search Input (Buyer Mode) -->
+      <div class="nav-search" id="navSearchWrap">
         <svg class="search-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.6"/>
           <path d="M13.5 13.5L17.5 17.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
         </svg>
-        <input type="text" id="searchInput" placeholder="Search gaming gear, consoles, RGB peripherals..." aria-label="Search products">
+        <input type="text" id="searchInput" placeholder="Search laptops, mobiles, gaming gear, consoles..." aria-label="Search products">
       </div>
 
       <!-- Nav Actions -->
       <div class="nav-actions">
-        <!-- Cart Button -->
+        <!-- Cart Button (Buyer Mode) -->
         <button type="button" class="nav-btn" id="cartBtn" aria-label="View Shopping Cart">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M3 3H5L6.68 14.39C6.77 15.02 7.31 15.5 7.95 15.5H18.5C19.12 15.5 19.65 15.05 19.75 14.43L21 6.5H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -62,7 +78,7 @@
             <div class="user-avatar" id="userAvatar">M</div>
             <div class="user-info-text">
               <span class="user-name" id="navUserName">Madhan Kumar</span>
-              <span class="user-role">Customer</span>
+              <span class="user-role-badge role-badge-buyer" id="navUserRoleBadge">Buyer</span>
             </div>
             <svg class="chevron-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -73,9 +89,13 @@
           <div class="dropdown-menu" id="userDropdown" role="menu">
             <div class="dropdown-header">
               <p class="dropdown-name" id="menuFullName">Madhan Kumar</p>
-              <p class="dropdown-email" id="menuEmail">madhan@example.com</p>
+              <p class="dropdown-email" id="menuEmail">buyer@madhanmart.com</p>
+              <span class="dropdown-role-tag" id="menuRoleTag">Role: Buyer</span>
             </div>
             <hr class="dropdown-divider">
+            <button type="button" class="dropdown-item" id="switchRoleQuickBtn">
+              <span>🔄 Switch Active Role</span>
+            </button>
             <button type="button" class="dropdown-item logout-item" id="logoutBtn">
               <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12.5 14.1667L16.6667 10M16.6667 10L12.5 5.83334M16.6667 10H7.5M7.5 3.33334H5.83333C4.45262 3.33334 3.33333 4.45263 3.33333 5.83334V14.1667C3.33333 15.5474 4.45262 16.6667 5.83333 16.6667H7.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
@@ -97,303 +117,483 @@
       <!-- Toast Container -->
       <div id="dashboardToast" class="toast-popup" role="alert" aria-live="polite"></div>
 
-      <!-- Welcome Hero Banner -->
-      <section class="welcome-banner">
-        <div class="banner-content">
-          <div class="badge-tag">MADHAN MART GAMING ZONE</div>
-          <h1 class="banner-title">Welcome back, <span id="heroUserName">Madhan</span>! 👋</h1>
-          <p class="banner-sub">Level up your battlestation with next-gen consoles, esports peripherals, high-speed gear & exclusive deals.</p>
-        </div>
-        <div class="banner-action">
-          <a href="#products" class="btn-shop-now">Explore Gaming Gear</a>
-        </div>
-      </section>
-
-      <!-- Metric Stats Grid -->
-      <section class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon-wrap icon-blue">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M16 11V7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7V11M5 9H19L20 21H4L5 9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+      <!-- ================================================================== -->
+      <!-- 1. BUYER MODULE VIEW -->
+      <!-- ================================================================== -->
+      <div id="buyerModuleView" class="role-module-view active">
+        
+        <!-- Welcome Hero Banner -->
+        <section class="welcome-banner">
+          <div class="banner-content">
+            <div class="badge-tag">MADHAN MART SHOPPING PORTAL</div>
+            <h1 class="banner-title">Welcome back, <span id="heroUserName">Madhan</span>! 👋</h1>
+            <p class="banner-sub">Explore premium laptops, smartphones, next-gen consoles, esports peripherals & accessories with instant order confirmation.</p>
           </div>
-          <div class="stat-data">
-            <span class="stat-number" id="statOrdersCount">0</span>
-            <span class="stat-label">Total Orders</span>
+          <div class="banner-action">
+            <a href="#products" class="btn-shop-now">Browse Catalog</a>
           </div>
-        </div>
+        </section>
 
-        <div class="stat-card">
-          <div class="stat-icon-wrap icon-amber">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <div class="stat-data">
-            <span class="stat-number" id="statRewardsXp">0 XP</span>
-            <span class="stat-label">Gamer Rewards</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- Featured Products Section -->
-      <section class="products-section" id="products">
-        <div class="section-header">
-          <div>
-            <h2 class="section-title">Popular Gaming Gear</h2>
-            <p class="section-sub">Curated pro esports gear, next-gen consoles & RGB peripherals</p>
-          </div>
-          <div class="category-filters">
-            <button class="filter-btn active" data-cat="all">All</button>
-            <button class="filter-btn" data-cat="consoles">Consoles</button>
-            <button class="filter-btn" data-cat="peripherals">Peripherals</button>
-            <button class="filter-btn" data-cat="audio">Audio</button>
-            <button class="filter-btn" data-cat="accessories">Accessories</button>
-            <button class="filter-btn" data-cat="hardware">Hardware</button>
-          </div>
-        </div>
-
-        <!-- Product Grid -->
-        <div class="products-grid" id="productsGrid">
-          
-          <!-- Product Card 1: Console Controller -->
-          <article class="product-card" data-cat="consoles">
-            <div class="product-img-box">
-              <span class="product-badge badge-popular">Bestseller</span>
-              <img src="images/ps5-controller.jpg" alt="PlayStation 5 DualSense Wireless Controller" class="product-img" loading="lazy">
+        <!-- Metric Stats Grid -->
+        <section class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon-wrap icon-blue">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16 11V7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7V11M5 9H19L20 21H4L5 9Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
             </div>
-            <div class="product-details">
-              <span class="product-category">Consoles & Controllers</span>
-              <h3 class="product-name">PlayStation 5 DualSense Wireless Controller</h3>
-              <div class="product-rating">
-                <span class="stars">★★★★★</span>
-                <span class="rating-num">(4.9)</span>
-              </div>
-              <div class="product-price-row">
-                <div class="price-wrap">
-                  <span class="price-current">₹5,790</span>
-                  <span class="price-original">₹6,490</span>
-                </div>
-                <button type="button" class="btn-add-cart" data-name="PS5 DualSense Controller">Add +</button>
-              </div>
+            <div class="stat-data">
+              <span class="stat-number" id="statOrdersCount">0</span>
+              <span class="stat-label">My Orders Placed</span>
             </div>
-          </article>
-
-          <!-- Product Card 2: Gaming Keyboard -->
-          <article class="product-card" data-cat="peripherals">
-            <div class="product-img-box">
-              <span class="product-badge badge-sale">20% OFF</span>
-              <img src="images/razer-keyboard.jpg" alt="Razer Huntsman Mini 60% Optical Keyboard" class="product-img" loading="lazy">
-            </div>
-            <div class="product-details">
-              <span class="product-category">RGB Keyboards</span>
-              <h3 class="product-name">Razer Huntsman Mini 60% Optical Keyboard</h3>
-              <div class="product-rating">
-                <span class="stars">★★★★★</span>
-                <span class="rating-num">(4.8)</span>
-              </div>
-              <div class="product-price-row">
-                <div class="price-wrap">
-                  <span class="price-current">₹7,999</span>
-                  <span class="price-original">₹9,999</span>
-                </div>
-                <button type="button" class="btn-add-cart" data-name="Razer Huntsman Mini Keyboard">Add +</button>
-              </div>
-            </div>
-          </article>
-
-          <!-- Product Card 3: Gaming Headset -->
-          <article class="product-card" data-cat="audio">
-            <div class="product-img-box">
-              <span class="product-badge badge-new">New</span>
-              <img src="images/hyperx-headset.jpg" alt="HyperX Cloud Alpha Wireless 7.1 Gaming Headset" class="product-img" loading="lazy">
-            </div>
-            <div class="product-details">
-              <span class="product-category">Audio & Headsets</span>
-              <h3 class="product-name">HyperX Cloud Alpha Wireless 7.1 Gaming Headset</h3>
-              <div class="product-rating">
-                <span class="stars">★★★★★</span>
-                <span class="rating-num">(4.9)</span>
-              </div>
-              <div class="product-price-row">
-                <div class="price-wrap">
-                  <span class="price-current">₹12,499</span>
-                  <span class="price-original">₹15,999</span>
-                </div>
-                <button type="button" class="btn-add-cart" data-name="HyperX Cloud Alpha Headset">Add +</button>
-              </div>
-            </div>
-          </article>
-
-          <!-- Product Card 4: Gaming Mouse -->
-          <article class="product-card" data-cat="peripherals">
-            <div class="product-img-box">
-              <span class="product-badge badge-sale">15% OFF</span>
-              <img src="images/logitech-mouse.jpg" alt="Logitech G502 X PLUS Wireless RGB Gaming Mouse" class="product-img" loading="lazy">
-            </div>
-            <div class="product-details">
-              <span class="product-category">Precision Mice</span>
-              <h3 class="product-name">Logitech G502 X PLUS Wireless RGB Gaming Mouse</h3>
-              <div class="product-rating">
-                <span class="stars">★★★★☆</span>
-                <span class="rating-num">(4.7)</span>
-              </div>
-              <div class="product-price-row">
-                <div class="price-wrap">
-                  <span class="price-current">₹8,495</span>
-                  <span class="price-original">₹9,995</span>
-                </div>
-                <button type="button" class="btn-add-cart" data-name="Logitech G502 X PLUS Mouse">Add +</button>
-              </div>
-            </div>
-          </article>
-
-          <!-- Product Card 5: Gaming Monitor -->
-          <article class="product-card" data-cat="hardware">
-            <div class="product-img-box">
-              <span class="product-badge badge-sale">Hot Deal</span>
-              <img src="images/rog-monitor.jpg" alt="ROG Swift OLED 27 240Hz Gaming Monitor" class="product-img" loading="lazy">
-            </div>
-            <div class="product-details">
-              <span class="product-category">Monitors & Displays</span>
-              <h3 class="product-name">ROG Swift OLED 27" 240Hz 0.03ms Gaming Monitor</h3>
-              <div class="product-rating">
-                <span class="stars">★★★★★</span>
-                <span class="rating-num">(5.0)</span>
-              </div>
-              <div class="product-price-row">
-                <div class="price-wrap">
-                  <span class="price-current">₹64,990</span>
-                  <span class="price-original">₹74,990</span>
-                </div>
-                <button type="button" class="btn-add-cart" data-name="ROG Swift OLED Monitor">Add +</button>
-              </div>
-            </div>
-          </article>
-
-          <!-- Product Card 6: VR Headset -->
-          <article class="product-card" data-cat="consoles">
-            <div class="product-img-box">
-              <span class="product-badge badge-popular">Trending</span>
-              <img src="images/meta-quest-vr.jpg" alt="Meta Quest 3 128GB All-In-One VR Headset" class="product-img" loading="lazy">
-            </div>
-            <div class="product-details">
-              <span class="product-category">VR & Next-Gen Gear</span>
-              <h3 class="product-name">Meta Quest 3 128GB All-In-One VR Headset</h3>
-              <div class="product-rating">
-                <span class="stars">★★★★★</span>
-                <span class="rating-num">(4.8)</span>
-              </div>
-              <div class="product-price-row">
-                <div class="price-wrap">
-                  <span class="price-current">₹46,990</span>
-                  <span class="price-original">₹52,990</span>
-                </div>
-                <button type="button" class="btn-add-cart" data-name="Meta Quest 3 VR Headset">Add +</button>
-              </div>
-            </div>
-          </article>
-
-          <!-- Product Card 7: Gaming Chair -->
-          <article class="product-card" data-cat="accessories">
-            <div class="product-img-box">
-              <span class="product-badge badge-popular">Top Rated</span>
-              <img src="images/gaming-chair.jpg" alt="Secretlab TITAN Evo Ergonomic Gaming Chair" class="product-img" loading="lazy">
-            </div>
-            <div class="product-details">
-              <span class="product-category">Gaming Comfort</span>
-              <h3 class="product-name">Secretlab TITAN Evo Ergonomic Gaming Chair</h3>
-              <div class="product-rating">
-                <span class="stars">★★★★★</span>
-                <span class="rating-num">(4.9)</span>
-              </div>
-              <div class="product-price-row">
-                <div class="price-wrap">
-                  <span class="price-current">₹34,999</span>
-                  <span class="price-original">₹41,999</span>
-                </div>
-                <button type="button" class="btn-add-cart" data-name="Secretlab TITAN Chair">Add +</button>
-              </div>
-            </div>
-          </article>
-
-          <!-- Product Card 8: Stream Deck / Macro Controller -->
-          <article class="product-card" data-cat="accessories">
-            <div class="product-img-box">
-              <span class="product-badge badge-new">Creator Pick</span>
-              <img src="images/stream-deck.jpg" alt="Elgato Stream Deck MK.2 – 15 Macro RGB Keys" class="product-img" loading="lazy">
-            </div>
-            <div class="product-details">
-              <span class="product-category">Streaming Gear</span>
-              <h3 class="product-name">Elgato Stream Deck MK.2 – 15 Macro RGB Keys</h3>
-              <div class="product-rating">
-                <span class="stars">★★★★★</span>
-                <span class="rating-num">(4.9)</span>
-              </div>
-              <div class="product-price-row">
-                <div class="price-wrap">
-                  <span class="price-current">₹13,499</span>
-                  <span class="price-original">₹15,999</span>
-                </div>
-                <button type="button" class="btn-add-cart" data-name="Elgato Stream Deck MK.2">Add +</button>
-              </div>
-            </div>
-          </article>
-
-        </div>
-      </section>
-
-      <!-- Recent Orders Section -->
-      <section class="orders-section">
-        <div class="section-header">
-          <div>
-            <h2 class="section-title">Recent Orders</h2>
-            <p class="section-sub">Track your live gaming gear shipments and past purchases</p>
-          </div>
-        </div>
-
-        <!-- Dynamic Orders Container -->
-        <div id="ordersContainer">
-          <!-- Empty Orders State (Default) -->
-          <div class="empty-orders-wrap" id="emptyOrdersWrap">
-            <div class="empty-orders-icon">📦</div>
-            <h3 class="empty-orders-title">No orders placed yet</h3>
-            <p class="empty-orders-sub">Your order history will appear here once you place your first order.</p>
-            <a href="#products" class="btn-empty-shop">Explore Products</a>
           </div>
 
-          <!-- Orders Table (Shown when orders exist) -->
-          <div class="table-responsive" id="ordersTableWrap" style="display: none;">
-            <table class="orders-table">
+          <div class="stat-card">
+            <div class="stat-icon-wrap icon-amber">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="stat-data">
+              <span class="stat-number" id="statRewardsXp">150 XP</span>
+              <span class="stat-label">Rewards & Points</span>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrap icon-emerald">
+              <span>💳</span>
+            </div>
+            <div class="stat-data">
+              <span class="stat-number">Instant 0%</span>
+              <span class="stat-label">GPay / UPI Checkout</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Featured Products Section -->
+        <section class="products-section" id="products">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Products Catalog</h2>
+              <p class="section-sub">Laptops, mobiles, gaming gear & multi-seller technology products</p>
+            </div>
+            <div class="category-filters">
+              <button class="filter-btn active" data-cat="all">All Items</button>
+              <button class="filter-btn" data-cat="laptops">💻 Laptops</button>
+              <button class="filter-btn" data-cat="mobiles">📱 Mobiles</button>
+              <button class="filter-btn" data-cat="consoles">🎮 Consoles</button>
+              <button class="filter-btn" data-cat="peripherals">⌨️ Peripherals</button>
+              <button class="filter-btn" data-cat="audio">🎧 Audio</button>
+              <button class="filter-btn" data-cat="accessories">🕹️ Accessories</button>
+              <button class="filter-btn" data-cat="hardware">🖥️ Hardware</button>
+            </div>
+          </div>
+
+          <!-- Dynamic Products Grid -->
+          <div class="products-grid" id="productsGrid"></div>
+        </section>
+
+        <!-- Recent Orders Section -->
+        <section class="orders-section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">My Order History</h2>
+              <p class="section-sub">Track your live deliveries, order statuses & download tax invoices</p>
+            </div>
+          </div>
+
+          <!-- Dynamic Orders Container -->
+          <div id="ordersContainer">
+            <div class="empty-orders-wrap" id="emptyOrdersWrap">
+              <div class="empty-orders-icon">📦</div>
+              <h3 class="empty-orders-title">No orders placed yet</h3>
+              <p class="empty-orders-sub">Your order history will appear here once you place your first order.</p>
+              <a href="#products" class="btn-empty-shop">Explore Products</a>
+            </div>
+
+            <div class="table-responsive" id="ordersTableWrap" style="display: none;">
+              <table class="orders-table">
+                <thead>
+                  <tr>
+                    <th>Order Code</th>
+                    <th>Date</th>
+                    <th>Items</th>
+                    <th>Total Price</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="ordersTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ================================================================== -->
+      <!-- 2. SELLER CENTER MODULE VIEW -->
+      <!-- ================================================================== -->
+      <div id="sellerModuleView" class="role-module-view" style="display: none;">
+        
+        <section class="seller-banner">
+          <div class="banner-content">
+            <div class="badge-tag tag-seller">🏪 SELLER CONTROL CENTER</div>
+            <h1 class="banner-title">Merchant Inventory & Order Manager</h1>
+            <p class="banner-sub">List new products (Laptops, Mobiles, Hardware), update pricing, manage stock and track orders received.</p>
+          </div>
+          <div class="banner-action">
+            <button type="button" class="btn-primary btn-add-prod-modal" id="btnOpenAddProduct">
+              ➕ Add New Product
+            </button>
+          </div>
+        </section>
+
+        <!-- Seller Metrics Grid -->
+        <section class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon-wrap icon-amber">
+              <span>📦</span>
+            </div>
+            <div class="stat-data">
+              <span class="stat-number" id="sellerProductCount">0</span>
+              <span class="stat-label">Products in Store</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap icon-blue">
+              <span>🚚</span>
+            </div>
+            <div class="stat-data">
+              <span class="stat-number" id="sellerOrdersCount">0</span>
+              <span class="stat-label">Orders Received</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap icon-emerald">
+              <span>💰</span>
+            </div>
+            <div class="stat-data">
+              <span class="stat-number" id="sellerRevenue">₹0</span>
+              <span class="stat-label">Gross Sales Volume</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Seller Inventory Management Table -->
+        <section class="seller-inventory-section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">My Store Inventory</h2>
+              <p class="section-sub">Add, edit pricing, or delete products in your active catalog</p>
+            </div>
+            <button type="button" class="btn-secondary" id="btnRefreshSellerCatalog">🔄 Refresh Inventory</button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="seller-table" id="sellerProductsTable">
               <thead>
                 <tr>
-                  <th>Order ID</th>
-                  <th>Date</th>
-                  <th>Items</th>
+                  <th>Product</th>
+                  <th>Category</th>
+                  <th>Price (₹)</th>
+                  <th>Stock</th>
+                  <th>Seller Badge</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="sellerProductsTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Seller Orders Received Section -->
+        <section class="seller-orders-section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Customer Orders Received</h2>
+              <p class="section-sub">Live customer orders requiring processing and fulfillment</p>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="seller-table" id="sellerOrdersTable">
+              <thead>
+                <tr>
+                  <th>Order Code</th>
+                  <th>Customer Email</th>
+                  <th>Items Ordered</th>
                   <th>Amount</th>
                   <th>Status</th>
                   <th>Action</th>
                 </tr>
               </thead>
-              <tbody id="ordersTableBody"></tbody>
+              <tbody id="sellerOrdersTableBody"></tbody>
             </table>
           </div>
-        </div>
-      </section>
+        </section>
+
+      </div>
+
+      <!-- ================================================================== -->
+      <!-- 3. ADMIN SUPER PANEL MODULE VIEW -->
+      <!-- ================================================================== -->
+      <div id="adminModuleView" class="role-module-view" style="display: none;">
+        
+        <section class="admin-banner">
+          <div class="banner-content">
+            <div class="badge-tag tag-admin">🛡️ SYSTEM ADMINISTRATOR PANEL</div>
+            <h1 class="banner-title">Platform Master Governance</h1>
+            <p class="banner-sub">Oversee all registered users (Buyers & Sellers), manage master orders, and moderate platform products.</p>
+          </div>
+          <div class="banner-action">
+            <button type="button" class="btn-primary" id="btnAdminExportStats">📊 Export Platform Data</button>
+          </div>
+        </section>
+
+        <!-- Admin Master KPIs -->
+        <section class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon-wrap icon-purple">
+              <span>👥</span>
+            </div>
+            <div class="stat-data">
+              <span class="stat-number" id="adminTotalUsers">0</span>
+              <span class="stat-label">Total Platform Users</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap icon-blue">
+              <span>📑</span>
+            </div>
+            <div class="stat-data">
+              <span class="stat-number" id="adminTotalOrders">0</span>
+              <span class="stat-label">Master Platform Orders</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap icon-emerald">
+              <span>💎</span>
+            </div>
+            <div class="stat-data">
+              <span class="stat-number" id="adminPlatformGMV">₹0</span>
+              <span class="stat-label">Total Platform GMV</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap icon-amber">
+              <span>🏷️</span>
+            </div>
+            <div class="stat-data">
+              <span class="stat-number" id="adminTotalProducts">0</span>
+              <span class="stat-label">Active Listings</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Admin: View All Users Table -->
+        <section class="admin-users-section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">👥 All Registered Users</h2>
+              <p class="section-sub">Comprehensive registry of Buyers, Sellers, and Administrators</p>
+            </div>
+            <button type="button" class="btn-secondary" id="btnRefreshAdminUsers">🔄 Refresh Users</button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>User Full Name</th>
+                  <th>Email Address</th>
+                  <th>Assigned Role</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="adminUsersTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Admin: View & Moderate All Orders Table -->
+        <section class="admin-orders-section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">📦 Master Order Governance</h2>
+              <p class="section-sub">Live monitoring and status dispatch control across the entire platform</p>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Order Code</th>
+                  <th>Customer Email</th>
+                  <th>Date</th>
+                  <th>Total Amount</th>
+                  <th>Current Status</th>
+                  <th>Update Status</th>
+                </tr>
+              </thead>
+              <tbody id="adminOrdersTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Admin: Moderate Products Section -->
+        <section class="admin-moderation-section">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">🛡️ Catalog Moderation</h2>
+              <p class="section-sub">Review and remove inappropriate or reported product listings</p>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Product Name</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Seller</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="adminCatalogTableBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
 
     </div>
   </main>
+
+  <!-- ====================================================================== -->
+  <!-- MODALS -->
+  <!-- ====================================================================== -->
+
+  <!-- Add / Edit Product Modal (Seller & Admin) -->
+  <div class="modal-overlay" id="productModal" role="dialog" aria-modal="true" aria-labelledby="productModalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="productModalTitle">📦 Add New Product</h3>
+        <button type="button" class="btn-modal-close" id="closeProductModalBtn" aria-label="Close">✕</button>
+      </div>
+      <form id="productForm" novalidate>
+        <div class="modal-body">
+          <input type="hidden" id="editProductId" value="">
+          
+          <div class="checkout-field">
+            <label for="prodName" class="checkout-label">Product Title / Name <span class="req">*</span></label>
+            <input type="text" id="prodName" class="checkout-input" placeholder="e.g. Dell Inspiron 15 Core i5 Laptop" required>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="checkout-field">
+              <label for="prodCategory" class="checkout-label">Category <span class="req">*</span></label>
+              <select id="prodCategory" class="checkout-input">
+                <option value="laptops">💻 Laptops</option>
+                <option value="mobiles">📱 Mobiles</option>
+                <option value="consoles">🎮 Consoles</option>
+                <option value="peripherals">⌨️ Peripherals</option>
+                <option value="audio">🎧 Audio</option>
+                <option value="accessories">🕹️ Accessories</option>
+                <option value="hardware">🖥️ Hardware</option>
+              </select>
+            </div>
+            <div class="checkout-field">
+              <label for="prodBadge" class="checkout-label">Highlight Badge</label>
+              <input type="text" id="prodBadge" class="checkout-input" placeholder="e.g. Bestseller / Top Deal" value="Hot Deal">
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="checkout-field">
+              <label for="prodPrice" class="checkout-label">Selling Price (₹) <span class="req">*</span></label>
+              <input type="number" id="prodPrice" class="checkout-input" placeholder="45000" min="1" required>
+            </div>
+            <div class="checkout-field">
+              <label for="prodOrigPrice" class="checkout-label">Original Price (₹)</label>
+              <input type="number" id="prodOrigPrice" class="checkout-input" placeholder="52000" min="1">
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="checkout-field">
+              <label for="prodStock" class="checkout-label">Stock Quantity <span class="req">*</span></label>
+              <input type="number" id="prodStock" class="checkout-input" placeholder="25" min="1" value="25" required>
+            </div>
+            <div class="checkout-field">
+              <label for="prodEmoji" class="checkout-label">Product Icon Emoji</label>
+              <input type="text" id="prodEmoji" class="checkout-input" placeholder="💻" value="📦">
+            </div>
+          </div>
+
+          <div class="checkout-field">
+            <label for="prodImage" class="checkout-label">Image Path or URL</label>
+            <input type="text" id="prodImage" class="checkout-input" placeholder="images/laptop.jpg" value="images/laptop.jpg">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="cancelProductBtn">Cancel</button>
+          <button type="submit" class="btn-primary" id="saveProductBtn">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Product Review Modal (Buyer) -->
+  <div class="modal-overlay" id="reviewModal" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="reviewModalTitle">⭐ Write Product Review</h3>
+        <button type="button" class="btn-modal-close" id="closeReviewModalBtn" aria-label="Close">✕</button>
+      </div>
+      <form id="reviewForm" novalidate>
+        <div class="modal-body">
+          <input type="hidden" id="reviewProductId" value="">
+          <p id="reviewProductName" style="font-weight: 700; margin-bottom: 12px; color: var(--text-main);"></p>
+
+          <div class="checkout-field">
+            <label class="checkout-label">Select Star Rating <span class="req">*</span></label>
+            <div class="star-rating-picker" id="starRatingPicker">
+              <span class="star-btn active" data-val="1">★</span>
+              <span class="star-btn active" data-val="2">★</span>
+              <span class="star-btn active" data-val="3">★</span>
+              <span class="star-btn active" data-val="4">★</span>
+              <span class="star-btn active" data-val="5">★</span>
+            </div>
+            <input type="hidden" id="selectedStarRating" value="5">
+          </div>
+
+          <div class="checkout-field">
+            <label for="reviewComment" class="checkout-label">Your Comments & Feedback <span class="req">*</span></label>
+            <textarea id="reviewComment" class="checkout-input" rows="4" placeholder="Share your experience with this product..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" id="cancelReviewBtn">Cancel</button>
+          <button type="submit" class="btn-primary" id="submitReviewBtn">Submit Review</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Cart Modal -->
   <div class="modal-overlay" id="cartModal" role="dialog" aria-modal="true" aria-labelledby="cartModalTitle">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 class="modal-title" id="cartModalTitle">🛒 Your Gaming Cart</h3>
+        <h3 class="modal-title" id="cartModalTitle">🛒 Your Shopping Cart</h3>
         <button type="button" class="btn-modal-close" id="closeCartBtn" aria-label="Close Cart">✕</button>
       </div>
       <div class="modal-body">
         <div id="cartItemsList" class="cart-items-list">
-          <p class="cart-empty-text">Your cart is empty. Add some gaming gear!</p>
+          <p class="cart-empty-text">Your cart is empty. Add some products!</p>
         </div>
         <div class="cart-summary" id="cartSummary" style="display: none;">
           <div class="summary-row">
@@ -422,7 +622,7 @@
   <div class="modal-overlay" id="checkoutModal" role="dialog" aria-modal="true" aria-labelledby="checkoutModalTitle">
     <div class="modal-card checkout-modal-card">
       <div class="modal-header">
-        <h3 class="modal-title" id="checkoutModalTitle">⚡ Checkout & Payment</h3>
+        <h3 class="modal-title" id="checkoutModalTitle">⚡ Checkout & Order Confirmation</h3>
         <button type="button" class="btn-modal-close" id="closeCheckoutBtn" aria-label="Close Checkout">✕</button>
       </div>
       <form id="checkoutForm" class="checkout-form" novalidate>
@@ -432,7 +632,7 @@
           <div class="checkout-section">
             <div class="checkout-section-header">
               <span class="checkout-step-badge">1</span>
-              <h4 class="checkout-section-title">📍 Delivery Address & Location</h4>
+              <h4 class="checkout-section-title">📍 Delivery Address</h4>
             </div>
 
             <div class="form-grid-2">
@@ -447,7 +647,7 @@
             </div>
 
             <div class="checkout-field">
-              <label for="shippingAddress" class="checkout-label">House No., Street & Landmark <span class="req">*</span></label>
+              <label for="shippingAddress" class="checkout-label">Address & Street <span class="req">*</span></label>
               <input type="text" id="shippingAddress" class="checkout-input" placeholder="e.g. No. 42, Anna Salai, Guindy" required>
             </div>
 
@@ -475,8 +675,6 @@
             </div>
 
             <div class="payment-methods-grid">
-              
-              <!-- Option 1: Google Pay / UPI -->
               <label class="payment-method-card active" for="payGpay">
                 <input type="radio" id="payGpay" name="paymentMethod" value="Google Pay / UPI" checked>
                 <div class="payment-card-content">
@@ -488,31 +686,6 @@
                 </div>
               </label>
 
-              <!-- Option 2: Credit / Debit Card -->
-              <label class="payment-method-card" for="payCard">
-                <input type="radio" id="payCard" name="paymentMethod" value="Credit / Debit Card">
-                <div class="payment-card-content">
-                  <div class="payment-icon-title">
-                    <span class="pay-icon">💳</span>
-                    <span class="pay-name">Debit / Credit Card</span>
-                  </div>
-                  <span class="pay-badge">Visa / Master / RuPay</span>
-                </div>
-              </label>
-
-              <!-- Option 3: Net Banking -->
-              <label class="payment-method-card" for="payNetbanking">
-                <input type="radio" id="payNetbanking" name="paymentMethod" value="Net Banking">
-                <div class="payment-card-content">
-                  <div class="payment-icon-title">
-                    <span class="pay-icon">🏦</span>
-                    <span class="pay-name">Net Banking</span>
-                  </div>
-                  <span class="pay-badge">All Major Banks</span>
-                </div>
-              </label>
-
-              <!-- Option 4: Cash on Delivery -->
               <label class="payment-method-card" for="payCod">
                 <input type="radio" id="payCod" name="paymentMethod" value="Cash on Delivery">
                 <div class="payment-card-content">
@@ -523,65 +696,16 @@
                   <span class="pay-badge">Pay at Doorstep</span>
                 </div>
               </label>
-
             </div>
-
-            <!-- Dynamic Payment Sub-fields -->
-            <div id="paymentDetailsBox" class="payment-details-box">
-              <!-- UPI Details (Default) -->
-              <div id="upiFields" class="payment-subfield">
-                <label for="upiId" class="checkout-label">Enter UPI ID / VPA <span class="req">*</span></label>
-                <div class="input-with-badge">
-                  <input type="text" id="upiId" class="checkout-input" placeholder="e.g. yourname@okaxis / 9876543210@paytm" value="madhan@okaxis">
-                  <span class="upi-verified-badge">✓ GPay Ready</span>
-                </div>
-              </div>
-
-              <!-- Card Details (Hidden by default) -->
-              <div id="cardFields" class="payment-subfield" style="display: none;">
-                <div class="checkout-field">
-                  <label for="cardNumber" class="checkout-label">Card Number <span class="req">*</span></label>
-                  <input type="text" id="cardNumber" class="checkout-input" placeholder="4532 •••• •••• 8820" maxlength="19" value="4532 8920 1120 8820">
-                </div>
-                <div class="form-grid-2">
-                  <div class="checkout-field">
-                    <label for="cardExpiry" class="checkout-label">Expiry (MM/YY) <span class="req">*</span></label>
-                    <input type="text" id="cardExpiry" class="checkout-input" placeholder="12/28" maxlength="5" value="12/28">
-                  </div>
-                  <div class="checkout-field">
-                    <label for="cardCvv" class="checkout-label">CVV <span class="req">*</span></label>
-                    <input type="password" id="cardCvv" class="checkout-input" placeholder="•••" maxlength="4" value="882">
-                  </div>
-                </div>
-              </div>
-
-              <!-- Netbanking details (Hidden by default) -->
-              <div id="netbankingFields" class="payment-subfield" style="display: none;">
-                <label for="bankSelect" class="checkout-label">Select Your Bank <span class="req">*</span></label>
-                <select id="bankSelect" class="checkout-input">
-                  <option value="HDFC Bank">HDFC Bank</option>
-                  <option value="State Bank of India">State Bank of India (SBI)</option>
-                  <option value="ICICI Bank">ICICI Bank</option>
-                  <option value="Axis Bank">Axis Bank</option>
-                  <option value="Kotak Mahindra Bank">Kotak Mahindra Bank</option>
-                </select>
-              </div>
-
-              <!-- COD Notice (Hidden by default) -->
-              <div id="codFields" class="payment-subfield" style="display: none;">
-                <p class="cod-notice">💵 Please keep exact cash or UPI ready at the time of delivery.</p>
-              </div>
-            </div>
-
           </div>
 
           <!-- Section 3: Summary Bar -->
           <div class="checkout-summary-bar">
             <div class="checkout-total-info">
-              <span class="checkout-total-label">Total Payable:</span>
+              <span class="checkout-total-label">Total Amount:</span>
               <span class="checkout-total-value" id="checkoutModalTotal">₹0</span>
             </div>
-            <span class="checkout-security-tag">🔒 256-Bit SSL Encrypted & Verified</span>
+            <span class="checkout-security-tag">🔒 Fast Instant Confirmation</span>
           </div>
 
         </div>
@@ -589,27 +713,52 @@
         <div class="modal-footer">
           <button type="button" class="btn-secondary" id="backToCartBtn">← Back to Cart</button>
           <button type="submit" class="btn-primary" id="confirmOrderBtn">
-            <span class="btn-label" id="confirmOrderBtnLabel">Confirm & Place Order</span>
+            <span class="btn-label" id="confirmOrderBtnLabel">Confirm Order</span>
           </button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Invoice / Bill Modal -->
+  <!-- Invoice Modal -->
   <div class="modal-overlay" id="invoiceModal" role="dialog" aria-modal="true" aria-labelledby="invoiceModalTitle">
     <div class="modal-card invoice-modal-card">
       <div class="modal-header">
         <h3 class="modal-title" id="invoiceModalTitle">🧾 Tax Invoice & Bill</h3>
         <button type="button" class="btn-modal-close" id="closeInvoiceBtn" aria-label="Close Invoice">✕</button>
       </div>
-      <div class="modal-body invoice-modal-body" id="invoiceModalBody">
-        <!-- Live Invoice Preview Paper Content inserted via JS -->
-      </div>
+      <div class="modal-body invoice-modal-body" id="invoiceModalBody"></div>
       <div class="modal-footer">
         <button type="button" class="btn-secondary" id="printInvoiceBtn">🖨️ Print</button>
         <button type="button" class="btn-primary" id="downloadInvoicePdfBtn">📥 Download Bill PDF</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Floating AI Assistant Chatbot -->
+  <div class="ai-chatbot-wrap" id="aiChatbotWrap">
+    <button type="button" class="ai-chatbot-toggle" id="aiChatbotToggle" aria-label="Open AI Shopping Assistant">
+      <span class="ai-icon">🤖</span>
+      <span class="ai-pulse"></span>
+    </button>
+
+    <div class="ai-chatbot-card" id="aiChatbotCard" style="display: none;">
+      <div class="ai-chat-header">
+        <div class="ai-chat-title-wrap">
+          <span class="ai-badge">AI Chatbot</span>
+          <span class="ai-status">Online</span>
+        </div>
+        <button type="button" class="btn-chat-close" id="closeAiChatBtn">✕</button>
+      </div>
+      <div class="ai-chat-messages" id="aiChatMessages">
+        <div class="ai-msg bot">
+          👋 Hello! I am Madhan Mart AI Shopping Assistant. Ask me about laptops, smartphones, order status, or deals!
+        </div>
+      </div>
+      <form class="ai-chat-input-bar" id="aiChatForm">
+        <input type="text" id="aiChatInput" placeholder="Ask AI assistant..." autocomplete="off">
+        <button type="submit" class="btn-send-chat">➤</button>
+      </form>
     </div>
   </div>
 
@@ -618,6 +767,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <script src="supabase-client.js"></script>
-  <script src="dashboard.js"></script>
+  <script src="dashboard.js?v=4"></script>
 </body>
 </html>

@@ -1521,28 +1521,487 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   8. Mobile Responsiveness
+   8. 3-Role Navigation Switcher & Role Badges
+   -------------------------------------------------------------------------- */
+.nav-role-switcher {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.nav-role-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+  user-select: none;
+}
+
+.nav-role-btn:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.nav-role-btn.active {
+  background: #ffffff;
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+  font-weight: 700;
+}
+
+.nav-role-btn[data-role="seller"].active {
+  color: #ea580c;
+}
+
+.nav-role-btn[data-role="admin"].active {
+  color: #7c3aed;
+}
+
+.user-role-badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.role-badge-buyer {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.role-badge-seller {
+  background: #fff7ed;
+  color: #ea580c;
+}
+
+.role-badge-admin {
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+
+.dropdown-role-tag {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-top: 4px;
+}
+
+/* --------------------------------------------------------------------------
+   9. Seller & Admin Module Styles
+   -------------------------------------------------------------------------- */
+.seller-banner {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 1px solid #fed7aa;
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.admin-banner {
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+  border: 1px solid #ddd6fe;
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.tag-seller {
+  background: #ffedd5;
+  color: #c2410c;
+  border-color: #fdba74;
+}
+
+.tag-admin {
+  background: #ede9fe;
+  color: #6d28d9;
+  border-color: #c4b5fd;
+}
+
+.icon-purple {
+  background: #f5f3ff;
+  color: #7c3aed;
+  border: 1px solid #ddd6fe;
+}
+
+.icon-emerald {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.seller-inventory-section,
+.seller-orders-section,
+.admin-users-section,
+.admin-orders-section,
+.admin-moderation-section {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 28px;
+  box-shadow: var(--shadow-card);
+}
+
+.seller-table,
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.88rem;
+}
+
+.seller-table th,
+.admin-table th {
+  background: #f8fafc;
+  padding: 12px 14px;
+  font-weight: 700;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.seller-table td,
+.admin-table td {
+  padding: 14px;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.seller-table tr:hover,
+.admin-table tr:hover {
+  background: #f8fafc;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.status-pending { background: #fef3c7; color: #b45309; }
+.status-delivered { background: #ecfdf5; color: #047857; }
+.status-processing { background: #eff6ff; color: #1d4ed8; }
+.status-cancelled { background: #fef2f2; color: #b91c1c; }
+
+.status-select {
+  padding: 4px 8px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+}
+
+.btn-action-delete {
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.btn-action-delete:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.btn-action-edit {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 6px;
+  transition: all var(--transition);
+}
+
+.btn-action-edit:hover {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+/* --------------------------------------------------------------------------
+   10. Star Rating Picker in Reviews Modal
+   -------------------------------------------------------------------------- */
+.star-rating-picker {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
+.star-btn {
+  color: #cbd5e1;
+  transition: color 0.15s ease, transform 0.15s ease;
+  user-select: none;
+}
+
+.star-btn.active, .star-btn:hover {
+  color: #f59e0b;
+  transform: scale(1.15);
+}
+
+.btn-review-card {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border-color);
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.btn-review-card:hover {
+  color: #f59e0b;
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+/* --------------------------------------------------------------------------
+   11. Floating AI Shopping Assistant Chatbot
+   -------------------------------------------------------------------------- */
+.ai-chatbot-wrap {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999;
+}
+
+.ai-chatbot-toggle {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ai-chatbot-toggle:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 22px rgba(37, 99, 235, 0.5);
+}
+
+.ai-pulse {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid #3b82f6;
+  opacity: 0.7;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.18); opacity: 0; }
+}
+
+.ai-chatbot-card {
+  position: absolute;
+  bottom: 64px;
+  right: 0;
+  width: 340px;
+  height: 440px;
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ai-chat-header {
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  color: #ffffff;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ai-chat-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-badge {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.ai-status {
+  font-size: 0.68rem;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.btn-chat-close {
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.ai-chat-messages {
+  flex: 1;
+  padding: 14px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #f8fafc;
+}
+
+.ai-msg {
+  max-width: 82%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.ai-msg.bot {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  align-self: flex-start;
+  border-bottom-left-radius: 2px;
+}
+
+.ai-msg.user {
+  background: var(--primary);
+  color: #ffffff;
+  align-self: flex-end;
+  border-bottom-right-radius: 2px;
+}
+
+.ai-chat-input-bar {
+  display: flex;
+  border-top: 1px solid var(--border-color);
+  background: #ffffff;
+  padding: 8px;
+  gap: 6px;
+}
+
+.ai-chat-input-bar input {
+  flex: 1;
+  border: 1px solid var(--border-color);
+  border-radius: 20px;
+  padding: 8px 14px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  outline: none;
+}
+
+.ai-chat-input-bar input:focus {
+  border-color: var(--primary);
+}
+
+.btn-send-chat {
+  background: var(--primary);
+  color: #ffffff;
+  border: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --------------------------------------------------------------------------
+   12. Mobile Responsiveness
    -------------------------------------------------------------------------- */
 @media (max-width: 768px) {
   .nav-search {
     display: none;
   }
 
-  .welcome-banner {
+  .nav-role-switcher {
+    padding: 2px;
+    gap: 2px;
+  }
+
+  .nav-role-btn {
+    padding: 4px 8px;
+    font-size: 0.72rem;
+  }
+
+  .welcome-banner,
+  .seller-banner,
+  .admin-banner {
     flex-direction: column;
     align-items: flex-start;
-    padding: 24px;
+    padding: 20px;
   }
 
   .banner-title {
     font-size: 1.35rem;
   }
 
-  .products-section, .orders-section {
-    padding: 20px 16px;
+  .products-section, 
+  .orders-section,
+  .seller-inventory-section,
+  .admin-users-section {
+    padding: 16px 12px;
   }
 
   .user-info-text {
     display: none;
   }
+
+  .ai-chatbot-card {
+    width: 290px;
+    height: 380px;
+    right: 0;
+  }
 }
+

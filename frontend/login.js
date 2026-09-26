@@ -1,6 +1,6 @@
 /**
  * MADHAN MART - Login Page Script
- * Pure Vanilla JavaScript (Seamless Login & Dashboard Redirect)
+ * Pure Vanilla JavaScript (3-Role Support: Buyer, Seller, Admin)
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -17,11 +17,125 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginBtn = document.getElementById('loginBtn');
   const btnLabel = loginBtn.querySelector('.btn-label');
   const formAlert = document.getElementById('formAlert');
-  const googleBtn = document.getElementById('googleBtn');
   const forgotPasswordLink = document.getElementById('forgotPasswordLink');
 
-  // Check URL parameters (e.g. redirected from register with registered=true & email)
+  // 3-Role Elements
+  const roleTabs = document.querySelectorAll('.role-tab');
+  const loginTitle = document.getElementById('loginTitle');
+  const loginSubtitle = document.getElementById('loginSubtitle');
+  const demoBadge = document.getElementById('demoBadge');
+  const demoHint = document.getElementById('demoHint');
+  const btnQuickDemo = document.getElementById('btnQuickDemo');
+  const createAccountLink = document.getElementById('createAccountLink');
+  const signupPromptContainer = document.getElementById('signupPromptContainer');
+
+  let currentRole = 'buyer';
+
+  const ROLE_CONFIGS = {
+    buyer: {
+      title: 'Buyer Sign In',
+      subtitle: 'Enter your credentials to browse & place orders',
+      btnText: 'Login as Buyer',
+      badge: 'Buyer Access',
+      hint: 'Shop products & track deliveries',
+      emailPlaceholder: 'buyer@madhanmart.com',
+      demoEmail: 'buyer@madhanmart.com',
+      demoPass: 'Buyer@123',
+      signupText: 'Create Buyer Account',
+      signupRole: 'buyer',
+      showSignup: true
+    },
+    seller: {
+      title: 'Seller Portal Login',
+      subtitle: 'Sign in to manage products, inventory & orders received',
+      btnText: 'Login as Seller',
+      badge: 'Seller Portal',
+      hint: 'Add/edit products & view customer orders',
+      emailPlaceholder: 'seller@madhanmart.com',
+      demoEmail: 'seller@madhanmart.com',
+      demoPass: 'Seller@123',
+      signupText: 'Register as a Seller',
+      signupRole: 'seller',
+      showSignup: true
+    },
+    admin: {
+      title: 'Admin Super Control',
+      subtitle: 'Sign in with system credentials to moderate platform',
+      btnText: 'Login as Administrator',
+      badge: 'Admin Panel',
+      hint: 'Manage all users, master orders & moderation',
+      emailPlaceholder: 'admin@madhanmart.com',
+      demoEmail: 'admin@madhanmart.com',
+      demoPass: 'Admin@123',
+      signupText: 'Admin accounts are pre-configured',
+      signupRole: 'admin',
+      showSignup: false
+    }
+  };
+
+  function applyRole(role) {
+    currentRole = role;
+    const config = ROLE_CONFIGS[role] || ROLE_CONFIGS.buyer;
+
+    // Update active tab
+    roleTabs.forEach(tab => {
+      const isMatch = tab.getAttribute('data-role') === role;
+      tab.classList.toggle('active', isMatch);
+      tab.setAttribute('aria-selected', isMatch ? 'true' : 'false');
+    });
+
+    // Update Headings & UI
+    if (loginTitle) loginTitle.textContent = config.title;
+    if (loginSubtitle) loginSubtitle.textContent = config.subtitle;
+    if (btnLabel) btnLabel.textContent = config.btnText;
+    if (demoBadge) demoBadge.textContent = config.badge;
+    if (demoHint) demoHint.textContent = config.hint;
+    if (emailInput) emailInput.placeholder = config.emailPlaceholder;
+
+    // Update signup footer
+    if (signupPromptContainer && createAccountLink) {
+      if (config.showSignup) {
+        signupPromptContainer.innerHTML = `Don’t have an account? <a href="register.html?role=${config.signupRole}" class="create-account-link" id="createAccountLink">${config.signupText}</a>`;
+      } else {
+        signupPromptContainer.innerHTML = `<span style="color: var(--text-muted); font-size: 0.8rem;">🔒 System Administrator role already exists.</span>`;
+      }
+    }
+  }
+
+  // Handle Tab Switching
+  roleTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const selected = tab.getAttribute('data-role');
+      applyRole(selected);
+      hideAlert();
+      clearError(emailGroup, emailError);
+      clearError(passwordGroup, passwordError);
+    });
+  });
+
+  // Handle 1-Click Quick Demo Login Button
+  if (btnQuickDemo) {
+    btnQuickDemo.addEventListener('click', async () => {
+      const config = ROLE_CONFIGS[currentRole] || ROLE_CONFIGS.buyer;
+      emailInput.value = config.demoEmail;
+      passwordInput.value = config.demoPass;
+      clearError(emailGroup, emailError);
+      clearError(passwordGroup, passwordError);
+
+      showAlert(`⚡ Logging in as demo ${currentRole.toUpperCase()}...`, 'success');
+      form.dispatchEvent(new Event('submit'));
+    });
+  }
+
+  // Check URL parameters (e.g. role, registered=true, email)
   const urlParams = new URLSearchParams(window.location.search);
+  const paramRole = urlParams.get('role');
+  if (paramRole && ROLE_CONFIGS[paramRole]) {
+    applyRole(paramRole);
+  } else {
+    applyRole('buyer');
+  }
+
   if (urlParams.get('registered') === 'true') {
     showAlert('Account created successfully! Please enter your password to sign in.', 'success');
   }
@@ -51,7 +165,6 @@ document.addEventListener('DOMContentLoaded', () => {
       togglePasswordBtn.setAttribute('aria-pressed', isPassword ? 'true' : 'false');
       togglePasswordBtn.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
       
-      // Keep cursor at end of input
       passwordInput.focus();
       const valLength = passwordInput.value.length;
       passwordInput.setSelectionRange(valLength, valLength);
@@ -69,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return { valid: false, message: 'Email address is required.' };
     }
     if (!EMAIL_REGEX.test(trimmed)) {
-      return { valid: false, message: 'Please enter a valid email address (e.g. madhan@example.com).' };
+      return { valid: false, message: 'Please enter a valid email address.' };
     }
     return { valid: true, message: '' };
   }
@@ -109,9 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
     formAlert.style.display = 'none';
   }
 
-  // --------------------------------------------------------------------------
-  // Live Validation Clearing on Input
-  // --------------------------------------------------------------------------
+  // Live Validation Clearing
   emailInput.addEventListener('input', () => {
     if (emailGroup.classList.contains('has-error')) {
       const result = validateEmail(emailInput.value);
@@ -127,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --------------------------------------------------------------------------
-  // Form Submission Handler -> Redirects to Dashboard only on valid password
+  // Form Submission Handler -> Redirects to Dashboard with Role
   // --------------------------------------------------------------------------
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -136,7 +247,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const emailValue = emailInput.value.trim();
     const passwordValue = passwordInput.value;
 
-    // Validate fields
     const emailCheck = validateEmail(emailValue);
     const passwordCheck = validatePassword(passwordValue);
 
@@ -162,7 +272,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Set Loading State
     setLoading(true);
 
     try {
@@ -170,60 +279,58 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error('Authentication service is initializing. Please try again.');
       }
 
-      // Strictly verify credentials via Supabase & local account store
-      const sessionUser = await window.MadhanMartSupabase.signIn(emailValue, passwordValue);
+      // Verify credentials via Supabase & Multi-Role Store
+      const sessionUser = await window.MadhanMartSupabase.signIn(emailValue, passwordValue, currentRole);
 
       if (!sessionUser) {
         throw new Error('Invalid email or password. Please try again.');
       }
 
-      // Handle remember me
+      // Save user role in current user session
+      sessionUser.role = sessionUser.role || currentRole;
+      localStorage.setItem('madhan_mart_current_user', JSON.stringify(sessionUser));
+
       if (rememberMeCheckbox && rememberMeCheckbox.checked) {
         localStorage.setItem('madhan_mart_saved_email', emailValue);
       } else {
         localStorage.removeItem('madhan_mart_saved_email');
       }
 
-      showAlert('Login successful! Redirecting to dashboard...', 'success');
+      showAlert(`Login successful as ${sessionUser.role.toUpperCase()}! Redirecting...`, 'success');
 
-      // Seamless redirect to dashboard
       setTimeout(() => {
         window.location.href = 'dashboard.html';
-      }, 600);
+      }, 500);
 
     } catch (err) {
       console.warn('Login verification failed:', err.message || err);
       setLoading(false);
-      const errMsg = err.message || 'Invalid email or password. Please try again.';
+      const errMsg = err.message || 'Invalid email or password. Please check your credentials and try again.';
       setError(passwordGroup, passwordError, errMsg);
       showAlert(errMsg, 'error');
       passwordInput.focus();
     }
   });
 
-  // --------------------------------------------------------------------------
-  // Helper: Loading State
-  // --------------------------------------------------------------------------
   function setLoading(isLoading) {
+    const config = ROLE_CONFIGS[currentRole] || ROLE_CONFIGS.buyer;
     if (isLoading) {
       loginBtn.classList.add('is-loading');
       loginBtn.disabled = true;
-      btnLabel.textContent = 'Logging in...';
+      btnLabel.textContent = 'Authenticating...';
     } else {
       loginBtn.classList.remove('is-loading');
       loginBtn.disabled = false;
-      btnLabel.textContent = 'Login';
+      btnLabel.textContent = config.btnText;
     }
   }
 
-  // --------------------------------------------------------------------------
   // Secondary Actions
-  // --------------------------------------------------------------------------
   if (forgotPasswordLink) {
     forgotPasswordLink.addEventListener('click', (e) => {
       e.preventDefault();
       const currentEmail = emailInput.value.trim();
-      const promptEmail = prompt('Enter your email to receive a password reset link:', currentEmail || 'madhan@example.com');
+      const promptEmail = prompt('Enter your email to receive a password reset link:', currentEmail || 'buyer@madhanmart.com');
       if (promptEmail) {
         showAlert(`Password reset instructions sent to ${promptEmail}`, 'success');
       }
@@ -244,7 +351,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let rafPending = false;
 
   function updateGlowTransform() {
-    // Responsive smooth lerp for fluid tracking
     currentX += (targetX - currentX) * 0.35;
     currentY += (targetY - currentY) * 0.35;
 
@@ -294,7 +400,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cursorBeam) cursorBeam.style.opacity = '1';
   });
 
-  // Set initial position
   const initialTransform = `translate3d(${targetX}px, ${targetY}px, 0) translate(-50%, -50%)`;
   if (cursorHalo) cursorHalo.style.transform = initialTransform;
   if (cursorBeam) cursorBeam.style.transform = initialTransform;

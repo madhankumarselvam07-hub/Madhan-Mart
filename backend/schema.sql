@@ -1,23 +1,27 @@
 -- =============================================================================
 -- MADHAN MART - Supabase PostgreSQL Database Schema & Security Policies
+-- 3-Role System: Buyer, Seller, Admin
 -- Run this script inside your Supabase Project -> SQL Editor
 -- =============================================================================
 
 -- 1. Enable UUID Extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 2. Users Table (Public mirror for user profiles)
+-- 2. Users Table (Public mirror for user profiles with Roles: buyer, seller, admin)
 CREATE TABLE IF NOT EXISTS public.users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     full_name VARCHAR(120) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
+    role VARCHAR(20) NOT NULL DEFAULT 'buyer',
     password_hash VARCHAR(255) DEFAULT 'managed_by_supabase_auth',
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'buyer';
 CREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);
+CREATE INDEX IF NOT EXISTS idx_users_role ON public.users(role);
 
 -- 3. User Sessions Table (Token authentication & persistence)
 CREATE TABLE IF NOT EXISTS public.user_sessions (
@@ -30,7 +34,7 @@ CREATE TABLE IF NOT EXISTS public.user_sessions (
 
 CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON public.user_sessions(session_token);
 
--- 4. Gaming Products Table
+-- 4. Products Table (Multi-seller support)
 CREATE TABLE IF NOT EXISTS public.products (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(200) NOT NULL,
@@ -42,12 +46,17 @@ CREATE TABLE IF NOT EXISTS public.products (
     original_price NUMERIC(10, 2),
     rating NUMERIC(3, 2) DEFAULT 5.0,
     stock_quantity INT DEFAULT 100,
+    seller_email VARCHAR(255) DEFAULT 'seller@madhanmart.com',
+    seller_name VARCHAR(120) DEFAULT 'Official Tech Mart',
     is_available BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS image_url VARCHAR(500);
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS seller_email VARCHAR(255) DEFAULT 'seller@madhanmart.com';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS seller_name VARCHAR(120) DEFAULT 'Official Tech Mart';
 CREATE INDEX IF NOT EXISTS idx_products_category ON public.products(category);
+CREATE INDEX IF NOT EXISTS idx_products_seller_email ON public.products(seller_email);
 
 -- 5. Orders Table
 CREATE TABLE IF NOT EXISTS public.orders (
@@ -56,11 +65,15 @@ CREATE TABLE IF NOT EXISTS public.orders (
     user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
     user_email VARCHAR(255),
     total_amount NUMERIC(10, 2) NOT NULL,
-    status VARCHAR(50) DEFAULT 'Delivered',
+    status VARCHAR(50) DEFAULT 'Pending',
+    shipping_address TEXT,
+    phone_number VARCHAR(50),
+    city VARCHAR(100),
+    pincode VARCHAR(20),
+    payment_method VARCHAR(50) DEFAULT 'Google Pay / UPI',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Ensure columns exist on orders tables for delivery details and payment methods
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS user_email VARCHAR(255);
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS shipping_address TEXT;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50);
@@ -69,6 +82,7 @@ ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS pincode VARCHAR(20);
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50);
 CREATE INDEX IF NOT EXISTS idx_orders_user_email ON public.orders(user_email);
 CREATE INDEX IF NOT EXISTS idx_orders_user_id ON public.orders(user_id);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
 
 -- 6. Order Items Table
 CREATE TABLE IF NOT EXISTS public.order_items (
@@ -80,44 +94,55 @@ CREATE TABLE IF NOT EXISTS public.order_items (
     unit_price NUMERIC(10, 2) NOT NULL
 );
 
+-- 7. Product Reviews Table (Buyer Star Ratings & Comments)
+CREATE TABLE IF NOT EXISTS public.reviews (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    product_id UUID REFERENCES public.products(id) ON DELETE CASCADE,
+    user_email VARCHAR(255) NOT NULL,
+    user_name VARCHAR(120) NOT NULL,
+    rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON public.reviews(product_id);
+
 -- =============================================================================
--- 7. ROW LEVEL SECURITY (RLS) POLICIES & PERMISSIONS
--- (Fixes "does not create row in supabase" permission errors)
+-- 8. ROW LEVEL SECURITY (RLS) POLICIES & PERMISSIONS
 -- =============================================================================
 
--- Enable RLS
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies if any
 DROP POLICY IF EXISTS "Public users access" ON public.users;
 DROP POLICY IF EXISTS "Public products access" ON public.products;
 DROP POLICY IF EXISTS "Public orders access" ON public.orders;
 DROP POLICY IF EXISTS "Public order_items access" ON public.order_items;
+DROP POLICY IF EXISTS "Public reviews access" ON public.reviews;
 
--- Create Open Policies for Website Access
 CREATE POLICY "Public users access" ON public.users FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Public products access" ON public.products FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Public orders access" ON public.orders FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Public order_items access" ON public.order_items FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public reviews access" ON public.reviews FOR ALL USING (true) WITH CHECK (true);
 
--- Grant Table Permissions
 GRANT ALL ON TABLE public.users TO anon, authenticated, service_role;
 GRANT ALL ON TABLE public.products TO anon, authenticated, service_role;
 GRANT ALL ON TABLE public.orders TO anon, authenticated, service_role;
 GRANT ALL ON TABLE public.order_items TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.reviews TO anon, authenticated, service_role;
 
 -- =============================================================================
--- 8. AUTOMATIC USER SYNC TRIGGER (Auth -> public.users)
--- Automatically inserts Google OAuth & Email signups into public.users
+-- 9. AUTOMATIC USER SYNC TRIGGER (Auth -> public.users)
 -- =============================================================================
 
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.users (id, full_name, email, password_hash)
+  INSERT INTO public.users (id, full_name, email, role, password_hash)
   VALUES (
     new.id,
     COALESCE(
@@ -126,10 +151,12 @@ BEGIN
       split_part(new.email, '@', 1)
     ),
     new.email,
+    COALESCE(new.raw_user_meta_data->>'role', 'buyer'),
     'managed_by_supabase_auth'
   )
   ON CONFLICT (email) DO UPDATE
   SET full_name = EXCLUDED.full_name,
+      role = COALESCE(EXCLUDED.role, public.users.role),
       updated_at = NOW();
   RETURN new;
 END;
@@ -141,16 +168,32 @@ CREATE TRIGGER on_auth_user_created
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
 -- =============================================================================
--- 9. SEED INITIAL GAMING PRODUCTS
+-- 10. PRE-SEEDED SYSTEM ROLES & DEMO ACCOUNTS
 -- =============================================================================
-INSERT INTO public.products (name, category, badge, image_url, emoji, price, original_price, rating, stock_quantity)
+
+INSERT INTO public.users (full_name, email, role, password_hash)
 VALUES
-    ('PlayStation 5 DualSense Wireless Controller', 'consoles', 'Bestseller', 'images/ps5-controller.jpg', '🎮', 5790.00, 6490.00, 4.9, 50),
-    ('Razer Huntsman Mini 60% Optical Keyboard', 'peripherals', '20% OFF', 'images/razer-keyboard.jpg', '⌨️', 7999.00, 9999.00, 4.8, 35),
-    ('HyperX Cloud Alpha Wireless 7.1 Gaming Headset', 'audio', 'New', 'images/hyperx-headset.jpg', '🎧', 12499.00, 15999.00, 4.9, 25),
-    ('Logitech G502 X PLUS Wireless RGB Gaming Mouse', 'peripherals', '15% OFF', 'images/logitech-mouse.jpg', '🖱️', 8495.00, 9995.00, 4.7, 40),
-    ('ROG Swift OLED 27" 240Hz 0.03ms Gaming Monitor', 'hardware', 'Hot Deal', 'images/rog-monitor.jpg', '🖥️', 64990.00, 74990.00, 5.0, 15),
-    ('Meta Quest 3 128GB All-In-One VR Headset', 'consoles', 'Trending', 'images/meta-quest-vr.jpg', '🥽', 46990.00, 52990.00, 4.8, 20),
-    ('Secretlab TITAN Evo Ergonomic Gaming Chair', 'accessories', 'Top Rated', 'images/gaming-chair.jpg', '💺', 34999.00, 41999.00, 4.9, 10),
-    ('Elgato Stream Deck MK.2 – 15 Macro RGB Keys', 'accessories', 'Creator Pick', 'images/stream-deck.jpg', '🕹️', 13499.00, 15999.00, 4.9, 30)
+    ('System Administrator', 'admin@madhanmart.com', 'admin', 'Admin@123'),
+    ('Tech Deals Official', 'seller@madhanmart.com', 'seller', 'Seller@123'),
+    ('Madhan Kumar', 'buyer@madhanmart.com', 'buyer', 'Buyer@123'),
+    ('Madhan Kumar', 'madhan@gmail.com', 'buyer', 'managed_by_supabase_auth')
+ON CONFLICT (email) DO UPDATE
+SET role = EXCLUDED.role;
+
+-- =============================================================================
+-- 11. SEED CATALOG (Including PDF Example Products: Laptop ₹45000, Mobile ₹18000)
+-- =============================================================================
+
+INSERT INTO public.products (name, category, badge, image_url, emoji, price, original_price, rating, stock_quantity, seller_email, seller_name)
+VALUES
+    ('Dell Inspiron 15 Core i5 Laptop', 'laptops', 'Bestseller', 'images/laptop.jpg', '💻', 45000.00, 52000.00, 4.8, 25, 'seller@madhanmart.com', 'Tech Deals Official'),
+    ('Samsung Galaxy 5G Mobile', 'mobiles', 'Top Deal', 'images/mobile.jpg', '📱', 18000.00, 22000.00, 4.7, 40, 'seller@madhanmart.com', 'Tech Deals Official'),
+    ('PlayStation 5 DualSense Wireless Controller', 'consoles', 'Bestseller', 'images/ps5-controller.jpg', '🎮', 5790.00, 6490.00, 4.9, 50, 'seller@madhanmart.com', 'Tech Deals Official'),
+    ('Razer Huntsman Mini 60% Optical Keyboard', 'peripherals', '20% OFF', 'images/razer-keyboard.jpg', '⌨️', 7999.00, 9999.00, 4.8, 35, 'seller@madhanmart.com', 'Tech Deals Official'),
+    ('HyperX Cloud Alpha Wireless 7.1 Gaming Headset', 'audio', 'New', 'images/hyperx-headset.jpg', '🎧', 12499.00, 15999.00, 4.9, 25, 'seller@madhanmart.com', 'Tech Deals Official'),
+    ('Logitech G502 X PLUS Wireless RGB Gaming Mouse', 'peripherals', '15% OFF', 'images/logitech-mouse.jpg', '🖱️', 8495.00, 9995.00, 4.7, 40, 'seller@madhanmart.com', 'Tech Deals Official'),
+    ('ROG Swift OLED 27" 240Hz 0.03ms Gaming Monitor', 'hardware', 'Hot Deal', 'images/rog-monitor.jpg', '🖥️', 64990.00, 74990.00, 5.0, 15, 'seller@madhanmart.com', 'Tech Deals Official'),
+    ('Meta Quest 3 128GB All-In-One VR Headset', 'consoles', 'Trending', 'images/meta-quest-vr.jpg', '🥽', 46990.00, 52990.00, 4.8, 20, 'seller@madhanmart.com', 'Tech Deals Official'),
+    ('Secretlab TITAN Evo Ergonomic Gaming Chair', 'accessories', 'Top Rated', 'images/gaming-chair.jpg', '💺', 34999.00, 41999.00, 4.9, 10, 'seller@madhanmart.com', 'Tech Deals Official'),
+    ('Elgato Stream Deck MK.2 – 15 Macro RGB Keys', 'accessories', 'Creator Pick', 'images/stream-deck.jpg', '🕹️', 13499.00, 15999.00, 4.9, 30, 'seller@madhanmart.com', 'Tech Deals Official')
 ON CONFLICT DO NOTHING;

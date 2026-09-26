@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Create a MADHAN MART account to start shopping smart.">
-  <title>Create Account - MADHAN MART</title>
+  <meta name="description" content="Create a MADHAN MART account as a Buyer or Seller.">
+  <title>Create Account - MADHAN MART (3-Role System)</title>
   
   <!-- Modern Clean Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="register.css?v=3">
+  <link rel="stylesheet" href="register.css?v=4">
 </head>
 <body>
   <!-- Interactive Mouse-Tracking Spotlight Glow & Crisp Grid -->
@@ -37,13 +37,29 @@
           </div>
           <span class="brand-name">MADHAN <span class="brand-highlight">MART</span></span>
         </a>
-        <p class="brand-tagline">Shop Smart. Live Better.</p>
+        <p class="brand-tagline">Multi-Role Commerce Platform</p>
       </header>
+
+      <!-- Role Selection on Registration -->
+      <div class="reg-role-container">
+        <span class="reg-role-label">Select Account Type</span>
+        <div class="reg-role-toggle">
+          <button type="button" class="reg-role-btn active" data-role="buyer" id="regRoleBuyer">
+            <span class="reg-role-icon">🛒</span>
+            <span class="reg-role-text">Buyer Account</span>
+          </button>
+          <button type="button" class="reg-role-btn" data-role="seller" id="regRoleSeller">
+            <span class="reg-role-icon">🏪</span>
+            <span class="reg-role-text">Seller Account</span>
+          </button>
+        </div>
+        <p class="reg-role-hint" id="regRoleHint">Shop products, manage cart & place instant orders</p>
+      </div>
 
       <!-- Welcome Headings -->
       <div class="register-title-section">
-        <h1 class="register-title">Create Account</h1>
-        <p class="register-subtitle">Sign up to start shopping on Madhan Mart</p>
+        <h1 class="register-title" id="regTitle">Register as Buyer</h1>
+        <p class="register-subtitle" id="regSubtitle">Create your profile to start ordering</p>
       </div>
 
       <!-- Alert Message Box -->
@@ -54,7 +70,7 @@
         
         <!-- Full Name Input Group -->
         <div class="form-group" id="nameGroup">
-          <label for="fullName" class="form-label">Full Name</label>
+          <label for="fullName" class="form-label" id="nameLabel">Full Name</label>
           <div class="input-wrapper">
             <span class="input-icon" aria-hidden="true">
               <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -74,6 +90,21 @@
             >
           </div>
           <span class="error-text" id="nameError"></span>
+        </div>
+
+        <!-- Store Name Group (Visible when Seller is selected) -->
+        <div class="form-group" id="storeGroup" style="display: none;">
+          <label for="storeName" class="form-label">Store / Brand Name</label>
+          <div class="input-wrapper">
+            <span class="input-icon" aria-hidden="true">🏪</span>
+            <input 
+              type="text" 
+              id="storeName" 
+              name="storeName" 
+              class="form-input" 
+              placeholder="e.g. Tech Deals Pro" 
+            >
+          </div>
         </div>
 
         <!-- Email Input Group -->
@@ -116,7 +147,7 @@
               id="password" 
               name="password" 
               class="form-input" 
-              placeholder="At least 6 characters" 
+              placeholder="Create a password (min 6 chars)" 
               autocomplete="new-password" 
               required 
               aria-describedby="passwordError"
@@ -149,9 +180,9 @@
           <div class="input-wrapper">
             <span class="input-icon" aria-hidden="true">
               <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7.5 10L9.16667 11.6667L12.5 8.33333" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                 <rect x="3.33334" y="9.16667" width="13.3333" height="8.33333" rx="2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
                 <path d="M5.83334 9.16667V6.66667C5.83334 4.36548 7.69882 2.5 10 2.5C12.3012 2.5 14.1667 4.36548 14.1667 6.66667V9.16667" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="10" cy="13.3333" r="1.25" fill="currentColor"/>
               </svg>
             </span>
             <input 
@@ -159,7 +190,7 @@
               id="confirmPassword" 
               name="confirmPassword" 
               class="form-input" 
-              placeholder="Repeat your password" 
+              placeholder="Re-enter your password" 
               autocomplete="new-password" 
               required 
               aria-describedby="confirmPasswordError"
@@ -168,7 +199,7 @@
               type="button" 
               id="toggleConfirmPassword" 
               class="password-toggle-btn" 
-              aria-label="Show password" 
+              aria-label="Show confirm password" 
               aria-pressed="false"
             >
               <svg class="eye-icon eye-open" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -202,7 +233,7 @@
 
         <!-- Submit Button -->
         <button type="submit" id="registerBtn" class="btn-register">
-          <span class="btn-label">Create Account</span>
+          <span class="btn-label">Create Buyer Account</span>
           <span class="spinner" aria-hidden="true"></span>
         </button>
 
@@ -222,6 +253,6 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js"></script>
-  <script src="register.js?v=3"></script>
+  <script src="register.js?v=4"></script>
 </body>
 </html>
