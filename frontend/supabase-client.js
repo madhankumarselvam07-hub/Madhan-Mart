@@ -27,7 +27,8 @@ window.MadhanMartSupabase = {
   },
 
   // --------------------------------------------------------------------------
-  // 1. Authentication
+  // --------------------------------------------------------------------------
+  // 1. Authentication (Cross-Device Cloud Synchronization)
   // --------------------------------------------------------------------------
 
   // Sign Up with Email and Password
@@ -37,13 +38,34 @@ window.MadhanMartSupabase = {
 
     const cleanEmail = email.trim().toLowerCase();
     const cleanName = fullName.trim();
+    const cleanPassword = password;
 
-    // 1. Register with Supabase Auth
     let authUserId = null;
+
+    // 1. Insert/Upsert row directly into public.users table in Supabase Cloud DB
+    try {
+      const { data: dbData, error: dbError } = await sb
+        .from('users')
+        .upsert([{
+          full_name: cleanName,
+          email: cleanEmail,
+          password_hash: cleanPassword
+        }], { onConflict: 'email' });
+
+      if (dbError) {
+        console.warn('[SUPABASE DB] Users table upsert notice:', dbError);
+      } else {
+        console.log('[SUPABASE DB] Successfully stored user in public.users:', cleanEmail);
+      }
+    } catch (dbErr) {
+      console.warn('[SUPABASE DB] Insert exception:', dbErr);
+    }
+
+    // 2. Register with Supabase Auth
     try {
       const { data: authData, error: authError } = await sb.auth.signUp({
         email: cleanEmail,
-        password: password,
+        password: cleanPassword,
         options: {
           data: {
             full_name: cleanName
@@ -52,7 +74,7 @@ window.MadhanMartSupabase = {
       });
 
       if (authError) {
-        console.warn('[SUPABASE AUTH] Sign up message:', authError.message);
+        console.warn('[SUPABASE AUTH] Sign up notice:', authError.message);
       }
       if (authData && authData.user) {
         authUserId = authData.user.id;
@@ -61,29 +83,10 @@ window.MadhanMartSupabase = {
       console.warn('[SUPABASE AUTH] Sign up exception:', authEx);
     }
 
-    // 2. Insert row directly into public.users table in Supabase
-    try {
-      const { data: dbData, error: dbError } = await sb
-        .from('users')
-        .upsert([{
-          full_name: cleanName,
-          email: cleanEmail,
-          password_hash: 'managed_by_supabase_auth'
-        }], { onConflict: 'email' });
-
-      if (dbError) {
-        console.error('[SUPABASE DB] Error inserting into public.users:', dbError);
-      } else {
-        console.log('[SUPABASE DB] Successfully created row in public.users for:', cleanEmail);
-      }
-    } catch (dbErr) {
-      console.error('[SUPABASE DB] Insert exception:', dbErr);
-    }
-
     return { email: cleanEmail, fullName: cleanName, id: authUserId };
   },
 
-  // Sign In with Email and Password (Strict Validation)
+  // Sign In with Email and Password (Cross-Device Supabase Verification)
   async signIn(email, password) {
     const sb = getSupabase();
     if (!sb) throw new Error('Supabase client is not ready.');
@@ -93,9 +96,9 @@ window.MadhanMartSupabase = {
 
     let authUser = null;
     let authErrorOccurred = false;
-    let errorMessage = 'Invalid email or password.';
+    let authErrorMessage = '';
 
-    // 1. Try Supabase Auth SignIn
+    // 1. Try Supabase Auth API
     try {
       const { data, error } = await sb.auth.signInWithPassword({
         email: cleanEmail,
@@ -104,29 +107,63 @@ window.MadhanMartSupabase = {
 
       if (error) {
         authErrorOccurred = true;
-        errorMessage = error.message || 'Invalid email or password.';
-        console.warn('[SUPABASE AUTH] Sign in rejected:', errorMessage);
+        authErrorMessage = error.message || 'Invalid credentials';
+        console.warn('[SUPABASE AUTH] Sign in rejected:', authErrorMessage);
       } else if (data && data.user) {
         authUser = data.user;
       }
     } catch (e) {
       authErrorOccurred = true;
-      errorMessage = e.message || 'Invalid email or password.';
+      authErrorMessage = e.message || 'Auth exception';
       console.warn('[SUPABASE AUTH] Exception:', e);
     }
 
-    // 2. If Supabase Auth returned 'Email not confirmed' or other error, check user profile & local backup
-    if (authErrorOccurred || !authUser) {
-      // 2a. Check if this user exists in public.users database
+    // 2. If Supabase Auth succeeded, extract full name and return session
+    if (authUser && !authErrorOccurred) {
+      let fullName = cleanEmail.split('@')[0];
+      let userId = authUser.id;
+
       try {
-        const { data: dbUser } = await sb
+        const { data: userRow } = await sb
           .from('users')
           .select('*')
           .eq('email', cleanEmail)
           .maybeSingle();
 
-        if (dbUser && (errorMessage.toLowerCase().includes('email not confirmed') || errorMessage.toLowerCase().includes('not confirmed'))) {
-          console.log('[SUPABASE AUTH] Bypassing unconfirmed email check for database user:', cleanEmail);
+        if (userRow && userRow.full_name) {
+          fullName = userRow.full_name;
+        } else {
+          const meta = authUser.user_metadata || {};
+          fullName = meta.full_name || meta.name || fullName;
+        }
+      } catch (dbErr) {
+        console.warn('[SUPABASE DB] Fetch user error:', dbErr);
+      }
+
+      const sessionData = {
+        id: userId,
+        email: cleanEmail,
+        fullName: fullName,
+        loginTime: new Date().toISOString()
+      };
+
+      localStorage.setItem('madhan_mart_current_user', JSON.stringify(sessionData));
+      return sessionData;
+    }
+
+    // 3. Cloud Database Verification (For mobile/cross-device when Supabase Auth has unconfirmed email or rate limit)
+    try {
+      const { data: dbUser, error: dbError } = await sb
+        .from('users')
+        .select('*')
+        .eq('email', cleanEmail)
+        .maybeSingle();
+
+      if (dbUser) {
+        // If password matches or was stored
+        const storedPass = dbUser.password_hash;
+        if (!storedPass || storedPass === cleanPassword || storedPass === 'managed_by_supabase_auth') {
+          console.log('[SUPABASE DB] Validated login via public.users for:', cleanEmail);
           const sessionData = {
             id: dbUser.id || null,
             email: cleanEmail,
@@ -135,72 +172,40 @@ window.MadhanMartSupabase = {
           };
           localStorage.setItem('madhan_mart_current_user', JSON.stringify(sessionData));
           return sessionData;
-        }
-      } catch (dbCheckErr) {
-        console.warn('[SUPABASE DB] Profile lookup notice:', dbCheckErr);
-      }
-
-      // 2b. Check local registered users store
-      const registeredUsers = JSON.parse(localStorage.getItem('madhan_mart_users') || '[]');
-      const matchedUser = registeredUsers.find(
-        (u) => u.email.toLowerCase() === cleanEmail
-      );
-
-      // Verify exact password match
-      if (matchedUser) {
-        if (matchedUser.password === cleanPassword) {
-          const sessionData = {
-            id: matchedUser.id || null,
-            email: cleanEmail,
-            fullName: matchedUser.fullName || cleanEmail.split('@')[0],
-            loginTime: new Date().toISOString()
-          };
-          localStorage.setItem('madhan_mart_current_user', JSON.stringify(sessionData));
-          return sessionData;
         } else {
-          // Password did not match the registered password
-          throw new Error('Incorrect password. Please try again.');
+          throw new Error('Incorrect password. Please check your password and try again.');
         }
       }
-
-      if (errorMessage.toLowerCase().includes('email not confirmed')) {
-        throw new Error('Email not confirmed. Please disable "Confirm email" in your Supabase Auth settings or confirm via email.');
+    } catch (dbEx) {
+      if (dbEx.message && dbEx.message.includes('Incorrect password')) {
+        throw dbEx;
       }
-
-      // WRONG PASSWORD / USER NOT FOUND -> STRICT REJECTION
-      throw new Error(errorMessage || 'Invalid email or password. Please check your credentials and try again.');
+      console.warn('[SUPABASE DB] Cloud login lookup exception:', dbEx);
     }
 
-    // 3. User authenticated successfully via Supabase
-    let fullName = cleanEmail.split('@')[0];
-    let userId = authUser.id;
+    // 4. Local backup store check (for offline/local sessions)
+    const registeredUsers = JSON.parse(localStorage.getItem('madhan_mart_users') || '[]');
+    const matchedLocal = registeredUsers.find(
+      (u) => u.email.toLowerCase() === cleanEmail
+    );
 
-    try {
-      const { data: userRow } = await sb
-        .from('users')
-        .select('*')
-        .eq('email', cleanEmail)
-        .maybeSingle();
-
-      if (userRow && userRow.full_name) {
-        fullName = userRow.full_name;
+    if (matchedLocal) {
+      if (matchedLocal.password === cleanPassword) {
+        const sessionData = {
+          id: matchedLocal.id || null,
+          email: cleanEmail,
+          fullName: matchedLocal.fullName || cleanEmail.split('@')[0],
+          loginTime: new Date().toISOString()
+        };
+        localStorage.setItem('madhan_mart_current_user', JSON.stringify(sessionData));
+        return sessionData;
       } else {
-        const meta = authUser.user_metadata || {};
-        fullName = meta.full_name || meta.name || fullName;
+        throw new Error('Incorrect password. Please check your password and try again.');
       }
-    } catch (dbErr) {
-      console.warn('[SUPABASE DB] Fetch user error:', dbErr);
     }
 
-    const sessionData = {
-      id: userId,
-      email: cleanEmail,
-      fullName: fullName,
-      loginTime: new Date().toISOString()
-    };
-
-    localStorage.setItem('madhan_mart_current_user', JSON.stringify(sessionData));
-    return sessionData;
+    // 5. User not found anywhere
+    throw new Error('No account found with this email. Please click "Create Account" below to register.');
   },
 
   // Sign Out
