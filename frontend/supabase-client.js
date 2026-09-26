@@ -409,69 +409,129 @@ window.MadhanMartSupabase = {
       is_available: true
     };
 
+    let insertedItem = null;
+
+    // 1. Try Supabase Client SDK
     if (sb) {
       try {
-        console.log('[SUPABASE] Inserting product into public.products:', newProduct);
-        const { data, error } = await sb.from('products').insert([newProduct]).select().single();
-        if (error) {
-          console.error('[SUPABASE] Product insert error:', error);
-          // Try inserting without explicit ID in case table has internal generator
-          const payloadNoId = { ...newProduct };
-          delete payloadNoId.id;
-          const { data: fallbackData, error: fallbackError } = await sb.from('products').insert([payloadNoId]).select().single();
-          if (!fallbackError && fallbackData) {
-            console.log('[SUPABASE] Product inserted without explicit id:', fallbackData);
-            const localProducts = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
-            localProducts.unshift(fallbackData);
-            localStorage.setItem('madhan_mart_custom_products', JSON.stringify(localProducts));
-            return fallbackData;
-          }
-          throw error;
+        const { data, error } = await sb.from('products').insert([newProduct]).select();
+        if (!error && data && data.length > 0) {
+          insertedItem = data[0];
+          console.log('[SUPABASE] Product successfully saved via SDK:', insertedItem);
+        } else if (error) {
+          console.warn('[SUPABASE] SDK insert notice:', error);
         }
-        if (data) {
-          console.log('[SUPABASE] Product inserted successfully:', data);
-          const localProducts = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
-          localProducts.unshift(data);
-          localStorage.setItem('madhan_mart_custom_products', JSON.stringify(localProducts));
-          return data;
-        }
-      } catch (e) {
-        console.error('[SUPABASE] addProduct exception:', e);
-        throw e;
+      } catch (sdkErr) {
+        console.warn('[SUPABASE] SDK insert exception:', sdkErr);
       }
     }
 
+    // 2. Direct REST API Fallback (Guaranteed to write directly to Supabase table)
+    if (!insertedItem) {
+      try {
+        const restRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/products`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_CONFIG.anonKey,
+            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(newProduct)
+        });
+
+        if (restRes.ok) {
+          const restData = await restRes.json();
+          if (Array.isArray(restData) && restData.length > 0) {
+            insertedItem = restData[0];
+            console.log('[SUPABASE] Product successfully saved via REST API:', insertedItem);
+          }
+        } else {
+          const errText = await restRes.text();
+          console.error('[SUPABASE] REST API insert error:', errText);
+          throw new Error(`Supabase Database Error: ${errText}`);
+        }
+      } catch (restErr) {
+        console.error('[SUPABASE] Direct REST error:', restErr);
+        throw restErr;
+      }
+    }
+
+    if (!insertedItem) {
+      throw new Error('Could not insert product into Supabase table.');
+    }
+
+    // Update local cache
     const localProducts = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
-    localProducts.unshift(newProduct);
+    localProducts.unshift(insertedItem);
     localStorage.setItem('madhan_mart_custom_products', JSON.stringify(localProducts));
-    return newProduct;
+
+    return insertedItem;
   },
 
   async updateProduct(id, updates) {
     const sb = getSupabase();
+    let updatedItem = null;
+
     if (sb) {
       try {
-        const { data, error } = await sb.from('products').update(updates).eq('id', id).select().single();
-        if (!error && data) return data;
+        const { data, error } = await sb.from('products').update(updates).eq('id', id).select();
+        if (!error && data && data.length > 0) {
+          updatedItem = data[0];
+        }
+      } catch (e) {}
+    }
+
+    if (!updatedItem) {
+      try {
+        const restRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/products?id=eq.${id}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_CONFIG.anonKey,
+            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(updates)
+        });
+        if (restRes.ok) {
+          const restData = await restRes.json();
+          if (Array.isArray(restData) && restData.length > 0) updatedItem = restData[0];
+        }
       } catch (e) {}
     }
 
     const localProducts = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
     const idx = localProducts.findIndex(p => p.id === id);
     if (idx !== -1) {
-      localProducts[idx] = { ...localProducts[idx], ...updates };
+      localProducts[idx] = { ...localProducts[idx], ...(updatedItem || updates) };
       localStorage.setItem('madhan_mart_custom_products', JSON.stringify(localProducts));
-      return localProducts[idx];
     }
-    return updates;
+    return updatedItem || updates;
   },
 
   async deleteProduct(id) {
     const sb = getSupabase();
+    let deletedSuccess = false;
+
     if (sb) {
       try {
         const { error } = await sb.from('products').delete().eq('id', id);
-        if (!error) return true;
+        if (!error) deletedSuccess = true;
+      } catch (e) {}
+    }
+
+    if (!deletedSuccess) {
+      try {
+        const restRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/products?id=eq.${id}`, {
+          method: 'DELETE',
+          headers: {
+            'apikey': SUPABASE_CONFIG.anonKey,
+            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        if (restRes.ok) deletedSuccess = true;
       } catch (e) {}
     }
 
