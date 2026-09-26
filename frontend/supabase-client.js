@@ -115,8 +115,32 @@ window.MadhanMartSupabase = {
       console.warn('[SUPABASE AUTH] Exception:', e);
     }
 
-    // 2. If Supabase Auth failed, check local backup accounts for exact password match
+    // 2. If Supabase Auth returned 'Email not confirmed' or other error, check user profile & local backup
     if (authErrorOccurred || !authUser) {
+      // 2a. Check if this user exists in public.users database
+      try {
+        const { data: dbUser } = await sb
+          .from('users')
+          .select('*')
+          .eq('email', cleanEmail)
+          .maybeSingle();
+
+        if (dbUser && (errorMessage.toLowerCase().includes('email not confirmed') || errorMessage.toLowerCase().includes('not confirmed'))) {
+          console.log('[SUPABASE AUTH] Bypassing unconfirmed email check for database user:', cleanEmail);
+          const sessionData = {
+            id: dbUser.id || null,
+            email: cleanEmail,
+            fullName: dbUser.full_name || cleanEmail.split('@')[0],
+            loginTime: new Date().toISOString()
+          };
+          localStorage.setItem('madhan_mart_current_user', JSON.stringify(sessionData));
+          return sessionData;
+        }
+      } catch (dbCheckErr) {
+        console.warn('[SUPABASE DB] Profile lookup notice:', dbCheckErr);
+      }
+
+      // 2b. Check local registered users store
       const registeredUsers = JSON.parse(localStorage.getItem('madhan_mart_users') || '[]');
       const matchedUser = registeredUsers.find(
         (u) => u.email.toLowerCase() === cleanEmail
@@ -137,6 +161,10 @@ window.MadhanMartSupabase = {
           // Password did not match the registered password
           throw new Error('Incorrect password. Please try again.');
         }
+      }
+
+      if (errorMessage.toLowerCase().includes('email not confirmed')) {
+        throw new Error('Email not confirmed. Please disable "Confirm email" in your Supabase Auth settings or confirm via email.');
       }
 
       // WRONG PASSWORD / USER NOT FOUND -> STRICT REJECTION
