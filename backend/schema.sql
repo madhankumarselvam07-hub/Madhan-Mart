@@ -109,9 +109,20 @@ CREATE TABLE IF NOT EXISTS public.products (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS name VARCHAR(200);
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS category VARCHAR(50);
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS badge VARCHAR(50);
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS image_url VARCHAR(500);
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS emoji VARCHAR(10);
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS price NUMERIC(10, 2);
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS original_price NUMERIC(10, 2);
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS rating NUMERIC(3, 2) DEFAULT 5.0;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS stock_quantity INT DEFAULT 100;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS seller_email VARCHAR(255) DEFAULT 'seller@madhanmart.com';
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS seller_name VARCHAR(120) DEFAULT 'Official Tech Mart';
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS is_available BOOLEAN DEFAULT TRUE;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+
 CREATE INDEX IF NOT EXISTS idx_products_category ON public.products(category);
 CREATE INDEX IF NOT EXISTS idx_products_seller_email ON public.products(seller_email);
 

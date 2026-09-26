@@ -1071,6 +1071,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
+  // --------------------------------------------------------------------------
+  // 13. Live Supabase Realtime Catalog Synchronization
+  // --------------------------------------------------------------------------
+  if (window.MadhanMartSupabase && window.MadhanMartSupabase.client) {
+    try {
+      const sb = window.MadhanMartSupabase.client;
+      sb.channel('realtime-products-sync')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
+          console.log('[REALTIME] Product updated in database:', payload);
+          if (activeRole === 'buyer') {
+            const activeFilter = document.querySelector('.category-filters .filter-btn.active');
+            const cat = activeFilter ? activeFilter.getAttribute('data-cat') : 'all';
+            loadProducts(cat, searchInput ? searchInput.value : '');
+          } else if (activeRole === 'seller') {
+            loadSellerDashboard();
+          } else if (activeRole === 'admin') {
+            loadAdminDashboard();
+          }
+        })
+        .subscribe();
+    } catch (realtimeErr) {
+      console.warn('[REALTIME] Products subscription notice:', realtimeErr);
+    }
+  }
+
   // Initial load strictly based on user's authorized role
   initializeRoleView(activeRole);
 });

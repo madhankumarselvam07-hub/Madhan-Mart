@@ -354,14 +354,21 @@ window.MadhanMartSupabase = {
       if (sellerEmail) {
         query = query.eq('seller_email', sellerEmail);
       }
-      query = query.order('created_at', { ascending: true });
+      // Sort newest added products first
+      query = query.order('created_at', { ascending: false });
 
       const { data, error } = await query;
-      if (error || !data || data.length === 0) {
-        return this.getLocalProducts(category);
+      if (!error && data && Array.isArray(data) && data.length > 0) {
+        // Cache to local for seamless offline backup
+        const localCustom = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
+        const deletedIds = JSON.parse(localStorage.getItem('madhan_mart_deleted_products') || '[]');
+        const dbIds = new Set(data.map(p => p.id));
+        const extraLocal = localCustom.filter(p => !dbIds.has(p.id) && !deletedIds.includes(p.id));
+        return [...data, ...extraLocal];
       }
-      return data;
+      return this.getLocalProducts(category);
     } catch (e) {
+      console.warn('[SUPABASE] getProducts notice:', e);
       return this.getLocalProducts(category);
     }
   },
@@ -386,8 +393,18 @@ window.MadhanMartSupabase = {
     if (sb) {
       try {
         const { data, error } = await sb.from('products').insert([newProduct]).select().single();
-        if (!error && data) return data;
-      } catch (e) {}
+        if (error) {
+          console.warn('[SUPABASE] addProduct notice:', error);
+        }
+        if (!error && data) {
+          const localProducts = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
+          localProducts.unshift(data);
+          localStorage.setItem('madhan_mart_custom_products', JSON.stringify(localProducts));
+          return data;
+        }
+      } catch (e) {
+        console.warn('[SUPABASE] addProduct exception:', e);
+      }
     }
 
     const localProducts = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
