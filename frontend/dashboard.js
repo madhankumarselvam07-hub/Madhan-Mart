@@ -859,20 +859,27 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
 
       if (window.MadhanMartSupabase) {
-        if (editId) {
-          await window.MadhanMartSupabase.updateProduct(editId, productPayload);
-          showToast(`Updated product "${name}"!`);
-        } else {
-          await window.MadhanMartSupabase.addProduct(productPayload);
-          showToast(`Added product "${name}"!`);
+        try {
+          if (editId) {
+            await window.MadhanMartSupabase.updateProduct(editId, productPayload);
+            showToast(`✅ Updated product "${name}" in database!`);
+          } else {
+            await window.MadhanMartSupabase.addProduct(productPayload);
+            showToast(`🎉 Product "${name}" published to Supabase!`);
+          }
+        } catch (saveErr) {
+          console.error('[SUPABASE PRODUCT SAVE ERROR]', saveErr);
+          showToast(`⚠️ Supabase Error: ${saveErr.message || 'Check database permissions'}`);
+          alert(`Could not save product to Supabase: ${saveErr.message || 'Check RLS permissions on the products table'}`);
+          return;
         }
       }
 
       productModal.classList.remove('show');
       productForm.reset();
 
-      if (activeRole === 'seller') loadSellerDashboard();
-      else loadProducts('all');
+      if (activeRole === 'seller') await loadSellerDashboard();
+      else await loadProducts('all');
     });
   }
 

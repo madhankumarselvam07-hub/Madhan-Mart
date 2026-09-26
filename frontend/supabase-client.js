@@ -20,6 +20,19 @@ function getSupabase() {
   return window._madhanMartSupabaseInstance;
 }
 
+function generateClientUUID() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    try {
+      return crypto.randomUUID();
+    } catch (e) {}
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 window.MadhanMartSupabase = {
   get client() {
     return getSupabase();
@@ -375,7 +388,13 @@ window.MadhanMartSupabase = {
 
   async addProduct(product) {
     const sb = getSupabase();
+    let productId = product.id;
+    if (!productId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productId)) {
+      productId = generateClientUUID();
+    }
+
     const newProduct = {
+      id: productId,
       name: product.name,
       category: product.category || 'laptops',
       badge: product.badge || '',
@@ -392,23 +411,37 @@ window.MadhanMartSupabase = {
 
     if (sb) {
       try {
+        console.log('[SUPABASE] Inserting product into public.products:', newProduct);
         const { data, error } = await sb.from('products').insert([newProduct]).select().single();
         if (error) {
-          console.warn('[SUPABASE] addProduct notice:', error);
+          console.error('[SUPABASE] Product insert error:', error);
+          // Try inserting without explicit ID in case table has internal generator
+          const payloadNoId = { ...newProduct };
+          delete payloadNoId.id;
+          const { data: fallbackData, error: fallbackError } = await sb.from('products').insert([payloadNoId]).select().single();
+          if (!fallbackError && fallbackData) {
+            console.log('[SUPABASE] Product inserted without explicit id:', fallbackData);
+            const localProducts = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
+            localProducts.unshift(fallbackData);
+            localStorage.setItem('madhan_mart_custom_products', JSON.stringify(localProducts));
+            return fallbackData;
+          }
+          throw error;
         }
-        if (!error && data) {
+        if (data) {
+          console.log('[SUPABASE] Product inserted successfully:', data);
           const localProducts = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
           localProducts.unshift(data);
           localStorage.setItem('madhan_mart_custom_products', JSON.stringify(localProducts));
           return data;
         }
       } catch (e) {
-        console.warn('[SUPABASE] addProduct exception:', e);
+        console.error('[SUPABASE] addProduct exception:', e);
+        throw e;
       }
     }
 
     const localProducts = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
-    newProduct.id = 'prod_' + Date.now();
     localProducts.unshift(newProduct);
     localStorage.setItem('madhan_mart_custom_products', JSON.stringify(localProducts));
     return newProduct;
