@@ -4,13 +4,6 @@
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Auto-clean any legacy test items like IQOO NEO 10R
-  try {
-    const customProds = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
-    const filteredProds = customProds.filter(p => p && p.name && !p.name.toLowerCase().includes('iqoo') && !p.name.toLowerCase().includes('neo 10r'));
-    localStorage.setItem('madhan_mart_custom_products', JSON.stringify(filteredProds));
-  } catch (e) {}
-
   // --------------------------------------------------------------------------
   // 1. Authentication & Session Check
   // --------------------------------------------------------------------------
@@ -177,6 +170,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   const categoryFilters = document.querySelectorAll('.category-filters .filter-btn');
   const searchInput = document.getElementById('searchInput');
 
+  function getProductImage(p) {
+    if (p && p.image_url && typeof p.image_url === 'string' && p.image_url.trim() && !p.image_url.includes('null')) {
+      return p.image_url;
+    }
+    const name = ((p && p.name) || '').toLowerCase();
+    if (name.includes('playstation') || name.includes('controller') || name.includes('dualsense')) return 'images/ps5-controller.jpg';
+    if (name.includes('razer') || name.includes('keyboard') || name.includes('huntsman')) return 'images/razer-keyboard.jpg';
+    if (name.includes('hyperx') || name.includes('headset') || name.includes('cloud alpha')) return 'images/hyperx-headset.jpg';
+    if (name.includes('logitech') || name.includes('mouse') || name.includes('g502')) return 'images/logitech-mouse.jpg';
+    if (name.includes('rog') || name.includes('monitor') || name.includes('oled')) return 'images/rog-monitor.jpg';
+    if (name.includes('quest') || name.includes('vr') || name.includes('meta')) return 'images/meta-quest-vr.jpg';
+    if (name.includes('chair') || name.includes('secretlab') || name.includes('titan')) return 'images/gaming-chair.jpg';
+    if (name.includes('stream deck') || name.includes('elgato')) return 'images/stream-deck.jpg';
+    return 'images/ps5-controller.jpg';
+  }
+
   async function loadProducts(category = 'all', searchQuery = '') {
     if (window.MadhanMartSupabase) {
       allCatalogProducts = await window.MadhanMartSupabase.getProducts(category);
@@ -215,9 +224,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       card.className = 'product-card';
       card.setAttribute('data-cat', p.category || 'general');
 
-      const imgHtml = p.image_url 
-        ? `<img src="${p.image_url}" alt="${p.name}" class="product-img" loading="lazy" onerror="this.src='images/laptop.jpg'">`
-        : `<div style="height: 180px; display: flex; align-items: center; justify-content: center; font-size: 3rem; background: #f1f5f9;">${p.emoji || '📦'}</div>`;
+      const imgSrc = getProductImage(p);
+      const imgHtml = `<img src="${imgSrc}" alt="${p.name}" class="product-img" loading="lazy" onerror="this.src='images/ps5-controller.jpg'">`;
 
       const badgeHtml = p.badge ? `<span class="product-badge badge-popular">${p.badge}</span>` : '';
       const origPriceHtml = p.original_price ? `<span class="price-original">₹${parseFloat(p.original_price).toLocaleString()}</span>` : '';
@@ -242,7 +250,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               <span class="price-current">₹${parseFloat(p.price).toLocaleString()}</span>
               ${origPriceHtml}
             </div>
-            <button type="button" class="btn-add-cart" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-img="${p.image_url || 'images/laptop.jpg'}">Add +</button>
+            <button type="button" class="btn-add-cart" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-img="${imgSrc}">Add +</button>
           </div>
         </div>
       `;
@@ -730,10 +738,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (sellerProductsTableBody) {
       sellerProductsTableBody.innerHTML = '';
       prods.forEach(p => {
+        const imgSrc = getProductImage(p);
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td style="font-weight: 600; display: flex; align-items: center; gap: 8px;">
-            <img src="${p.image_url || 'images/laptop.jpg'}" style="width: 36px; height: 36px; border-radius: 6px; object-fit: cover;" onerror="this.src='images/laptop.jpg'">
+            <img src="${imgSrc}" style="width: 36px; height: 36px; border-radius: 6px; object-fit: cover;" onerror="this.src='images/ps5-controller.jpg'">
             <span>${p.name}</span>
           </td>
           <td><span style="text-transform: capitalize;">${p.category || 'tech'}</span></td>

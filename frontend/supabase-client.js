@@ -354,14 +354,6 @@ window.MadhanMartSupabase = {
 
   async getProducts(category = 'all', sellerEmail = null) {
     const sb = getSupabase();
-
-    // Auto-clean any legacy test items from local cache
-    try {
-      const localCustom = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
-      const cleaned = localCustom.filter(p => p && p.name && !p.name.toLowerCase().includes('iqoo') && !p.name.toLowerCase().includes('neo 10r'));
-      localStorage.setItem('madhan_mart_custom_products', JSON.stringify(cleaned));
-    } catch (e) {}
-
     if (!sb) return this.getLocalProducts(category);
 
     try {
@@ -378,7 +370,7 @@ window.MadhanMartSupabase = {
       const { data, error } = await query;
       if (!error && data && Array.isArray(data) && data.length > 0) {
         const deletedIds = JSON.parse(localStorage.getItem('madhan_mart_deleted_products') || '[]');
-        return data.filter(p => !deletedIds.includes(p.id) && (!p.name || (!p.name.toLowerCase().includes('iqoo') && !p.name.toLowerCase().includes('neo 10r'))));
+        return data.filter(p => !deletedIds.includes(p.id));
       }
       return this.getLocalProducts(category);
     } catch (e) {
@@ -548,24 +540,20 @@ window.MadhanMartSupabase = {
 
   getLocalProducts(category = 'all') {
     const defaults = [
-      { id: '1', name: 'Dell Inspiron 15 Core i5 Laptop', category: 'laptops', badge: 'Bestseller', image_url: 'images/laptop.jpg', emoji: '💻', price: 45000.00, original_price: 52000.00, rating: 4.8, stock_quantity: 25, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
-      { id: '2', name: 'Samsung Galaxy 5G Mobile', category: 'mobiles', badge: 'Top Deal', image_url: 'images/mobile.jpg', emoji: '📱', price: 18000.00, original_price: 22000.00, rating: 4.7, stock_quantity: 40, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
-      { id: '3', name: 'PlayStation 5 DualSense Wireless Controller', category: 'consoles', badge: 'Bestseller', image_url: 'images/ps5-controller.jpg', emoji: '🎮', price: 5790.00, original_price: 6490.00, rating: 4.9, stock_quantity: 50, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
-      { id: '4', name: 'Razer Huntsman Mini 60% Optical Keyboard', category: 'peripherals', badge: '20% OFF', image_url: 'images/razer-keyboard.jpg', emoji: '⌨️', price: 7999.00, original_price: 9999.00, rating: 4.8, stock_quantity: 35, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
-      { id: '5', name: 'HyperX Cloud Alpha Wireless 7.1 Gaming Headset', category: 'audio', badge: 'New', image_url: 'images/hyperx-headset.jpg', emoji: '🎧', price: 12499.00, original_price: 15999.00, rating: 4.9, stock_quantity: 25, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
-      { id: '6', name: 'Logitech G502 X PLUS Wireless RGB Gaming Mouse', category: 'peripherals', badge: '15% OFF', image_url: 'images/logitech-mouse.jpg', emoji: '🖱️', price: 8495.00, original_price: 9995.00, rating: 4.7, stock_quantity: 40, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
-      { id: '7', name: 'ROG Swift OLED 27" 240Hz 0.03ms Gaming Monitor', category: 'hardware', badge: 'Hot Deal', image_url: 'images/rog-monitor.jpg', emoji: '🖥️', price: 64990.00, original_price: 74990.00, rating: 5.0, stock_quantity: 15, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
-      { id: '8', name: 'Meta Quest 3 128GB All-In-One VR Headset', category: 'consoles', badge: 'Trending', image_url: 'images/meta-quest-vr.jpg', emoji: '🥽', price: 46990.00, original_price: 52990.00, rating: 4.8, stock_quantity: 20, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
-      { id: '9', name: 'Secretlab TITAN Evo Ergonomic Gaming Chair', category: 'accessories', badge: 'Top Rated', image_url: 'images/gaming-chair.jpg', emoji: '💺', price: 34999.00, original_price: 41999.00, rating: 4.9, stock_quantity: 10, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
-      { id: '10', name: 'Elgato Stream Deck MK.2 – 15 Macro RGB Keys', category: 'accessories', badge: 'Creator Pick', image_url: 'images/stream-deck.jpg', emoji: '🕹️', price: 13499.00, original_price: 15999.00, rating: 4.9, stock_quantity: 30, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' }
+      { id: '3e3b915f-0890-4def-afd4-fb4db5ac223d', name: 'PlayStation 5 DualSense Wireless Controller', category: 'consoles', badge: 'Bestseller', image_url: 'images/ps5-controller.jpg', emoji: '🎮', price: 5790.00, original_price: 6490.00, rating: 4.9, stock_quantity: 50, seller_email: 'seller@madhanmart.com', seller_name: 'Official Tech Mart' },
+      { id: '2974b341-06d0-48a1-86f3-3cdc973e4bc8', name: 'Razer Huntsman Mini 60% Optical Keyboard', category: 'peripherals', badge: '20% OFF', image_url: 'images/razer-keyboard.jpg', emoji: '⌨️', price: 7999.00, original_price: 9999.00, rating: 4.8, stock_quantity: 35, seller_email: 'seller@madhanmart.com', seller_name: 'Official Tech Mart' },
+      { id: 'a0112bac-19cd-45b4-96e9-968ab79d1ead', name: 'HyperX Cloud Alpha Wireless 7.1 Gaming Headset', category: 'audio', badge: 'New', image_url: 'images/hyperx-headset.jpg', emoji: '🎧', price: 12499.00, original_price: 15999.00, rating: 4.9, stock_quantity: 25, seller_email: 'seller@madhanmart.com', seller_name: 'Official Tech Mart' },
+      { id: '085d19a8-df99-4a60-adb7-fa8a308a5b69', name: 'Logitech G502 X PLUS Wireless RGB Gaming Mouse', category: 'peripherals', badge: '15% OFF', image_url: 'images/logitech-mouse.jpg', emoji: '🖱️', price: 8495.00, original_price: 9995.00, rating: 4.7, stock_quantity: 40, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
+      { id: 'd95aa559-11b4-4bc1-b269-02f641063ccc', name: 'ROG Swift OLED 27" 240Hz 0.03ms Gaming Monitor', category: 'hardware', badge: 'Hot Deal', image_url: 'images/rog-monitor.jpg', emoji: '🖥️', price: 64990.00, original_price: 74990.00, rating: 5.0, stock_quantity: 15, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
+      { id: 'cf66b5da-5995-44ba-8437-6451a3080b15', name: 'Meta Quest 3 128GB All-In-One VR Headset', category: 'consoles', badge: 'Trending', image_url: 'images/meta-quest-vr.jpg', emoji: '🥽', price: 46990.00, original_price: 52990.00, rating: 4.8, stock_quantity: 20, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
+      { id: 'cdc2db4e-e5bc-47ce-a2ae-f50947b47214', name: 'Secretlab TITAN Evo Ergonomic Gaming Chair', category: 'accessories', badge: 'Top Rated', image_url: 'images/gaming-chair.jpg', emoji: '💺', price: 34999.00, original_price: 41999.00, rating: 4.9, stock_quantity: 10, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
+      { id: 'b40bc392-4305-4bed-845c-3bd57c31e6fe', name: 'Elgato Stream Deck MK.2 – 15 Macro RGB Keys', category: 'accessories', badge: 'Creator Pick', image_url: 'images/stream-deck.jpg', emoji: '🕹️', price: 13499.00, original_price: 15999.00, rating: 4.9, stock_quantity: 30, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' }
     ];
 
     const customProducts = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
     const deletedIds = JSON.parse(localStorage.getItem('madhan_mart_deleted_products') || '[]');
 
-    const all = [...customProducts, ...defaults].filter(p => 
-      !deletedIds.includes(p.id) && (!p.name || (!p.name.toLowerCase().includes('iqoo') && !p.name.toLowerCase().includes('neo 10r')))
-    );
+    const all = [...customProducts, ...defaults].filter(p => !deletedIds.includes(p.id));
     if (category && category !== 'all') {
       return all.filter(p => p.category === category);
     }

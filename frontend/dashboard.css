@@ -382,16 +382,23 @@ body {
   position: fixed;
   bottom: 24px;
   right: 24px;
-  background-color: var(--text-main);
+  background-color: #0f172a;
   color: #ffffff;
-  padding: 12px 20px;
+  padding: 14px 22px;
   border-radius: var(--radius-md);
-  font-size: 0.88rem;
-  font-weight: 500;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  z-index: 99999;
   display: none;
-  animation: slideUp 0.2s ease forwards;
+  align-items: center;
+  gap: 10px;
+}
+
+.toast-popup.show {
+  display: flex !important;
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes slideUp {
