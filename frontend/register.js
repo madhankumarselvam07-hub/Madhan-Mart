@@ -310,10 +310,10 @@ document.addEventListener('DOMContentLoaded', () => {
     setLoading(true);
 
     try {
-      // 1. Live Supabase Sign Up with Role
+      // 1. Live Supabase Sign Up with Role & Store Name
       if (window.MadhanMartSupabase) {
         try {
-          await window.MadhanMartSupabase.signUp(emailVal, passVal, nameVal, selectedRole);
+          await window.MadhanMartSupabase.signUp(emailVal, passVal, nameVal, selectedRole, { storeName: storeVal });
         } catch (supabaseErr) {
           console.warn('[SUPABASE] Registration notice:', supabaseErr.message || supabaseErr);
           if (supabaseErr.message && (supabaseErr.message.includes('already registered') || supabaseErr.message.includes('User already registered'))) {

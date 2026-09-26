@@ -1521,53 +1521,45 @@ body {
 }
 
 /* --------------------------------------------------------------------------
-   8. 3-Role Navigation Switcher & Role Badges
+   8. Locked Role Portal Indicator & Role Badges
    -------------------------------------------------------------------------- */
-.nav-role-switcher {
-  display: flex;
+.portal-badge-indicator {
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   background: #f1f5f9;
-  padding: 4px;
-  border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
-}
-
-.nav-role-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  font-family: inherit;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--text-muted);
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all var(--transition);
+  color: var(--text-main);
+  box-shadow: var(--shadow-sm);
   user-select: none;
 }
 
-.nav-role-btn:hover {
-  color: var(--text-main);
-  background: rgba(255, 255, 255, 0.6);
+.portal-badge-indicator.portal-buyer {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
 }
 
-.nav-role-btn.active {
-  background: #ffffff;
-  color: var(--primary);
-  box-shadow: var(--shadow-sm);
-  font-weight: 700;
+.portal-badge-indicator.portal-seller {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #c2410c;
 }
 
-.nav-role-btn[data-role="seller"].active {
-  color: #ea580c;
+.portal-badge-indicator.portal-admin {
+  background: #faf5ff;
+  border-color: #e9d5ff;
+  color: #6b21a8;
 }
 
-.nav-role-btn[data-role="admin"].active {
-  color: #7c3aed;
+.portal-badge-icon {
+  font-size: 1rem;
+  line-height: 1;
 }
 
 .user-role-badge {

@@ -1,6 +1,6 @@
 /**
  * MADHAN MART - Supabase Client Integration
- * Pure Vanilla JavaScript Client with Multi-Role Support (Buyer, Seller, Admin)
+ * Dedicated Table Architecture: Buyers (public.buyers), Sellers (public.sellers), Admins (public.admins)
  */
 
 const SUPABASE_CONFIG = {
@@ -8,7 +8,6 @@ const SUPABASE_CONFIG = {
   anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwbXN2aXlvdXJuaHRqYXFtemZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzMzM3MDUsImV4cCI6MjEwNTkwOTcwNX0.-4tHZXqV19QCXizVX2QfAEvrhiBJqMrx803clppJPsk'
 };
 
-// Lazy / Safe Supabase Client Initializer
 function getSupabase() {
   if (!window._madhanMartSupabaseInstance) {
     if (window.supabase && typeof window.supabase.createClient === 'function') {
@@ -27,11 +26,9 @@ window.MadhanMartSupabase = {
   },
 
   // --------------------------------------------------------------------------
-  // 1. Authentication (Buyer, Seller, Admin)
+  // 1. Role-Specific Dedicated Table Registration
   // --------------------------------------------------------------------------
-
-  // Sign Up with Email, Password, Full Name and Role (buyer or seller)
-  async signUp(email, password, fullName, role = 'buyer') {
+  async signUp(email, password, fullName, role = 'buyer', extraData = {}) {
     const sb = getSupabase();
     if (!sb) throw new Error('Supabase client is loading. Please try again.');
 
@@ -39,180 +36,262 @@ window.MadhanMartSupabase = {
     const cleanName = fullName.trim();
     const cleanPassword = password;
     const cleanRole = (role || 'buyer').toLowerCase();
+    const storeName = extraData.storeName || `${cleanName}'s Store`;
 
     let authUserId = null;
 
-    // 1. Insert/Upsert row directly into public.users table in Supabase Cloud DB
+    // 1. Insert into Master public.users table
     try {
-      const { data: dbData, error: dbError } = await sb
-        .from('users')
-        .upsert([{
+      await sb.from('users').upsert([{
+        full_name: cleanName,
+        email: cleanEmail,
+        role: cleanRole,
+        password_hash: cleanPassword
+      }], { onConflict: 'email' });
+    } catch (e) {
+      console.warn('[SUPABASE] Master user sync notice:', e);
+    }
+
+    // 2. Insert into Role-Specific Dedicated Table (public.sellers / public.buyers / public.admins)
+    if (cleanRole === 'seller') {
+      try {
+        const { error: sellerErr } = await sb.from('sellers').upsert([{
           full_name: cleanName,
           email: cleanEmail,
-          role: cleanRole,
+          store_name: storeName,
           password_hash: cleanPassword
         }], { onConflict: 'email' });
 
-      if (dbError) {
-        console.warn('[SUPABASE DB] Users table upsert notice:', dbError);
-      } else {
-        console.log('[SUPABASE DB] Successfully stored user in public.users:', cleanEmail, 'Role:', cleanRole);
+        if (sellerErr) console.warn('[SUPABASE] Seller table insert notice:', sellerErr);
+      } catch (sellerEx) {
+        console.warn('[SUPABASE] Seller table exception:', sellerEx);
       }
-    } catch (dbErr) {
-      console.warn('[SUPABASE DB] Insert exception:', dbErr);
+
+      // Local backup for sellers
+      const localSellers = JSON.parse(localStorage.getItem('madhan_mart_sellers') || '[]');
+      localSellers.push({ fullName: cleanName, email: cleanEmail, storeName, password: cleanPassword, role: 'seller' });
+      localStorage.setItem('madhan_mart_sellers', JSON.stringify(localSellers));
+
+    } else if (cleanRole === 'buyer') {
+      try {
+        const { error: buyerErr } = await sb.from('buyers').upsert([{
+          full_name: cleanName,
+          email: cleanEmail,
+          password_hash: cleanPassword
+        }], { onConflict: 'email' });
+
+        if (buyerErr) console.warn('[SUPABASE] Buyer table insert notice:', buyerErr);
+      } catch (buyerEx) {
+        console.warn('[SUPABASE] Buyer table exception:', buyerEx);
+      }
+
+      // Local backup for buyers
+      const localBuyers = JSON.parse(localStorage.getItem('madhan_mart_buyers') || '[]');
+      localBuyers.push({ fullName: cleanName, email: cleanEmail, password: cleanPassword, role: 'buyer' });
+      localStorage.setItem('madhan_mart_buyers', JSON.stringify(localBuyers));
     }
 
-    // 2. Register with Supabase Auth
+    // Local general user store
+    const localUsers = JSON.parse(localStorage.getItem('madhan_mart_users') || '[]');
+    localUsers.push({ fullName: cleanName, email: cleanEmail, password: cleanPassword, role: cleanRole, storeName });
+    localStorage.setItem('madhan_mart_users', JSON.stringify(localUsers));
+
+    // 3. Register with Supabase Auth API
     try {
-      const { data: authData, error: authError } = await sb.auth.signUp({
+      const { data: authData } = await sb.auth.signUp({
         email: cleanEmail,
         password: cleanPassword,
         options: {
           data: {
             full_name: cleanName,
-            role: cleanRole
+            role: cleanRole,
+            store_name: storeName
           }
         }
       });
-
-      if (authError) {
-        console.warn('[SUPABASE AUTH] Sign up notice:', authError.message);
-      }
       if (authData && authData.user) {
         authUserId = authData.user.id;
       }
-    } catch (authEx) {
-      console.warn('[SUPABASE AUTH] Sign up exception:', authEx);
-    }
+    } catch (authEx) {}
 
     return { email: cleanEmail, fullName: cleanName, role: cleanRole, id: authUserId };
   },
 
-  // Sign In with Email, Password and optional requested Role
-  async signIn(email, password, requestedRole = null) {
+  // --------------------------------------------------------------------------
+  // 2. Strict Dedicated Table Login & Role Isolation Enforcement
+  // --------------------------------------------------------------------------
+  async signIn(email, password, requestedRole = 'buyer') {
     const sb = getSupabase();
     if (!sb) throw new Error('Supabase client is not ready.');
 
     const cleanEmail = email.trim().toLowerCase();
     const cleanPassword = password;
+    const cleanRole = (requestedRole || 'buyer').toLowerCase();
 
-    let authUser = null;
-    let authErrorOccurred = false;
-    let authErrorMessage = '';
+    // 1. Verify User Role from Dedicated Table / Master Table
+    let userRecord = null;
+    let actualRole = null;
+    let fullName = cleanEmail.split('@')[0];
 
-    // 1. Try Supabase Auth API
+    // Check Cloud Database
+    if (cleanRole === 'seller') {
+      try {
+        const { data: sellerData } = await sb.from('sellers').select('*').eq('email', cleanEmail).maybeSingle();
+        if (sellerData) {
+          userRecord = sellerData;
+          actualRole = 'seller';
+          fullName = sellerData.full_name || fullName;
+        }
+      } catch (e) {}
+
+      // If not found in sellers, check if registered in buyers or admins to provide clear feedback
+      if (!userRecord) {
+        try {
+          const { data: bData } = await sb.from('buyers').select('*').eq('email', cleanEmail).maybeSingle();
+          if (bData) {
+            throw new Error('This account is registered as a Buyer. Please switch to the Buyer login tab.');
+          }
+          const { data: aData } = await sb.from('admins').select('*').eq('email', cleanEmail).maybeSingle();
+          if (aData) {
+            throw new Error('This account is an Administrator. Please switch to the Admin login tab.');
+          }
+        } catch (e) {
+          if (e.message && e.message.includes('registered as') || e.message.includes('Administrator')) throw e;
+        }
+
+        // Check local store
+        const localSellers = JSON.parse(localStorage.getItem('madhan_mart_sellers') || '[]');
+        const matchedSeller = localSellers.find(s => s.email.toLowerCase() === cleanEmail);
+        if (matchedSeller) {
+          userRecord = matchedSeller;
+          actualRole = 'seller';
+          fullName = matchedSeller.fullName || fullName;
+        } else {
+          throw new Error('No Seller account found with this email. Please register as a Seller first.');
+        }
+      }
+
+    } else if (cleanRole === 'admin') {
+      try {
+        const { data: adminData } = await sb.from('admins').select('*').eq('email', cleanEmail).maybeSingle();
+        if (adminData) {
+          userRecord = adminData;
+          actualRole = 'admin';
+          fullName = adminData.full_name || fullName;
+        }
+      } catch (e) {}
+
+      // Fallback check for admin in public.users
+      if (!userRecord) {
+        try {
+          const { data: uData } = await sb.from('users').select('*').eq('email', cleanEmail).eq('role', 'admin').maybeSingle();
+          if (uData) {
+            userRecord = uData;
+            actualRole = 'admin';
+            fullName = uData.full_name || fullName;
+          }
+        } catch (e) {}
+      }
+
+      if (!userRecord) {
+        throw new Error('Access Denied: This email address is not registered in the Administrator registry.');
+      }
+
+    } else {
+      // Buyer Role Verification
+      try {
+        const { data: sellerCheck } = await sb.from('sellers').select('*').eq('email', cleanEmail).maybeSingle();
+        if (sellerCheck) {
+          throw new Error('This account is registered as a Seller. Please switch to the Seller login tab.');
+        }
+
+        const { data: adminCheck } = await sb.from('admins').select('*').eq('email', cleanEmail).maybeSingle();
+        if (adminCheck) {
+          throw new Error('This account is an Administrator. Please switch to the Admin login tab.');
+        }
+
+        const { data: buyerData } = await sb.from('buyers').select('*').eq('email', cleanEmail).maybeSingle();
+        if (buyerData) {
+          userRecord = buyerData;
+          actualRole = 'buyer';
+          fullName = buyerData.full_name || fullName;
+        } else {
+          const { data: userData } = await sb.from('users').select('*').eq('email', cleanEmail).maybeSingle();
+          if (userData && userData.role !== 'seller' && userData.role !== 'admin') {
+            userRecord = userData;
+            actualRole = 'buyer';
+            fullName = userData.full_name || fullName;
+          }
+        }
+      } catch (e) {
+        if (e.message && (e.message.includes('registered as a Seller') || e.message.includes('Administrator'))) throw e;
+      }
+
+      // Check local buyers
+      if (!userRecord) {
+        const localBuyers = JSON.parse(localStorage.getItem('madhan_mart_buyers') || '[]');
+        const matchedBuyer = localBuyers.find(b => b.email.toLowerCase() === cleanEmail);
+        if (matchedBuyer) {
+          userRecord = matchedBuyer;
+          actualRole = 'buyer';
+          fullName = matchedBuyer.fullName || fullName;
+        } else {
+          const localUsers = JSON.parse(localStorage.getItem('madhan_mart_users') || '[]');
+          const matchedUser = localUsers.find(u => u.email.toLowerCase() === cleanEmail);
+          if (matchedUser && matchedUser.role === 'buyer') {
+            userRecord = matchedUser;
+            actualRole = 'buyer';
+            fullName = matchedUser.fullName || fullName;
+          } else if (matchedUser && matchedUser.role === 'seller') {
+            throw new Error('This account is registered as a Seller. Please switch to the Seller login tab.');
+          } else if (matchedUser && matchedUser.role === 'admin') {
+            throw new Error('This account is an Administrator. Please switch to the Admin login tab.');
+          }
+        }
+      }
+
+      if (!userRecord) {
+        throw new Error('No Buyer account found with this email. Please click "Create Account" below to register.');
+      }
+    }
+
+    // 2. Validate Password
+    let passwordMatched = false;
+
+    // Check Supabase Auth API
     try {
       const { data, error } = await sb.auth.signInWithPassword({
         email: cleanEmail,
         password: cleanPassword
       });
-
-      if (error) {
-        authErrorOccurred = true;
-        authErrorMessage = error.message || 'Invalid credentials';
-        console.warn('[SUPABASE AUTH] Sign in rejected:', authErrorMessage);
-      } else if (data && data.user) {
-        authUser = data.user;
+      if (!error && data && data.user) {
+        passwordMatched = true;
       }
-    } catch (e) {
-      authErrorOccurred = true;
-      authErrorMessage = e.message || 'Auth exception';
-      console.warn('[SUPABASE AUTH] Exception:', e);
-    }
+    } catch (e) {}
 
-    // 2. If Supabase Auth succeeded, extract full name and role
-    if (authUser && !authErrorOccurred) {
-      let fullName = cleanEmail.split('@')[0];
-      let userRole = requestedRole || 'buyer';
-      let userId = authUser.id;
-
-      try {
-        const { data: userRow } = await sb
-          .from('users')
-          .select('*')
-          .eq('email', cleanEmail)
-          .maybeSingle();
-
-        if (userRow) {
-          if (userRow.full_name) fullName = userRow.full_name;
-          if (userRow.role) userRole = userRow.role;
-        } else {
-          const meta = authUser.user_metadata || {};
-          fullName = meta.full_name || meta.name || fullName;
-          if (meta.role) userRole = meta.role;
-        }
-      } catch (dbErr) {
-        console.warn('[SUPABASE DB] Fetch user error:', dbErr);
-      }
-
-      const sessionData = {
-        id: userId,
-        email: cleanEmail,
-        fullName: fullName,
-        role: userRole,
-        loginTime: new Date().toISOString()
-      };
-
-      localStorage.setItem('madhan_mart_current_user', JSON.stringify(sessionData));
-      return sessionData;
-    }
-
-    // 3. Cloud Database Verification (For unconfirmed emails, rate limits, or direct table sync)
-    try {
-      const { data: dbUser, error: dbError } = await sb
-        .from('users')
-        .select('*')
-        .eq('email', cleanEmail)
-        .maybeSingle();
-
-      if (dbUser) {
-        const storedPass = dbUser.password_hash;
-        if (!storedPass || storedPass === cleanPassword || storedPass === 'managed_by_supabase_auth') {
-          console.log('[SUPABASE DB] Validated login via public.users for:', cleanEmail);
-          const sessionData = {
-            id: dbUser.id || null,
-            email: cleanEmail,
-            fullName: dbUser.full_name || cleanEmail.split('@')[0],
-            role: dbUser.role || requestedRole || 'buyer',
-            loginTime: new Date().toISOString()
-          };
-          localStorage.setItem('madhan_mart_current_user', JSON.stringify(sessionData));
-          return sessionData;
-        } else {
-          throw new Error('Incorrect password. Please check your password and try again.');
-        }
-      }
-    } catch (dbEx) {
-      if (dbEx.message && dbEx.message.includes('Incorrect password')) {
-        throw dbEx;
-      }
-      console.warn('[SUPABASE DB] Cloud login lookup notice:', dbEx);
-    }
-
-    // 4. Local backup store check (for offline/locally registered accounts)
-    const registeredUsers = JSON.parse(localStorage.getItem('madhan_mart_users') || '[]');
-    const matchedLocal = registeredUsers.find(
-      (u) => u.email.toLowerCase() === cleanEmail
-    );
-
-    if (matchedLocal) {
-      if (matchedLocal.password === cleanPassword) {
-        const sessionData = {
-          id: matchedLocal.id || null,
-          email: cleanEmail,
-          fullName: matchedLocal.fullName || cleanEmail.split('@')[0],
-          role: matchedLocal.role || requestedRole || 'buyer',
-          loginTime: new Date().toISOString()
-        };
-        localStorage.setItem('madhan_mart_current_user', JSON.stringify(sessionData));
-        return sessionData;
-      } else {
-        throw new Error('Incorrect password. Please check your password and try again.');
+    // Check Password Hash in DB
+    if (!passwordMatched && userRecord) {
+      const storedPass = userRecord.password_hash || userRecord.password;
+      if (storedPass === cleanPassword || storedPass === 'managed_by_supabase_auth') {
+        passwordMatched = true;
       }
     }
 
-    // 5. User not found
-    throw new Error('No account found with this email. Please click "Create Account" below to register.');
+    if (!passwordMatched) {
+      throw new Error('Incorrect password. Please check your credentials and try again.');
+    }
+
+    // 3. Create Session with Strict Locked Role
+    const sessionData = {
+      id: userRecord.id || userRecord.user_id || 'user_' + Date.now(),
+      email: cleanEmail,
+      fullName: fullName,
+      role: actualRole,
+      loginTime: new Date().toISOString()
+    };
+
+    localStorage.setItem('madhan_mart_current_user', JSON.stringify(sessionData));
+    return sessionData;
   },
 
   // Sign Out
@@ -222,13 +301,11 @@ window.MadhanMartSupabase = {
     if (sb) {
       try {
         await sb.auth.signOut();
-      } catch (e) {
-        console.warn('[SUPABASE] Sign out notice:', e);
-      }
+      } catch (e) {}
     }
   },
 
-  // Check Current Session & Hydrate
+  // Check Current Session
   async getCurrentSession() {
     const localUser = localStorage.getItem('madhan_mart_current_user');
     if (localUser) {
@@ -245,18 +322,8 @@ window.MadhanMartSupabase = {
       if (!error && session && session.user) {
         const user = session.user;
         const meta = user.user_metadata || {};
-        const fullName = meta.full_name || meta.name || user.email.split('@')[0];
         const role = meta.role || 'buyer';
-
-        try {
-          await sb.from('users').upsert([{
-            id: user.id,
-            full_name: fullName,
-            email: user.email,
-            role: role,
-            password_hash: 'managed_by_supabase_auth'
-          }], { onConflict: 'email' });
-        } catch (e) {}
+        const fullName = meta.full_name || meta.name || user.email.split('@')[0];
 
         const userData = {
           id: user.id,
@@ -268,25 +335,24 @@ window.MadhanMartSupabase = {
         localStorage.setItem('madhan_mart_current_user', JSON.stringify(userData));
         return userData;
       }
-    } catch (e) {
-      console.warn('[SUPABASE] Session check error:', e);
-    }
+    } catch (e) {}
     return null;
   },
 
   // --------------------------------------------------------------------------
-  // 2. Products Database (Catalog, Search, Add, Edit, Delete for Sellers & Admins)
+  // 3. Products Management (Seller & Admin)
   // --------------------------------------------------------------------------
-  async getProducts(category = 'all') {
+  async getProducts(category = 'all', sellerEmail = null) {
     const sb = getSupabase();
-    if (!sb) {
-      return this.getLocalProducts(category);
-    }
+    if (!sb) return this.getLocalProducts(category);
 
     try {
       let query = sb.from('products').select('*');
       if (category && category !== 'all') {
         query = query.eq('category', category);
+      }
+      if (sellerEmail) {
+        query = query.eq('seller_email', sellerEmail);
       }
       query = query.order('created_at', { ascending: true });
 
@@ -296,12 +362,10 @@ window.MadhanMartSupabase = {
       }
       return data;
     } catch (e) {
-      console.warn('[SUPABASE] Products query error:', e);
       return this.getLocalProducts(category);
     }
   },
 
-  // Seller/Admin: Add Product
   async addProduct(product) {
     const sb = getSupabase();
     const newProduct = {
@@ -315,22 +379,17 @@ window.MadhanMartSupabase = {
       rating: 5.0,
       stock_quantity: parseInt(product.stock_quantity) || 20,
       seller_email: product.seller_email || '',
-      seller_name: product.seller_name || 'Seller',
+      seller_name: product.seller_name || 'Seller Store',
       is_available: true
     };
 
     if (sb) {
       try {
         const { data, error } = await sb.from('products').insert([newProduct]).select().single();
-        if (!error && data) {
-          return data;
-        }
-      } catch (e) {
-        console.warn('[SUPABASE] Product insert error:', e);
-      }
+        if (!error && data) return data;
+      } catch (e) {}
     }
 
-    // Local fallback store
     const localProducts = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
     newProduct.id = 'prod_' + Date.now();
     localProducts.unshift(newProduct);
@@ -338,16 +397,13 @@ window.MadhanMartSupabase = {
     return newProduct;
   },
 
-  // Seller/Admin: Update Product
   async updateProduct(id, updates) {
     const sb = getSupabase();
     if (sb) {
       try {
         const { data, error } = await sb.from('products').update(updates).eq('id', id).select().single();
         if (!error && data) return data;
-      } catch (e) {
-        console.warn('[SUPABASE] Update product error:', e);
-      }
+      } catch (e) {}
     }
 
     const localProducts = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
@@ -360,16 +416,13 @@ window.MadhanMartSupabase = {
     return updates;
   },
 
-  // Seller/Admin: Delete Product
   async deleteProduct(id) {
     const sb = getSupabase();
     if (sb) {
       try {
         const { error } = await sb.from('products').delete().eq('id', id);
         if (!error) return true;
-      } catch (e) {
-        console.warn('[SUPABASE] Delete product error:', e);
-      }
+      } catch (e) {}
     }
 
     const localProducts = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
@@ -382,7 +435,6 @@ window.MadhanMartSupabase = {
     return true;
   },
 
-  // Standard catalog products
   getLocalProducts(category = 'all') {
     const defaults = [
       { id: '1', name: 'Dell Inspiron 15 Core i5 Laptop', category: 'laptops', badge: 'Bestseller', image_url: 'images/laptop.jpg', emoji: '💻', price: 45000.00, original_price: 52000.00, rating: 4.8, stock_quantity: 25, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
@@ -408,7 +460,7 @@ window.MadhanMartSupabase = {
   },
 
   // --------------------------------------------------------------------------
-  // 3. Orders Database (Orders, Status Updates & Multi-Role Querying)
+  // 4. Orders Management
   // --------------------------------------------------------------------------
   async createOrder(items, totalAmount, targetUser = null, orderDetails = {}) {
     const sb = getSupabase();
@@ -452,12 +504,8 @@ window.MadhanMartSupabase = {
     if (sb) {
       try {
         const { data, error } = await sb.from('orders').insert([orderPayload]).select().single();
-        if (!error && data) {
-          orderData = data;
-        }
-      } catch (orderError) {
-        console.warn('[SUPABASE] Order insert notice:', orderError);
-      }
+        if (!error && data) orderData = data;
+      } catch (orderError) {}
     }
 
     if (sb && items && items.length > 0 && orderData && orderData.id) {
@@ -469,9 +517,7 @@ window.MadhanMartSupabase = {
           unit_price: item.price
         }));
         await sb.from('order_items').insert(orderItemsToInsert);
-      } catch (itemErr) {
-        console.warn('[SUPABASE] Order items insert notice:', itemErr);
-      }
+      } catch (itemErr) {}
     }
 
     const createdOrder = orderData || {
@@ -491,7 +537,6 @@ window.MadhanMartSupabase = {
     return createdOrder;
   },
 
-  // Get Buyer Orders
   async getUserOrders(targetUser = null) {
     const sb = getSupabase();
     let userEmail = null;
@@ -524,39 +569,31 @@ window.MadhanMartSupabase = {
 
         const { data, error } = await query.order('created_at', { ascending: false });
         if (!error && data && data.length > 0) return data;
-      } catch (e) {
-        console.warn('[SUPABASE] Orders query error:', e);
-      }
+      } catch (e) {}
     }
 
     const masterOrders = JSON.parse(localStorage.getItem('madhan_mart_all_orders') || '[]');
     return masterOrders.filter(o => o.user_email && o.user_email.toLowerCase() === userEmail);
   },
 
-  // Admin / Seller: Get All System Orders
   async getAllOrders() {
     const sb = getSupabase();
     if (sb) {
       try {
         const { data, error } = await sb.from('orders').select('*').order('created_at', { ascending: false });
         if (!error && data && data.length > 0) return data;
-      } catch (e) {
-        console.warn('[SUPABASE] All orders query error:', e);
-      }
+      } catch (e) {}
     }
 
     return JSON.parse(localStorage.getItem('madhan_mart_all_orders') || '[]');
   },
 
-  // Admin / Seller: Update Order Status
   async updateOrderStatus(orderId, newStatus) {
     const sb = getSupabase();
     if (sb) {
       try {
         await sb.from('orders').update({ status: newStatus }).eq('id', orderId);
-      } catch (e) {
-        console.warn('[SUPABASE] Update order status error:', e);
-      }
+      } catch (e) {}
     }
 
     const masterOrders = JSON.parse(localStorage.getItem('madhan_mart_all_orders') || '[]');
@@ -569,7 +606,7 @@ window.MadhanMartSupabase = {
   },
 
   // --------------------------------------------------------------------------
-  // 4. Admin Management (All Registered Users)
+  // 5. User Registry Queries (Admin)
   // --------------------------------------------------------------------------
   async getAllUsers() {
     const sb = getSupabase();
@@ -577,13 +614,9 @@ window.MadhanMartSupabase = {
 
     if (sb) {
       try {
-        const { data, error } = await sb.from('users').select('*').order('created_at', { ascending: false });
-        if (!error && data) {
-          cloudUsers = data;
-        }
-      } catch (e) {
-        console.warn('[SUPABASE] All users query error:', e);
-      }
+        const { data } = await sb.from('users').select('*').order('created_at', { ascending: false });
+        if (data) cloudUsers = data;
+      } catch (e) {}
     }
 
     const localUsers = JSON.parse(localStorage.getItem('madhan_mart_users') || '[]');
@@ -603,14 +636,14 @@ window.MadhanMartSupabase = {
   },
 
   // --------------------------------------------------------------------------
-  // 5. Product Reviews (Buyer Ratings & Comments)
+  // 6. Reviews (Buyer)
   // --------------------------------------------------------------------------
   async getReviews(productId) {
     const sb = getSupabase();
     if (sb) {
       try {
-        const { data, error } = await sb.from('reviews').select('*').eq('product_id', productId).order('created_at', { ascending: false });
-        if (!error && data) return data;
+        const { data } = await sb.from('reviews').select('*').eq('product_id', productId).order('created_at', { ascending: false });
+        if (data) return data;
       } catch (e) {}
     }
 
@@ -631,8 +664,8 @@ window.MadhanMartSupabase = {
 
     if (sb) {
       try {
-        const { data, error } = await sb.from('reviews').insert([newRev]).select().single();
-        if (!error && data) return data;
+        const { data } = await sb.from('reviews').insert([newRev]).select().single();
+        if (data) return data;
       } catch (e) {}
     }
 

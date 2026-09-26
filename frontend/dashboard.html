@@ -35,20 +35,10 @@
         </div>
       </a>
 
-      <!-- 1-Click Role Switcher in Top Navigation -->
-      <div class="nav-role-switcher" role="tablist" aria-label="Switch Role View">
-        <button type="button" class="nav-role-btn active" data-role="buyer" id="navRoleBuyer">
-          <span class="role-btn-icon">🛒</span>
-          <span class="role-btn-text">Buyer View</span>
-        </button>
-        <button type="button" class="nav-role-btn" data-role="seller" id="navRoleSeller">
-          <span class="role-btn-icon">🏪</span>
-          <span class="role-btn-text">Seller Center</span>
-        </button>
-        <button type="button" class="nav-role-btn" data-role="admin" id="navRoleAdmin">
-          <span class="role-btn-icon">🛡️</span>
-          <span class="role-btn-text">Admin Panel</span>
-        </button>
+      <!-- Locked Role Portal Indicator Badge -->
+      <div class="portal-badge-indicator portal-buyer" id="portalBadgeIndicator" aria-label="Active Portal">
+        <span class="portal-badge-icon" id="portalBadgeIcon">🛒</span>
+        <span class="portal-badge-text" id="portalBadgeText">Buyer Storefront</span>
       </div>
 
       <!-- Search Input (Buyer Mode) -->
@@ -93,9 +83,6 @@
               <span class="dropdown-role-tag" id="menuRoleTag">Role: Buyer</span>
             </div>
             <hr class="dropdown-divider">
-            <button type="button" class="dropdown-item" id="switchRoleQuickBtn">
-              <span>🔄 Switch Active Role</span>
-            </button>
             <button type="button" class="dropdown-item logout-item" id="logoutBtn">
               <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12.5 14.1667L16.6667 10M16.6667 10L12.5 5.83334M16.6667 10H7.5M7.5 3.33334H5.83333C4.45262 3.33334 3.33333 4.45263 3.33333 5.83334V14.1667C3.33333 15.5474 4.45262 16.6667 5.83333 16.6667H7.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>

@@ -1,13 +1,13 @@
 -- =============================================================================
 -- MADHAN MART - Supabase PostgreSQL Database Schema & Security Policies
--- 3-Role System: Buyer, Seller, Admin
+-- Dedicated Multi-Table Architecture for Buyers, Sellers, and Admins
 -- Run this script inside your Supabase Project -> SQL Editor
 -- =============================================================================
 
 -- 1. Enable UUID Extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 2. Users Table (Public mirror for user profiles with Roles: buyer, seller, admin)
+-- 2. Master Users Table (Directory & Credentials)
 CREATE TABLE IF NOT EXISTS public.users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     full_name VARCHAR(120) NOT NULL,
@@ -23,18 +23,50 @@ ALTER TABLE public.users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'buye
 CREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);
 CREATE INDEX IF NOT EXISTS idx_users_role ON public.users(role);
 
--- 3. User Sessions Table (Token authentication & persistence)
-CREATE TABLE IF NOT EXISTS public.user_sessions (
+-- 3. Dedicated BUYERS Table
+CREATE TABLE IF NOT EXISTS public.buyers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
-    session_token VARCHAR(255) UNIQUE NOT NULL,
-    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    full_name VARCHAR(120) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255),
+    phone_number VARCHAR(50),
+    shipping_address TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON public.user_sessions(session_token);
+CREATE INDEX IF NOT EXISTS idx_buyers_email ON public.buyers(email);
 
--- 4. Products Table (Multi-seller support)
+-- 4. Dedicated SELLERS Table
+CREATE TABLE IF NOT EXISTS public.sellers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    full_name VARCHAR(120) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    store_name VARCHAR(150) NOT NULL,
+    password_hash VARCHAR(255),
+    phone_number VARCHAR(50),
+    business_address TEXT,
+    is_verified BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_sellers_email ON public.sellers(email);
+
+-- 5. Dedicated ADMINS Table
+CREATE TABLE IF NOT EXISTS public.admins (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+    full_name VARCHAR(120) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    admin_level VARCHAR(50) DEFAULT 'super_admin',
+    password_hash VARCHAR(255),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_admins_email ON public.admins(email);
+
+-- 6. Products Table (Multi-seller support)
 CREATE TABLE IF NOT EXISTS public.products (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(200) NOT NULL,
@@ -58,7 +90,7 @@ ALTER TABLE public.products ADD COLUMN IF NOT EXISTS seller_name VARCHAR(120) DE
 CREATE INDEX IF NOT EXISTS idx_products_category ON public.products(category);
 CREATE INDEX IF NOT EXISTS idx_products_seller_email ON public.products(seller_email);
 
--- 5. Orders Table
+-- 7. Orders Table
 CREATE TABLE IF NOT EXISTS public.orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     order_code VARCHAR(50) UNIQUE NOT NULL,
@@ -74,17 +106,10 @@ CREATE TABLE IF NOT EXISTS public.orders (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS user_email VARCHAR(255);
-ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS shipping_address TEXT;
-ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50);
-ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS city VARCHAR(100);
-ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS pincode VARCHAR(20);
-ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50);
 CREATE INDEX IF NOT EXISTS idx_orders_user_email ON public.orders(user_email);
-CREATE INDEX IF NOT EXISTS idx_orders_user_id ON public.orders(user_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON public.orders(status);
 
--- 6. Order Items Table
+-- 8. Order Items Table
 CREATE TABLE IF NOT EXISTS public.order_items (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     order_id UUID NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
@@ -94,7 +119,7 @@ CREATE TABLE IF NOT EXISTS public.order_items (
     unit_price NUMERIC(10, 2) NOT NULL
 );
 
--- 7. Product Reviews Table (Buyer Star Ratings & Comments)
+-- 9. Product Reviews Table
 CREATE TABLE IF NOT EXISTS public.reviews (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     product_id UUID REFERENCES public.products(id) ON DELETE CASCADE,
@@ -108,80 +133,78 @@ CREATE TABLE IF NOT EXISTS public.reviews (
 CREATE INDEX IF NOT EXISTS idx_reviews_product_id ON public.reviews(product_id);
 
 -- =============================================================================
--- 8. ROW LEVEL SECURITY (RLS) POLICIES & PERMISSIONS
+-- 10. ROW LEVEL SECURITY (RLS) POLICIES & PERMISSIONS
 -- =============================================================================
 
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.buyers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.sellers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Public users access" ON public.users;
+DROP POLICY IF EXISTS "Public buyers access" ON public.buyers;
+DROP POLICY IF EXISTS "Public sellers access" ON public.sellers;
+DROP POLICY IF EXISTS "Public admins access" ON public.admins;
 DROP POLICY IF EXISTS "Public products access" ON public.products;
 DROP POLICY IF EXISTS "Public orders access" ON public.orders;
 DROP POLICY IF EXISTS "Public order_items access" ON public.order_items;
 DROP POLICY IF EXISTS "Public reviews access" ON public.reviews;
 
 CREATE POLICY "Public users access" ON public.users FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public buyers access" ON public.buyers FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public sellers access" ON public.sellers FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Public admins access" ON public.admins FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Public products access" ON public.products FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Public orders access" ON public.orders FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Public order_items access" ON public.order_items FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Public reviews access" ON public.reviews FOR ALL USING (true) WITH CHECK (true);
 
 GRANT ALL ON TABLE public.users TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.buyers TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.sellers TO anon, authenticated, service_role;
+GRANT ALL ON TABLE public.admins TO anon, authenticated, service_role;
 GRANT ALL ON TABLE public.products TO anon, authenticated, service_role;
 GRANT ALL ON TABLE public.orders TO anon, authenticated, service_role;
 GRANT ALL ON TABLE public.order_items TO anon, authenticated, service_role;
 GRANT ALL ON TABLE public.reviews TO anon, authenticated, service_role;
 
 -- =============================================================================
--- 9. AUTOMATIC USER SYNC TRIGGER (Auth -> public.users)
+-- 11. PRE-SEEDED SYSTEM ACCOUNTS
 -- =============================================================================
 
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS trigger AS $$
-BEGIN
-  INSERT INTO public.users (id, full_name, email, role, password_hash)
-  VALUES (
-    new.id,
-    COALESCE(
-      new.raw_user_meta_data->>'full_name',
-      new.raw_user_meta_data->>'name',
-      split_part(new.email, '@', 1)
-    ),
-    new.email,
-    COALESCE(new.raw_user_meta_data->>'role', 'buyer'),
-    'managed_by_supabase_auth'
-  )
-  ON CONFLICT (email) DO UPDATE
-  SET full_name = EXCLUDED.full_name,
-      role = COALESCE(EXCLUDED.role, public.users.role),
-      updated_at = NOW();
-  RETURN new;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
--- =============================================================================
--- 10. PRE-SEEDED SYSTEM ROLES & DEMO ACCOUNTS
--- =============================================================================
-
+-- Seed Admin
 INSERT INTO public.users (full_name, email, role, password_hash)
-VALUES
-    ('System Administrator', 'admin@madhanmart.com', 'admin', 'Admin@123'),
-    ('Tech Deals Official', 'seller@madhanmart.com', 'seller', 'Seller@123'),
-    ('Madhan Kumar', 'buyer@madhanmart.com', 'buyer', 'Buyer@123'),
-    ('Madhan Kumar', 'madhan@gmail.com', 'buyer', 'managed_by_supabase_auth')
-ON CONFLICT (email) DO UPDATE
-SET role = EXCLUDED.role;
+VALUES ('System Administrator', 'admin@madhanmart.com', 'admin', 'Admin@123')
+ON CONFLICT (email) DO UPDATE SET role = 'admin';
+
+INSERT INTO public.admins (full_name, email, admin_level, password_hash)
+VALUES ('System Administrator', 'admin@madhanmart.com', 'super_admin', 'Admin@123')
+ON CONFLICT (email) DO NOTHING;
+
+-- Seed Seller
+INSERT INTO public.users (full_name, email, role, password_hash)
+VALUES ('Tech Deals Official', 'seller@madhanmart.com', 'seller', 'Seller@123')
+ON CONFLICT (email) DO UPDATE SET role = 'seller';
+
+INSERT INTO public.sellers (full_name, email, store_name, password_hash)
+VALUES ('Tech Deals Official', 'seller@madhanmart.com', 'Tech Deals Pro', 'Seller@123')
+ON CONFLICT (email) DO NOTHING;
+
+-- Seed Buyer
+INSERT INTO public.users (full_name, email, role, password_hash)
+VALUES ('Madhan Kumar', 'buyer@madhanmart.com', 'buyer', 'Buyer@123')
+ON CONFLICT (email) DO UPDATE SET role = 'buyer';
+
+INSERT INTO public.buyers (full_name, email, password_hash)
+VALUES ('Madhan Kumar', 'buyer@madhanmart.com', 'Buyer@123')
+ON CONFLICT (email) DO NOTHING;
 
 -- =============================================================================
--- 11. SEED CATALOG (Including PDF Example Products: Laptop ₹45000, Mobile ₹18000)
+-- 12. SEED INITIAL PRODUCTS
 -- =============================================================================
 
 INSERT INTO public.products (name, category, badge, image_url, emoji, price, original_price, rating, stock_quantity, seller_email, seller_name)

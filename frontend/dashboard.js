@@ -70,61 +70,49 @@ document.addEventListener('DOMContentLoaded', async () => {
   updateUserInfoDisplay();
 
   // --------------------------------------------------------------------------
-  // 2. Role Switcher Controller (Buyer / Seller / Admin)
+  // 2. Strict Role Locking & Module View Activation (No Role Switching Allowed)
   // --------------------------------------------------------------------------
-  const navRoleBtns = document.querySelectorAll('.nav-role-btn');
   const buyerView = document.getElementById('buyerModuleView');
   const sellerView = document.getElementById('sellerModuleView');
   const adminView = document.getElementById('adminModuleView');
   const navSearchWrap = document.getElementById('navSearchWrap');
   const cartBtn = document.getElementById('cartBtn');
+  const portalBadgeIndicator = document.getElementById('portalBadgeIndicator');
+  const portalBadgeIcon = document.getElementById('portalBadgeIcon');
+  const portalBadgeText = document.getElementById('portalBadgeText');
 
-  function switchRoleView(role) {
-    activeRole = role.toLowerCase();
-    currentUser.role = activeRole;
-    localStorage.setItem('madhan_mart_current_user', JSON.stringify(currentUser));
-    updateUserInfoDisplay();
+  function initializeRoleView(role) {
+    const lockedRole = (role || 'buyer').toLowerCase();
 
-    // Update active tab buttons
-    navRoleBtns.forEach(btn => {
-      const isMatch = btn.getAttribute('data-role') === activeRole;
-      btn.classList.toggle('active', isMatch);
-    });
+    // 1. Update Portal Badge
+    if (portalBadgeIndicator) {
+      portalBadgeIndicator.className = `portal-badge-indicator portal-${lockedRole}`;
+    }
+    if (portalBadgeIcon) {
+      portalBadgeIcon.textContent = lockedRole === 'seller' ? '🏪' : (lockedRole === 'admin' ? '🛡️' : '🛒');
+    }
+    if (portalBadgeText) {
+      portalBadgeText.textContent = lockedRole === 'seller' ? 'Seller Center' : (lockedRole === 'admin' ? 'Admin Super Panel' : 'Buyer Storefront');
+    }
 
-    // Toggle views
-    if (buyerView) buyerView.style.display = activeRole === 'buyer' ? 'block' : 'none';
-    if (sellerView) sellerView.style.display = activeRole === 'seller' ? 'block' : 'none';
-    if (adminView) adminView.style.display = activeRole === 'admin' ? 'block' : 'none';
+    // 2. Activate ONLY the user's authorized role view and hide others
+    if (buyerView) buyerView.style.display = lockedRole === 'buyer' ? 'block' : 'none';
+    if (sellerView) sellerView.style.display = lockedRole === 'seller' ? 'block' : 'none';
+    if (adminView) adminView.style.display = lockedRole === 'admin' ? 'block' : 'none';
 
-    // Show/hide buyer specific nav elements
-    if (navSearchWrap) navSearchWrap.style.display = activeRole === 'buyer' ? 'flex' : 'none';
-    if (cartBtn) cartBtn.style.display = activeRole === 'buyer' ? 'flex' : 'none';
+    // 3. Buyer specific navigation items
+    if (navSearchWrap) navSearchWrap.style.display = lockedRole === 'buyer' ? 'flex' : 'none';
+    if (cartBtn) cartBtn.style.display = lockedRole === 'buyer' ? 'flex' : 'none';
 
-    // Load data for active role
-    if (activeRole === 'buyer') {
+    // 4. Load data strictly for active role
+    if (lockedRole === 'buyer') {
       loadProducts('all');
       loadBuyerOrders();
-    } else if (activeRole === 'seller') {
+    } else if (lockedRole === 'seller') {
       loadSellerDashboard();
-    } else if (activeRole === 'admin') {
+    } else if (lockedRole === 'admin') {
       loadAdminDashboard();
     }
-  }
-
-  navRoleBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const role = btn.getAttribute('data-role');
-      switchRoleView(role);
-    });
-  });
-
-  const switchRoleQuickBtn = document.getElementById('switchRoleQuickBtn');
-  if (switchRoleQuickBtn) {
-    switchRoleQuickBtn.addEventListener('click', () => {
-      const roles = ['buyer', 'seller', 'admin'];
-      const nextIdx = (roles.indexOf(activeRole) + 1) % roles.length;
-      switchRoleView(roles[nextIdx]);
-    });
   }
 
   // --------------------------------------------------------------------------
@@ -1068,7 +1056,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else if (lower.includes('order') || lower.includes('track') || lower.includes('status')) {
         reply = '📦 You can review all your placed orders and download receipts in the "My Order History" section.';
       } else if (lower.includes('seller') || lower.includes('admin') || lower.includes('role')) {
-        reply = '🔄 You can switch views anytime using the role switcher buttons in the top navbar!';
+        reply = `🔒 You are logged in as a ${activeRole.toUpperCase()}. Account roles are locked for security. To switch roles, log out and sign in with that role's account.`;
       }
 
       setTimeout(() => {
@@ -1083,6 +1071,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Initial load based on user's active role
-  switchRoleView(activeRole);
+  // Initial load strictly based on user's authorized role
+  initializeRoleView(activeRole);
 });
