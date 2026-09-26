@@ -10,16 +10,22 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- 2. Master Users Table (Directory & Credentials)
 CREATE TABLE IF NOT EXISTS public.users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    full_name VARCHAR(120) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    role VARCHAR(20) NOT NULL DEFAULT 'buyer',
+    full_name VARCHAR(120),
+    email VARCHAR(255) UNIQUE,
+    role VARCHAR(20) DEFAULT 'buyer',
     password_hash VARCHAR(255) DEFAULT 'managed_by_supabase_auth',
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Ensure all columns exist on pre-existing users table
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS role VARCHAR(20) DEFAULT 'buyer';
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS full_name VARCHAR(120);
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255) DEFAULT 'managed_by_supabase_auth';
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+
 CREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);
 CREATE INDEX IF NOT EXISTS idx_users_role ON public.users(role);
 
@@ -27,13 +33,19 @@ CREATE INDEX IF NOT EXISTS idx_users_role ON public.users(role);
 CREATE TABLE IF NOT EXISTS public.buyers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
-    full_name VARCHAR(120) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
+    full_name VARCHAR(120),
+    email VARCHAR(255) UNIQUE,
     password_hash VARCHAR(255),
     phone_number VARCHAR(50),
     shipping_address TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE public.buyers ADD COLUMN IF NOT EXISTS full_name VARCHAR(120);
+ALTER TABLE public.buyers ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+ALTER TABLE public.buyers ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
+ALTER TABLE public.buyers ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50);
+ALTER TABLE public.buyers ADD COLUMN IF NOT EXISTS shipping_address TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_buyers_email ON public.buyers(email);
 
@@ -41,9 +53,9 @@ CREATE INDEX IF NOT EXISTS idx_buyers_email ON public.buyers(email);
 CREATE TABLE IF NOT EXISTS public.sellers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
-    full_name VARCHAR(120) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    store_name VARCHAR(150) NOT NULL,
+    full_name VARCHAR(120),
+    email VARCHAR(255) UNIQUE,
+    store_name VARCHAR(150),
     password_hash VARCHAR(255),
     phone_number VARCHAR(50),
     business_address TEXT,
@@ -51,18 +63,31 @@ CREATE TABLE IF NOT EXISTS public.sellers (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE public.sellers ADD COLUMN IF NOT EXISTS full_name VARCHAR(120);
+ALTER TABLE public.sellers ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+ALTER TABLE public.sellers ADD COLUMN IF NOT EXISTS store_name VARCHAR(150);
+ALTER TABLE public.sellers ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
+ALTER TABLE public.sellers ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50);
+ALTER TABLE public.sellers ADD COLUMN IF NOT EXISTS business_address TEXT;
+ALTER TABLE public.sellers ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT TRUE;
+
 CREATE INDEX IF NOT EXISTS idx_sellers_email ON public.sellers(email);
 
 -- 5. Dedicated ADMINS Table
 CREATE TABLE IF NOT EXISTS public.admins (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
-    full_name VARCHAR(120) NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
+    full_name VARCHAR(120),
+    email VARCHAR(255) UNIQUE,
     admin_level VARCHAR(50) DEFAULT 'super_admin',
     password_hash VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE public.admins ADD COLUMN IF NOT EXISTS full_name VARCHAR(120);
+ALTER TABLE public.admins ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+ALTER TABLE public.admins ADD COLUMN IF NOT EXISTS admin_level VARCHAR(50) DEFAULT 'super_admin';
+ALTER TABLE public.admins ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
 
 CREATE INDEX IF NOT EXISTS idx_admins_email ON public.admins(email);
 
