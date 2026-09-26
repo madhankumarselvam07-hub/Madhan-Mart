@@ -737,7 +737,7 @@ window.MadhanMartSupabase = {
         }
 
         const { data, error } = await query.order('created_at', { ascending: false });
-        if (!error && data && Array.isArray(data) && data.length > 0) {
+        if (!error && data && Array.isArray(data)) {
           return data.map(o => ({
             ...o,
             items: o.order_items && o.order_items.length > 0
@@ -760,7 +760,7 @@ window.MadhanMartSupabase = {
       });
       if (restRes.ok) {
         const data = await restRes.json();
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           return data.map(o => ({
             ...o,
             items: o.order_items && o.order_items.length > 0
@@ -771,8 +771,7 @@ window.MadhanMartSupabase = {
       }
     } catch (e) {}
 
-    const masterOrders = JSON.parse(localStorage.getItem('madhan_mart_all_orders') || '[]');
-    return masterOrders.filter(o => o.user_email && o.user_email.toLowerCase() === userEmail);
+    return [];
   },
 
   async getAllOrders() {
@@ -782,7 +781,7 @@ window.MadhanMartSupabase = {
     if (sb) {
       try {
         const { data, error } = await sb.from('orders').select('*, order_items(*)').order('created_at', { ascending: false });
-        if (!error && data && Array.isArray(data) && data.length > 0) {
+        if (!error && data && Array.isArray(data)) {
           return data.map(o => ({
             ...o,
             items: o.order_items && o.order_items.length > 0
@@ -803,7 +802,7 @@ window.MadhanMartSupabase = {
       });
       if (restRes.ok) {
         const data = await restRes.json();
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           return data.map(o => ({
             ...o,
             items: o.order_items && o.order_items.length > 0
@@ -814,7 +813,7 @@ window.MadhanMartSupabase = {
       }
     } catch (e) {}
 
-    return JSON.parse(localStorage.getItem('madhan_mart_all_orders') || '[]');
+    return [];
   },
 
   async updateOrderStatus(orderId, newStatus) {

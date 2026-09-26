@@ -4,6 +4,9 @@
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Clear any legacy offline orders cache so dashboard strictly reflects Supabase
+  localStorage.removeItem('madhan_mart_all_orders');
+
   // --------------------------------------------------------------------------
   // 1. Authentication & Session Check
   // --------------------------------------------------------------------------
