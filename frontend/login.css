@@ -794,65 +794,6 @@ body {
   font-size: 1rem;
 }
 
-/* Quick 1-Click Demo Login Banner */
-.quick-demo-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #f8fafc;
-  border: 1px dashed var(--border-color);
-  padding: 10px 14px;
-  border-radius: var(--radius-md);
-  margin-bottom: 18px;
-  transition: all var(--transition-normal);
-}
-
-.quick-demo-banner:hover {
-  background: #f1f5f9;
-  border-color: var(--border-hover);
-}
-
-.demo-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.demo-badge {
-  display: inline-block;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--primary);
-}
-
-.demo-hint {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.btn-quick-demo {
-  background: var(--primary-light);
-  color: var(--primary);
-  border: 1px solid var(--accent-soft);
-  font-family: inherit;
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 6px 10px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  white-space: nowrap;
-}
-
-.btn-quick-demo:hover {
-  background: var(--primary);
-  color: #ffffff;
-  border-color: var(--primary);
-  transform: translateY(-1px);
-}
-
 /* --------------------------------------------------------------------------
    15. Card Footer (Create Account)
    -------------------------------------------------------------------------- */
@@ -915,16 +856,6 @@ body {
     flex-direction: row;
     gap: 8px;
   }
-
-  .quick-demo-banner {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .btn-quick-demo {
-    width: 100%;
-    text-align: center;
-  }
 }
+
 

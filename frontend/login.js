@@ -23,9 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const roleTabs = document.querySelectorAll('.role-tab');
   const loginTitle = document.getElementById('loginTitle');
   const loginSubtitle = document.getElementById('loginSubtitle');
-  const demoBadge = document.getElementById('demoBadge');
-  const demoHint = document.getElementById('demoHint');
-  const btnQuickDemo = document.getElementById('btnQuickDemo');
   const createAccountLink = document.getElementById('createAccountLink');
   const signupPromptContainer = document.getElementById('signupPromptContainer');
 
@@ -34,39 +31,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const ROLE_CONFIGS = {
     buyer: {
       title: 'Buyer Sign In',
-      subtitle: 'Enter your credentials to browse & place orders',
+      subtitle: 'Enter your email and password to shop & track orders',
       btnText: 'Login as Buyer',
-      badge: 'Buyer Access',
-      hint: 'Shop products & track deliveries',
-      emailPlaceholder: 'buyer@madhanmart.com',
-      demoEmail: 'buyer@madhanmart.com',
-      demoPass: 'Buyer@123',
+      emailPlaceholder: 'Enter your buyer email',
       signupText: 'Create Buyer Account',
       signupRole: 'buyer',
       showSignup: true
     },
     seller: {
       title: 'Seller Portal Login',
-      subtitle: 'Sign in to manage products, inventory & orders received',
+      subtitle: 'Sign in to manage your inventory and customer orders',
       btnText: 'Login as Seller',
-      badge: 'Seller Portal',
-      hint: 'Add/edit products & view customer orders',
-      emailPlaceholder: 'seller@madhanmart.com',
-      demoEmail: 'seller@madhanmart.com',
-      demoPass: 'Seller@123',
+      emailPlaceholder: 'Enter your seller email',
       signupText: 'Register as a Seller',
       signupRole: 'seller',
       showSignup: true
     },
     admin: {
-      title: 'Admin Super Control',
-      subtitle: 'Sign in with system credentials to moderate platform',
+      title: 'Admin Control Login',
+      subtitle: 'Sign in with administrator credentials to manage platform',
       btnText: 'Login as Administrator',
-      badge: 'Admin Panel',
-      hint: 'Manage all users, master orders & moderation',
-      emailPlaceholder: 'admin@madhanmart.com',
-      demoEmail: 'admin@madhanmart.com',
-      demoPass: 'Admin@123',
+      emailPlaceholder: 'Enter administrator email',
       signupText: 'Admin accounts are pre-configured',
       signupRole: 'admin',
       showSignup: false
@@ -88,16 +73,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (loginTitle) loginTitle.textContent = config.title;
     if (loginSubtitle) loginSubtitle.textContent = config.subtitle;
     if (btnLabel) btnLabel.textContent = config.btnText;
-    if (demoBadge) demoBadge.textContent = config.badge;
-    if (demoHint) demoHint.textContent = config.hint;
     if (emailInput) emailInput.placeholder = config.emailPlaceholder;
 
     // Update signup footer
-    if (signupPromptContainer && createAccountLink) {
+    if (signupPromptContainer) {
       if (config.showSignup) {
         signupPromptContainer.innerHTML = `Don’t have an account? <a href="register.html?role=${config.signupRole}" class="create-account-link" id="createAccountLink">${config.signupText}</a>`;
       } else {
-        signupPromptContainer.innerHTML = `<span style="color: var(--text-muted); font-size: 0.8rem;">🔒 System Administrator role already exists.</span>`;
+        signupPromptContainer.innerHTML = `<span style="color: var(--text-muted); font-size: 0.8rem;">System Administrator access</span>`;
       }
     }
   }
@@ -112,20 +95,6 @@ document.addEventListener('DOMContentLoaded', () => {
       clearError(passwordGroup, passwordError);
     });
   });
-
-  // Handle 1-Click Quick Demo Login Button
-  if (btnQuickDemo) {
-    btnQuickDemo.addEventListener('click', async () => {
-      const config = ROLE_CONFIGS[currentRole] || ROLE_CONFIGS.buyer;
-      emailInput.value = config.demoEmail;
-      passwordInput.value = config.demoPass;
-      clearError(emailGroup, emailError);
-      clearError(passwordGroup, passwordError);
-
-      showAlert(`⚡ Logging in as demo ${currentRole.toUpperCase()}...`, 'success');
-      form.dispatchEvent(new Event('submit'));
-    });
-  }
 
   // Check URL parameters (e.g. role, registered=true, email)
   const urlParams = new URLSearchParams(window.location.search);
@@ -149,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const savedEmail = localStorage.getItem('madhan_mart_saved_email');
   if (savedEmail && !prefillEmail) {
     emailInput.value = savedEmail;
-    rememberMeCheckbox.checked = true;
+    if (rememberMeCheckbox) rememberMeCheckbox.checked = true;
   }
 
   // --------------------------------------------------------------------------
@@ -238,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --------------------------------------------------------------------------
-  // Form Submission Handler -> Redirects to Dashboard with Role
+  // Form Submission Handler -> Authenticates & Redirects to Dashboard
   // --------------------------------------------------------------------------
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -279,11 +248,11 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error('Authentication service is initializing. Please try again.');
       }
 
-      // Verify credentials via Supabase & Multi-Role Store
+      // Verify credentials via Supabase & PostgreSQL Store
       const sessionUser = await window.MadhanMartSupabase.signIn(emailValue, passwordValue, currentRole);
 
       if (!sessionUser) {
-        throw new Error('Invalid email or password. Please try again.');
+        throw new Error('Invalid email or password. Please check your credentials and try again.');
       }
 
       // Save user role in current user session
@@ -296,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem('madhan_mart_saved_email');
       }
 
-      showAlert(`Login successful as ${sessionUser.role.toUpperCase()}! Redirecting...`, 'success');
+      showAlert(`Login successful! Redirecting...`, 'success');
 
       setTimeout(() => {
         window.location.href = 'dashboard.html';
@@ -330,7 +299,7 @@ document.addEventListener('DOMContentLoaded', () => {
     forgotPasswordLink.addEventListener('click', (e) => {
       e.preventDefault();
       const currentEmail = emailInput.value.trim();
-      const promptEmail = prompt('Enter your email to receive a password reset link:', currentEmail || 'buyer@madhanmart.com');
+      const promptEmail = prompt('Enter your email to receive a password reset link:', currentEmail || '');
       if (promptEmail) {
         showAlert(`Password reset instructions sent to ${promptEmail}`, 'success');
       }

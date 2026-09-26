@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="MADHAN MART Multi-Role Commerce Dashboard - Buyer, Seller, and Admin Control.">
-  <title>Dashboard - MADHAN MART (3-Role System)</title>
+  <title>Dashboard - MADHAN MART</title>
   
   <!-- Modern Clean Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="dashboard.css?v=4">
+  <link rel="stylesheet" href="dashboard.css?v=5">
 </head>
 <body>
   <!-- Header / Navigation -->
@@ -57,7 +57,7 @@
           <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.6"/>
           <path d="M13.5 13.5L17.5 17.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
         </svg>
-        <input type="text" id="searchInput" placeholder="Search laptops, mobiles, gaming gear, consoles..." aria-label="Search products">
+        <input type="text" id="searchInput" placeholder="Search laptops, mobiles, gaming gear, accessories..." aria-label="Search products">
       </div>
 
       <!-- Nav Actions -->
@@ -75,9 +75,9 @@
         <!-- User Profile Dropdown -->
         <div class="user-profile-menu">
           <button type="button" class="user-profile-btn" id="userMenuBtn" aria-expanded="false" aria-haspopup="true">
-            <div class="user-avatar" id="userAvatar">M</div>
+            <div class="user-avatar" id="userAvatar">U</div>
             <div class="user-info-text">
-              <span class="user-name" id="navUserName">Madhan Kumar</span>
+              <span class="user-name" id="navUserName">User</span>
               <span class="user-role-badge role-badge-buyer" id="navUserRoleBadge">Buyer</span>
             </div>
             <svg class="chevron-icon" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -88,8 +88,8 @@
           <!-- Dropdown Menu -->
           <div class="dropdown-menu" id="userDropdown" role="menu">
             <div class="dropdown-header">
-              <p class="dropdown-name" id="menuFullName">Madhan Kumar</p>
-              <p class="dropdown-email" id="menuEmail">buyer@madhanmart.com</p>
+              <p class="dropdown-name" id="menuFullName">User Account</p>
+              <p class="dropdown-email" id="menuEmail">user@example.com</p>
               <span class="dropdown-role-tag" id="menuRoleTag">Role: Buyer</span>
             </div>
             <hr class="dropdown-divider">
@@ -125,12 +125,12 @@
         <!-- Welcome Hero Banner -->
         <section class="welcome-banner">
           <div class="banner-content">
-            <div class="badge-tag">MADHAN MART SHOPPING PORTAL</div>
-            <h1 class="banner-title">Welcome back, <span id="heroUserName">Madhan</span>! 👋</h1>
-            <p class="banner-sub">Explore premium laptops, smartphones, next-gen consoles, esports peripherals & accessories with instant order confirmation.</p>
+            <div class="badge-tag">SHOPPING PORTAL</div>
+            <h1 class="banner-title">Welcome back, <span id="heroUserName">Shopper</span>! 👋</h1>
+            <p class="banner-sub">Explore laptops, smartphones, gaming gear & technology products with instant order confirmation.</p>
           </div>
           <div class="banner-action">
-            <a href="#products" class="btn-shop-now">Browse Catalog</a>
+            <a href="#products" class="btn-shop-now">Browse Products</a>
           </div>
         </section>
 
@@ -144,19 +144,21 @@
             </div>
             <div class="stat-data">
               <span class="stat-number" id="statOrdersCount">0</span>
-              <span class="stat-label">My Orders Placed</span>
+              <span class="stat-label">Orders Placed</span>
             </div>
           </div>
 
           <div class="stat-card">
             <div class="stat-icon-wrap icon-amber">
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M3 3H5L6.68 14.39C6.77 15.02 7.31 15.5 7.95 15.5H18.5C19.12 15.5 19.65 15.05 19.75 14.43L21 6.5H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="9" cy="20" r="1.5" fill="currentColor"/>
+                <circle cx="18" cy="20" r="1.5" fill="currentColor"/>
               </svg>
             </div>
             <div class="stat-data">
-              <span class="stat-number" id="statRewardsXp">150 XP</span>
-              <span class="stat-label">Rewards & Points</span>
+              <span class="stat-number" id="statCartCount">0</span>
+              <span class="stat-label">Items in Cart</span>
             </div>
           </div>
 
@@ -165,18 +167,18 @@
               <span>💳</span>
             </div>
             <div class="stat-data">
-              <span class="stat-number">Instant 0%</span>
-              <span class="stat-label">GPay / UPI Checkout</span>
+              <span class="stat-number">Secure</span>
+              <span class="stat-label">Google Pay / UPI & COD</span>
             </div>
           </div>
         </section>
 
-        <!-- Featured Products Section -->
+        <!-- Products Section -->
         <section class="products-section" id="products">
           <div class="section-header">
             <div>
               <h2 class="section-title">Products Catalog</h2>
-              <p class="section-sub">Laptops, mobiles, gaming gear & multi-seller technology products</p>
+              <p class="section-sub">Browse items by category or search directly</p>
             </div>
             <div class="category-filters">
               <button class="filter-btn active" data-cat="all">All Items</button>
@@ -199,7 +201,7 @@
           <div class="section-header">
             <div>
               <h2 class="section-title">My Order History</h2>
-              <p class="section-sub">Track your live deliveries, order statuses & download tax invoices</p>
+              <p class="section-sub">Track order statuses and download invoices</p>
             </div>
           </div>
 
@@ -208,8 +210,8 @@
             <div class="empty-orders-wrap" id="emptyOrdersWrap">
               <div class="empty-orders-icon">📦</div>
               <h3 class="empty-orders-title">No orders placed yet</h3>
-              <p class="empty-orders-sub">Your order history will appear here once you place your first order.</p>
-              <a href="#products" class="btn-empty-shop">Explore Products</a>
+              <p class="empty-orders-sub">Your placed orders will appear here in real time.</p>
+              <a href="#products" class="btn-empty-shop">Browse Products</a>
             </div>
 
             <div class="table-responsive" id="ordersTableWrap" style="display: none;">
@@ -240,8 +242,8 @@
         <section class="seller-banner">
           <div class="banner-content">
             <div class="badge-tag tag-seller">🏪 SELLER CONTROL CENTER</div>
-            <h1 class="banner-title">Merchant Inventory & Order Manager</h1>
-            <p class="banner-sub">List new products (Laptops, Mobiles, Hardware), update pricing, manage stock and track orders received.</p>
+            <h1 class="banner-title">Store Inventory & Orders Manager</h1>
+            <p class="banner-sub">List new products, update pricing, manage stock and track orders received.</p>
           </div>
           <div class="banner-action">
             <button type="button" class="btn-primary btn-add-prod-modal" id="btnOpenAddProduct">
@@ -276,7 +278,7 @@
             </div>
             <div class="stat-data">
               <span class="stat-number" id="sellerRevenue">₹0</span>
-              <span class="stat-label">Gross Sales Volume</span>
+              <span class="stat-label">Total Revenue</span>
             </div>
           </div>
         </section>
@@ -299,7 +301,7 @@
                   <th>Category</th>
                   <th>Price (₹)</th>
                   <th>Stock</th>
-                  <th>Seller Badge</th>
+                  <th>Badge</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -344,11 +346,11 @@
         <section class="admin-banner">
           <div class="banner-content">
             <div class="badge-tag tag-admin">🛡️ SYSTEM ADMINISTRATOR PANEL</div>
-            <h1 class="banner-title">Platform Master Governance</h1>
-            <p class="banner-sub">Oversee all registered users (Buyers & Sellers), manage master orders, and moderate platform products.</p>
+            <h1 class="banner-title">Platform Administration</h1>
+            <p class="banner-sub">Manage registered users, supervise master orders, and moderate catalog listings.</p>
           </div>
           <div class="banner-action">
-            <button type="button" class="btn-primary" id="btnAdminExportStats">📊 Export Platform Data</button>
+            <button type="button" class="btn-primary" id="btnAdminExportStats">📊 Export Data</button>
           </div>
         </section>
 
@@ -360,7 +362,7 @@
             </div>
             <div class="stat-data">
               <span class="stat-number" id="adminTotalUsers">0</span>
-              <span class="stat-label">Total Platform Users</span>
+              <span class="stat-label">Registered Users</span>
             </div>
           </div>
           <div class="stat-card">
@@ -369,7 +371,7 @@
             </div>
             <div class="stat-data">
               <span class="stat-number" id="adminTotalOrders">0</span>
-              <span class="stat-label">Master Platform Orders</span>
+              <span class="stat-label">Master Orders</span>
             </div>
           </div>
           <div class="stat-card">
@@ -378,7 +380,7 @@
             </div>
             <div class="stat-data">
               <span class="stat-number" id="adminPlatformGMV">₹0</span>
-              <span class="stat-label">Total Platform GMV</span>
+              <span class="stat-label">Platform Volume</span>
             </div>
           </div>
           <div class="stat-card">
@@ -387,7 +389,7 @@
             </div>
             <div class="stat-data">
               <span class="stat-number" id="adminTotalProducts">0</span>
-              <span class="stat-label">Active Listings</span>
+              <span class="stat-label">Catalog Products</span>
             </div>
           </div>
         </section>
@@ -397,7 +399,7 @@
           <div class="section-header">
             <div>
               <h2 class="section-title">👥 All Registered Users</h2>
-              <p class="section-sub">Comprehensive registry of Buyers, Sellers, and Administrators</p>
+              <p class="section-sub">Registry of Buyers, Sellers, and Administrators</p>
             </div>
             <button type="button" class="btn-secondary" id="btnRefreshAdminUsers">🔄 Refresh Users</button>
           </div>
@@ -422,7 +424,7 @@
           <div class="section-header">
             <div>
               <h2 class="section-title">📦 Master Order Governance</h2>
-              <p class="section-sub">Live monitoring and status dispatch control across the entire platform</p>
+              <p class="section-sub">Order management and status dispatch control across the platform</p>
             </div>
           </div>
 
@@ -481,7 +483,7 @@
   <div class="modal-overlay" id="productModal" role="dialog" aria-modal="true" aria-labelledby="productModalTitle">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 class="modal-title" id="productModalTitle">📦 Add New Product</h3>
+        <h3 class="modal-title" id="productModalTitle">📦 Add Product</h3>
         <button type="button" class="btn-modal-close" id="closeProductModalBtn" aria-label="Close">✕</button>
       </div>
       <form id="productForm" novalidate>
@@ -508,35 +510,35 @@
             </div>
             <div class="checkout-field">
               <label for="prodBadge" class="checkout-label">Highlight Badge</label>
-              <input type="text" id="prodBadge" class="checkout-input" placeholder="e.g. Bestseller / Top Deal" value="Hot Deal">
+              <input type="text" id="prodBadge" class="checkout-input" placeholder="e.g. Bestseller / Top Deal">
             </div>
           </div>
 
           <div class="form-grid-2">
             <div class="checkout-field">
               <label for="prodPrice" class="checkout-label">Selling Price (₹) <span class="req">*</span></label>
-              <input type="number" id="prodPrice" class="checkout-input" placeholder="45000" min="1" required>
+              <input type="number" id="prodPrice" class="checkout-input" placeholder="e.g. 45000" min="1" required>
             </div>
             <div class="checkout-field">
               <label for="prodOrigPrice" class="checkout-label">Original Price (₹)</label>
-              <input type="number" id="prodOrigPrice" class="checkout-input" placeholder="52000" min="1">
+              <input type="number" id="prodOrigPrice" class="checkout-input" placeholder="e.g. 52000" min="1">
             </div>
           </div>
 
           <div class="form-grid-2">
             <div class="checkout-field">
               <label for="prodStock" class="checkout-label">Stock Quantity <span class="req">*</span></label>
-              <input type="number" id="prodStock" class="checkout-input" placeholder="25" min="1" value="25" required>
+              <input type="number" id="prodStock" class="checkout-input" placeholder="e.g. 25" min="1" required>
             </div>
             <div class="checkout-field">
-              <label for="prodEmoji" class="checkout-label">Product Icon Emoji</label>
-              <input type="text" id="prodEmoji" class="checkout-input" placeholder="💻" value="📦">
+              <label for="prodEmoji" class="checkout-label">Icon Emoji</label>
+              <input type="text" id="prodEmoji" class="checkout-input" placeholder="e.g. 💻">
             </div>
           </div>
 
           <div class="checkout-field">
             <label for="prodImage" class="checkout-label">Image Path or URL</label>
-            <input type="text" id="prodImage" class="checkout-input" placeholder="images/laptop.jpg" value="images/laptop.jpg">
+            <input type="text" id="prodImage" class="checkout-input" placeholder="e.g. images/laptop.jpg">
           </div>
         </div>
         <div class="modal-footer">
@@ -572,7 +574,7 @@
           </div>
 
           <div class="checkout-field">
-            <label for="reviewComment" class="checkout-label">Your Comments & Feedback <span class="req">*</span></label>
+            <label for="reviewComment" class="checkout-label">Your Review & Comments <span class="req">*</span></label>
             <textarea id="reviewComment" class="checkout-input" rows="4" placeholder="Share your experience with this product..." required></textarea>
           </div>
         </div>
@@ -588,12 +590,12 @@
   <div class="modal-overlay" id="cartModal" role="dialog" aria-modal="true" aria-labelledby="cartModalTitle">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 class="modal-title" id="cartModalTitle">🛒 Your Shopping Cart</h3>
+        <h3 class="modal-title" id="cartModalTitle">🛒 Shopping Cart</h3>
         <button type="button" class="btn-modal-close" id="closeCartBtn" aria-label="Close Cart">✕</button>
       </div>
       <div class="modal-body">
         <div id="cartItemsList" class="cart-items-list">
-          <p class="cart-empty-text">Your cart is empty. Add some products!</p>
+          <p class="cart-empty-text">Your cart is empty.</p>
         </div>
         <div class="cart-summary" id="cartSummary" style="display: none;">
           <div class="summary-row">
@@ -638,31 +640,31 @@
             <div class="form-grid-2">
               <div class="checkout-field">
                 <label for="shippingFullName" class="checkout-label">Recipient Name <span class="req">*</span></label>
-                <input type="text" id="shippingFullName" class="checkout-input" placeholder="e.g. Madhan Kumar" required>
+                <input type="text" id="shippingFullName" class="checkout-input" placeholder="Enter recipient full name" required>
               </div>
               <div class="checkout-field">
                 <label for="shippingPhone" class="checkout-label">Phone Number <span class="req">*</span></label>
-                <input type="tel" id="shippingPhone" class="checkout-input" placeholder="e.g. +91 98765 43210" required>
+                <input type="tel" id="shippingPhone" class="checkout-input" placeholder="e.g. +91 9876543210" required>
               </div>
             </div>
 
             <div class="checkout-field">
               <label for="shippingAddress" class="checkout-label">Address & Street <span class="req">*</span></label>
-              <input type="text" id="shippingAddress" class="checkout-input" placeholder="e.g. No. 42, Anna Salai, Guindy" required>
+              <input type="text" id="shippingAddress" class="checkout-input" placeholder="House / Flat No., Street, Landmark" required>
             </div>
 
             <div class="form-grid-3">
               <div class="checkout-field">
                 <label for="shippingCity" class="checkout-label">City <span class="req">*</span></label>
-                <input type="text" id="shippingCity" class="checkout-input" placeholder="Chennai" value="Chennai" required>
+                <input type="text" id="shippingCity" class="checkout-input" placeholder="City" required>
               </div>
               <div class="checkout-field">
                 <label for="shippingState" class="checkout-label">State <span class="req">*</span></label>
-                <input type="text" id="shippingState" class="checkout-input" placeholder="Tamil Nadu" value="Tamil Nadu" required>
+                <input type="text" id="shippingState" class="checkout-input" placeholder="State" required>
               </div>
               <div class="checkout-field">
                 <label for="shippingPin" class="checkout-label">PIN Code <span class="req">*</span></label>
-                <input type="text" id="shippingPin" class="checkout-input" placeholder="600025" value="600025" maxlength="6" required>
+                <input type="text" id="shippingPin" class="checkout-input" placeholder="6-digit PIN code" maxlength="6" required>
               </div>
             </div>
           </div>
@@ -705,7 +707,7 @@
               <span class="checkout-total-label">Total Amount:</span>
               <span class="checkout-total-value" id="checkoutModalTotal">₹0</span>
             </div>
-            <span class="checkout-security-tag">🔒 Fast Instant Confirmation</span>
+            <span class="checkout-security-tag">🔒 Instant Order Confirmation</span>
           </div>
 
         </div>
@@ -724,7 +726,7 @@
   <div class="modal-overlay" id="invoiceModal" role="dialog" aria-modal="true" aria-labelledby="invoiceModalTitle">
     <div class="modal-card invoice-modal-card">
       <div class="modal-header">
-        <h3 class="modal-title" id="invoiceModalTitle">🧾 Tax Invoice & Bill</h3>
+        <h3 class="modal-title" id="invoiceModalTitle">🧾 Tax Invoice & Receipt</h3>
         <button type="button" class="btn-modal-close" id="closeInvoiceBtn" aria-label="Close Invoice">✕</button>
       </div>
       <div class="modal-body invoice-modal-body" id="invoiceModalBody"></div>
@@ -745,18 +747,18 @@
     <div class="ai-chatbot-card" id="aiChatbotCard" style="display: none;">
       <div class="ai-chat-header">
         <div class="ai-chat-title-wrap">
-          <span class="ai-badge">AI Chatbot</span>
+          <span class="ai-badge">AI Assistant</span>
           <span class="ai-status">Online</span>
         </div>
         <button type="button" class="btn-chat-close" id="closeAiChatBtn">✕</button>
       </div>
       <div class="ai-chat-messages" id="aiChatMessages">
         <div class="ai-msg bot">
-          👋 Hello! I am Madhan Mart AI Shopping Assistant. Ask me about laptops, smartphones, order status, or deals!
+          👋 Hello! I am your Shopping Assistant. Ask me about products (Laptops, Mobiles, Consoles), order tracking, or assistance!
         </div>
       </div>
       <form class="ai-chat-input-bar" id="aiChatForm">
-        <input type="text" id="aiChatInput" placeholder="Ask AI assistant..." autocomplete="off">
+        <input type="text" id="aiChatInput" placeholder="Type your question..." autocomplete="off">
         <button type="submit" class="btn-send-chat">➤</button>
       </form>
     </div>
@@ -767,6 +769,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <script src="supabase-client.js"></script>
-  <script src="dashboard.js?v=4"></script>
+  <script src="dashboard.js?v=5"></script>
 </body>
 </html>

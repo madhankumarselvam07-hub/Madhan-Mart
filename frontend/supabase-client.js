@@ -1,37 +1,12 @@
 /**
  * MADHAN MART - Supabase Client Integration
- * Pure Vanilla JavaScript Client with 3-Role Support (Buyer, Seller, Admin)
+ * Pure Vanilla JavaScript Client with Multi-Role Support (Buyer, Seller, Admin)
  */
 
 const SUPABASE_CONFIG = {
   url: 'https://jpmsviyournhtjaqmzfr.supabase.co',
   anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpwbXN2aXlvdXJuaHRqYXFtemZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAzMzM3MDUsImV4cCI6MjEwNTkwOTcwNX0.-4tHZXqV19QCXizVX2QfAEvrhiBJqMrx803clppJPsk'
 };
-
-// Built-in Demo & Fallback Accounts (3-Role System)
-const BUILTIN_DEMO_ACCOUNTS = [
-  {
-    email: 'admin@madhanmart.com',
-    password: 'Admin@123',
-    fullName: 'System Administrator',
-    role: 'admin',
-    id: '00000000-0000-0000-0000-000000000001'
-  },
-  {
-    email: 'seller@madhanmart.com',
-    password: 'Seller@123',
-    fullName: 'Tech Deals Official',
-    role: 'seller',
-    id: '00000000-0000-0000-0000-000000000002'
-  },
-  {
-    email: 'buyer@madhanmart.com',
-    password: 'Buyer@123',
-    fullName: 'Madhan Kumar',
-    role: 'buyer',
-    id: '00000000-0000-0000-0000-000000000003'
-  }
-];
 
 // Lazy / Safe Supabase Client Initializer
 function getSupabase() {
@@ -52,7 +27,7 @@ window.MadhanMartSupabase = {
   },
 
   // --------------------------------------------------------------------------
-  // 1. Authentication (3-Role Support: Buyer, Seller, Admin)
+  // 1. Authentication (Buyer, Seller, Admin)
   // --------------------------------------------------------------------------
 
   // Sign Up with Email, Password, Full Name and Role (buyer or seller)
@@ -121,40 +96,11 @@ window.MadhanMartSupabase = {
     const cleanEmail = email.trim().toLowerCase();
     const cleanPassword = password;
 
-    // A. Check Built-in Demo Accounts (Admin, Seller, Buyer)
-    const demoMatch = BUILTIN_DEMO_ACCOUNTS.find(
-      (acc) => acc.email === cleanEmail && (acc.password === cleanPassword || cleanPassword === 'admin123' || cleanPassword === 'Admin@123' || cleanPassword === 'Seller@123' || cleanPassword === 'Buyer@123')
-    );
-    if (demoMatch) {
-      const sessionData = {
-        id: demoMatch.id,
-        email: demoMatch.email,
-        fullName: demoMatch.fullName,
-        role: demoMatch.role,
-        loginTime: new Date().toISOString()
-      };
-      localStorage.setItem('madhan_mart_current_user', JSON.stringify(sessionData));
-      return sessionData;
-    }
-
-    // Admin Special Check (Allow admin@... to authenticate with admin credentials)
-    if (cleanEmail.includes('admin') && (cleanPassword === 'Admin@123' || cleanPassword === 'admin123' || cleanPassword === 'admin')) {
-      const sessionData = {
-        id: '00000000-0000-0000-0000-000000000001',
-        email: cleanEmail,
-        fullName: 'System Administrator',
-        role: 'admin',
-        loginTime: new Date().toISOString()
-      };
-      localStorage.setItem('madhan_mart_current_user', JSON.stringify(sessionData));
-      return sessionData;
-    }
-
     let authUser = null;
     let authErrorOccurred = false;
     let authErrorMessage = '';
 
-    // B. Try Supabase Auth API
+    // 1. Try Supabase Auth API
     try {
       const { data, error } = await sb.auth.signInWithPassword({
         email: cleanEmail,
@@ -174,7 +120,7 @@ window.MadhanMartSupabase = {
       console.warn('[SUPABASE AUTH] Exception:', e);
     }
 
-    // C. If Supabase Auth succeeded, extract full name and role
+    // 2. If Supabase Auth succeeded, extract full name and role
     if (authUser && !authErrorOccurred) {
       let fullName = cleanEmail.split('@')[0];
       let userRole = requestedRole || 'buyer';
@@ -211,7 +157,7 @@ window.MadhanMartSupabase = {
       return sessionData;
     }
 
-    // D. Cloud Database Verification (For unconfirmed emails, rate limits, or direct table sync)
+    // 3. Cloud Database Verification (For unconfirmed emails, rate limits, or direct table sync)
     try {
       const { data: dbUser, error: dbError } = await sb
         .from('users')
@@ -243,7 +189,7 @@ window.MadhanMartSupabase = {
       console.warn('[SUPABASE DB] Cloud login lookup notice:', dbEx);
     }
 
-    // E. Local backup store check (for offline/locally registered accounts)
+    // 4. Local backup store check (for offline/locally registered accounts)
     const registeredUsers = JSON.parse(localStorage.getItem('madhan_mart_users') || '[]');
     const matchedLocal = registeredUsers.find(
       (u) => u.email.toLowerCase() === cleanEmail
@@ -265,7 +211,7 @@ window.MadhanMartSupabase = {
       }
     }
 
-    // F. User not found anywhere
+    // 5. User not found
     throw new Error('No account found with this email. Please click "Create Account" below to register.');
   },
 
@@ -282,7 +228,7 @@ window.MadhanMartSupabase = {
     }
   },
 
-  // Check Current Session & Hydrate (e.g. Google OAuth or page reload)
+  // Check Current Session & Hydrate
   async getCurrentSession() {
     const localUser = localStorage.getItem('madhan_mart_current_user');
     if (localUser) {
@@ -302,14 +248,13 @@ window.MadhanMartSupabase = {
         const fullName = meta.full_name || meta.name || user.email.split('@')[0];
         const role = meta.role || 'buyer';
 
-        // Ensure row exists in public.users
         try {
           await sb.from('users').upsert([{
             id: user.id,
             full_name: fullName,
             email: user.email,
             role: role,
-            password_hash: 'google_oauth_provider'
+            password_hash: 'managed_by_supabase_auth'
           }], { onConflict: 'email' });
         } catch (e) {}
 
@@ -335,7 +280,7 @@ window.MadhanMartSupabase = {
   async getProducts(category = 'all') {
     const sb = getSupabase();
     if (!sb) {
-      return this.getLocalFallbackProducts();
+      return this.getLocalProducts(category);
     }
 
     try {
@@ -347,12 +292,12 @@ window.MadhanMartSupabase = {
 
       const { data, error } = await query;
       if (error || !data || data.length === 0) {
-        return this.getLocalFallbackProducts(category);
+        return this.getLocalProducts(category);
       }
       return data;
     } catch (e) {
       console.warn('[SUPABASE] Products query error:', e);
-      return this.getLocalFallbackProducts(category);
+      return this.getLocalProducts(category);
     }
   },
 
@@ -361,16 +306,16 @@ window.MadhanMartSupabase = {
     const sb = getSupabase();
     const newProduct = {
       name: product.name,
-      category: product.category || 'peripherals',
-      badge: product.badge || 'New',
+      category: product.category || 'laptops',
+      badge: product.badge || '',
       image_url: product.image_url || 'images/laptop.jpg',
       emoji: product.emoji || '📦',
       price: parseFloat(product.price) || 0,
-      original_price: parseFloat(product.original_price) || parseFloat(product.price) * 1.2,
+      original_price: parseFloat(product.original_price) || parseFloat(product.price) * 1.15,
       rating: 5.0,
-      stock_quantity: parseInt(product.stock_quantity) || 50,
-      seller_email: product.seller_email || 'seller@madhanmart.com',
-      seller_name: product.seller_name || 'Tech Deals Official',
+      stock_quantity: parseInt(product.stock_quantity) || 20,
+      seller_email: product.seller_email || '',
+      seller_name: product.seller_name || 'Seller',
       is_available: true
     };
 
@@ -427,31 +372,29 @@ window.MadhanMartSupabase = {
       }
     }
 
-    // Remove from local custom products
     const localProducts = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
     const filtered = localProducts.filter(p => p.id !== id);
     localStorage.setItem('madhan_mart_custom_products', JSON.stringify(filtered));
 
-    // Also track deleted system products in local storage
     const deletedIds = JSON.parse(localStorage.getItem('madhan_mart_deleted_products') || '[]');
     deletedIds.push(id);
     localStorage.setItem('madhan_mart_deleted_products', JSON.stringify(deletedIds));
     return true;
   },
 
-  // Fallback initial products
-  getLocalFallbackProducts(category = 'all') {
+  // Standard catalog products
+  getLocalProducts(category = 'all') {
     const defaults = [
-      { id: '1', name: 'Dell Inspiron 15 Core i5 Laptop', category: 'laptops', badge: 'Bestseller', image_url: 'images/laptop.jpg', emoji: '💻', price: 45000.00, original_price: 52000.00, rating: 4.8, stock_quantity: 25, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals Official' },
-      { id: '2', name: 'Samsung Galaxy 5G Mobile', category: 'mobiles', badge: 'Top Deal', image_url: 'images/mobile.jpg', emoji: '📱', price: 18000.00, original_price: 22000.00, rating: 4.7, stock_quantity: 40, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals Official' },
-      { id: '3', name: 'PlayStation 5 DualSense Wireless Controller', category: 'consoles', badge: 'Bestseller', image_url: 'images/ps5-controller.jpg', emoji: '🎮', price: 5790.00, original_price: 6490.00, rating: 4.9, stock_quantity: 50, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals Official' },
-      { id: '4', name: 'Razer Huntsman Mini 60% Optical Keyboard', category: 'peripherals', badge: '20% OFF', image_url: 'images/razer-keyboard.jpg', emoji: '⌨️', price: 7999.00, original_price: 9999.00, rating: 4.8, stock_quantity: 35, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals Official' },
-      { id: '5', name: 'HyperX Cloud Alpha Wireless 7.1 Gaming Headset', category: 'audio', badge: 'New', image_url: 'images/hyperx-headset.jpg', emoji: '🎧', price: 12499.00, original_price: 15999.00, rating: 4.9, stock_quantity: 25, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals Official' },
-      { id: '6', name: 'Logitech G502 X PLUS Wireless RGB Gaming Mouse', category: 'peripherals', badge: '15% OFF', image_url: 'images/logitech-mouse.jpg', emoji: '🖱️', price: 8495.00, original_price: 9995.00, rating: 4.7, stock_quantity: 40, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals Official' },
-      { id: '7', name: 'ROG Swift OLED 27" 240Hz 0.03ms Gaming Monitor', category: 'hardware', badge: 'Hot Deal', image_url: 'images/rog-monitor.jpg', emoji: '🖥️', price: 64990.00, original_price: 74990.00, rating: 5.0, stock_quantity: 15, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals Official' },
-      { id: '8', name: 'Meta Quest 3 128GB All-In-One VR Headset', category: 'consoles', badge: 'Trending', image_url: 'images/meta-quest-vr.jpg', emoji: '🥽', price: 46990.00, original_price: 52990.00, rating: 4.8, stock_quantity: 20, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals Official' },
-      { id: '9', name: 'Secretlab TITAN Evo Ergonomic Gaming Chair', category: 'accessories', badge: 'Top Rated', image_url: 'images/gaming-chair.jpg', emoji: '💺', price: 34999.00, original_price: 41999.00, rating: 4.9, stock_quantity: 10, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals Official' },
-      { id: '10', name: 'Elgato Stream Deck MK.2 – 15 Macro RGB Keys', category: 'accessories', badge: 'Creator Pick', image_url: 'images/stream-deck.jpg', emoji: '🕹️', price: 13499.00, original_price: 15999.00, rating: 4.9, stock_quantity: 30, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals Official' }
+      { id: '1', name: 'Dell Inspiron 15 Core i5 Laptop', category: 'laptops', badge: 'Bestseller', image_url: 'images/laptop.jpg', emoji: '💻', price: 45000.00, original_price: 52000.00, rating: 4.8, stock_quantity: 25, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
+      { id: '2', name: 'Samsung Galaxy 5G Mobile', category: 'mobiles', badge: 'Top Deal', image_url: 'images/mobile.jpg', emoji: '📱', price: 18000.00, original_price: 22000.00, rating: 4.7, stock_quantity: 40, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
+      { id: '3', name: 'PlayStation 5 DualSense Wireless Controller', category: 'consoles', badge: 'Bestseller', image_url: 'images/ps5-controller.jpg', emoji: '🎮', price: 5790.00, original_price: 6490.00, rating: 4.9, stock_quantity: 50, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
+      { id: '4', name: 'Razer Huntsman Mini 60% Optical Keyboard', category: 'peripherals', badge: '20% OFF', image_url: 'images/razer-keyboard.jpg', emoji: '⌨️', price: 7999.00, original_price: 9999.00, rating: 4.8, stock_quantity: 35, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
+      { id: '5', name: 'HyperX Cloud Alpha Wireless 7.1 Gaming Headset', category: 'audio', badge: 'New', image_url: 'images/hyperx-headset.jpg', emoji: '🎧', price: 12499.00, original_price: 15999.00, rating: 4.9, stock_quantity: 25, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
+      { id: '6', name: 'Logitech G502 X PLUS Wireless RGB Gaming Mouse', category: 'peripherals', badge: '15% OFF', image_url: 'images/logitech-mouse.jpg', emoji: '🖱️', price: 8495.00, original_price: 9995.00, rating: 4.7, stock_quantity: 40, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
+      { id: '7', name: 'ROG Swift OLED 27" 240Hz 0.03ms Gaming Monitor', category: 'hardware', badge: 'Hot Deal', image_url: 'images/rog-monitor.jpg', emoji: '🖥️', price: 64990.00, original_price: 74990.00, rating: 5.0, stock_quantity: 15, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
+      { id: '8', name: 'Meta Quest 3 128GB All-In-One VR Headset', category: 'consoles', badge: 'Trending', image_url: 'images/meta-quest-vr.jpg', emoji: '🥽', price: 46990.00, original_price: 52990.00, rating: 4.8, stock_quantity: 20, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
+      { id: '9', name: 'Secretlab TITAN Evo Ergonomic Gaming Chair', category: 'accessories', badge: 'Top Rated', image_url: 'images/gaming-chair.jpg', emoji: '💺', price: 34999.00, original_price: 41999.00, rating: 4.9, stock_quantity: 10, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' },
+      { id: '10', name: 'Elgato Stream Deck MK.2 – 15 Macro RGB Keys', category: 'accessories', badge: 'Creator Pick', image_url: 'images/stream-deck.jpg', emoji: '🕹️', price: 13499.00, original_price: 15999.00, rating: 4.9, stock_quantity: 30, seller_email: 'seller@madhanmart.com', seller_name: 'Tech Deals' }
     ];
 
     const customProducts = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
@@ -471,7 +414,7 @@ window.MadhanMartSupabase = {
     const sb = getSupabase();
 
     let userId = null;
-    let userEmail = 'buyer@madhanmart.com';
+    let userEmail = 'customer@madhanmart.com';
 
     if (targetUser && targetUser.email) {
       userEmail = targetUser.email.trim().toLowerCase();
@@ -494,10 +437,10 @@ window.MadhanMartSupabase = {
       user_email: userEmail,
       total_amount: totalAmount,
       status: 'Pending',
-      shipping_address: orderDetails.shipping_address || 'Chennai, Tamil Nadu',
+      shipping_address: orderDetails.shipping_address || '',
       phone_number: orderDetails.phone_number || '',
-      city: orderDetails.city || 'Chennai',
-      pincode: orderDetails.pincode || '600025',
+      city: orderDetails.city || '',
+      pincode: orderDetails.pincode || '',
       payment_method: orderDetails.payment_method || 'Google Pay / UPI'
     };
 
@@ -513,11 +456,10 @@ window.MadhanMartSupabase = {
           orderData = data;
         }
       } catch (orderError) {
-        console.warn('[SUPABASE] Rich order insert notice:', orderError);
+        console.warn('[SUPABASE] Order insert notice:', orderError);
       }
     }
 
-    // Insert order items if order was created in Supabase
     if (sb && items && items.length > 0 && orderData && orderData.id) {
       try {
         const orderItemsToInsert = items.map(item => ({
@@ -542,7 +484,6 @@ window.MadhanMartSupabase = {
       items: items
     };
 
-    // Store in all orders master array in localStorage
     const masterOrders = JSON.parse(localStorage.getItem('madhan_mart_all_orders') || '[]');
     masterOrders.unshift(createdOrder);
     localStorage.setItem('madhan_mart_all_orders', JSON.stringify(masterOrders));
@@ -588,7 +529,6 @@ window.MadhanMartSupabase = {
       }
     }
 
-    // Local fallback
     const masterOrders = JSON.parse(localStorage.getItem('madhan_mart_all_orders') || '[]');
     return masterOrders.filter(o => o.user_email && o.user_email.toLowerCase() === userEmail);
   },
@@ -608,7 +548,7 @@ window.MadhanMartSupabase = {
     return JSON.parse(localStorage.getItem('madhan_mart_all_orders') || '[]');
   },
 
-  // Admin / Seller: Update Order Status (Pending -> Delivered / Cancelled)
+  // Admin / Seller: Update Order Status
   async updateOrderStatus(orderId, newStatus) {
     const sb = getSupabase();
     if (sb) {
@@ -629,7 +569,7 @@ window.MadhanMartSupabase = {
   },
 
   // --------------------------------------------------------------------------
-  // 4. Admin Management (All Users)
+  // 4. Admin Management (All Registered Users)
   // --------------------------------------------------------------------------
   async getAllUsers() {
     const sb = getSupabase();
@@ -648,14 +588,16 @@ window.MadhanMartSupabase = {
 
     const localUsers = JSON.parse(localStorage.getItem('madhan_mart_users') || '[]');
     
-    // Combine and deduplicate users
     const userMap = new Map();
-    BUILTIN_DEMO_ACCOUNTS.forEach(u => userMap.set(u.email.toLowerCase(), u));
     cloudUsers.forEach(u => userMap.set(u.email.toLowerCase(), u));
-    localUsers.forEach(u => userMap.set(u.email.toLowerCase(), {
-      ...u,
-      role: u.role || 'buyer'
-    }));
+    localUsers.forEach(u => {
+      if (!userMap.has(u.email.toLowerCase())) {
+        userMap.set(u.email.toLowerCase(), {
+          ...u,
+          role: u.role || 'buyer'
+        });
+      }
+    });
 
     return Array.from(userMap.values());
   },
@@ -680,10 +622,10 @@ window.MadhanMartSupabase = {
     const sb = getSupabase();
     const newRev = {
       product_id: reviewData.product_id,
-      user_email: reviewData.user_email || 'buyer@madhanmart.com',
+      user_email: reviewData.user_email || '',
       user_name: reviewData.user_name || 'Buyer',
       rating: parseInt(reviewData.rating) || 5,
-      comment: reviewData.comment || 'Great product!',
+      comment: reviewData.comment || '',
       created_at: new Date().toISOString()
     };
 

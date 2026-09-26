@@ -5,7 +5,7 @@
 
 document.addEventListener('DOMContentLoaded', async () => {
   // --------------------------------------------------------------------------
-  // 1. Authentication & Role Hydration
+  // 1. Authentication & Session Check
   // --------------------------------------------------------------------------
   let currentUser = null;
 
@@ -29,15 +29,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Fallback demo user if not logged in (to prevent blank screen)
+  // If no user is logged in, redirect to login page
   if (!currentUser) {
-    currentUser = {
-      id: 'demo_user_001',
-      fullName: 'Madhan Kumar',
-      email: 'buyer@madhanmart.com',
-      role: 'buyer'
-    };
-    localStorage.setItem('madhan_mart_current_user', JSON.stringify(currentUser));
+    window.location.href = 'login.html';
+    return;
   }
 
   let activeRole = (currentUser.role || 'buyer').toLowerCase();
@@ -52,9 +47,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const menuRoleTag = document.getElementById('menuRoleTag');
 
   function updateUserInfoDisplay() {
-    const fullName = currentUser.fullName || 'Madhan Kumar';
+    const fullName = currentUser.fullName || currentUser.email.split('@')[0];
     const firstName = fullName.split(' ')[0];
-    const userEmail = currentUser.email || 'customer@madhanmart.com';
+    const userEmail = currentUser.email || '';
     const initial = firstName.charAt(0).toUpperCase();
 
     if (navUserName) navUserName.textContent = fullName;
@@ -114,8 +109,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (activeRole === 'admin') {
       loadAdminDashboard();
     }
-
-    showToast(`Switched to ${activeRole.toUpperCase()} mode`);
   }
 
   navRoleBtns.forEach(btn => {
@@ -316,6 +309,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   const cartBadge = document.getElementById('cartBadge');
+  const statCartCount = document.getElementById('statCartCount');
   const cartModal = document.getElementById('cartModal');
   const closeCartBtn = document.getElementById('closeCartBtn');
   const cartItemsList = document.getElementById('cartItemsList');
@@ -328,6 +322,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function updateCartUI() {
     const totalCount = cart.reduce((sum, item) => sum + item.quantity, 0);
     if (cartBadge) cartBadge.textContent = totalCount;
+    if (statCartCount) statCartCount.textContent = totalCount;
 
     localStorage.setItem(cartKey, JSON.stringify(cart));
 
@@ -380,7 +375,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (cartSubtotal) cartSubtotal.textContent = `₹${subtotal.toLocaleString()}`;
     if (cartTotal) cartTotal.textContent = `₹${subtotal.toLocaleString()}`;
 
-    // Attach quantity and remove handlers
     cartItemsList.querySelectorAll('.btn-qty-minus').forEach(b => {
       b.addEventListener('click', () => {
         const idx = parseInt(b.getAttribute('data-idx'));
@@ -480,28 +474,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (total <= 0) return;
 
       const orderDetails = {
-        shipping_address: document.getElementById('shippingAddress')?.value || 'Chennai, Tamil Nadu',
+        shipping_address: document.getElementById('shippingAddress')?.value || '',
         phone_number: document.getElementById('shippingPhone')?.value || '',
-        city: document.getElementById('shippingCity')?.value || 'Chennai',
-        pincode: document.getElementById('shippingPin')?.value || '600025',
+        city: document.getElementById('shippingCity')?.value || '',
+        pincode: document.getElementById('shippingPin')?.value || '',
         payment_method: document.querySelector('input[name="paymentMethod"]:checked')?.value || 'Google Pay / UPI'
       };
 
-      showToast('Placing order in Supabase...');
+      showToast('Placing order...');
 
       let createdOrder = null;
       if (window.MadhanMartSupabase) {
         createdOrder = await window.MadhanMartSupabase.createOrder(cart, total, currentUser, orderDetails);
       }
 
-      // Clear cart
       cart = [];
       updateCartUI();
       checkoutModal.classList.remove('show');
 
-      showToast(`🎉 Order Placed Successfully! (${createdOrder?.order_code || '#MM-SUCCESS'})`);
-
-      // Refresh Orders
+      showToast(`🎉 Order Placed Successfully! (${createdOrder?.order_code || '#MM-ORDER'})`);
       await loadBuyerOrders();
     });
   }
@@ -542,16 +533,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       tr.innerHTML = `
         <td style="font-weight: 700; color: var(--primary);">${order.order_code}</td>
         <td>${dateStr}</td>
-        <td>${order.items ? order.items.map(i => `${i.name} (x${i.quantity || 1})`).join(', ') : 'Tech & Gaming Gear'}</td>
+        <td>${order.items ? order.items.map(i => `${i.name} (x${i.quantity || 1})`).join(', ') : 'Ordered Items'}</td>
         <td style="font-weight: 700;">₹${parseFloat(order.total_amount).toLocaleString()}</td>
         <td><span class="status-badge status-${statusClass}">${order.status || 'Pending'}</span></td>
-        <td><button type="button" class="btn-secondary btn-view-invoice" data-code="${order.order_code}" data-amount="${order.total_amount}" data-date="${dateStr}">🧾 Bill</button></td>
+        <td><button type="button" class="btn-secondary btn-view-invoice" data-code="${order.order_code}" data-amount="${order.total_amount}" data-date="${dateStr}">🧾 Receipt</button></td>
       `;
 
       ordersTableBody.appendChild(tr);
     });
 
-    // Attach invoice modal triggers
     ordersTableBody.querySelectorAll('.btn-view-invoice').forEach(btn => {
       btn.addEventListener('click', () => {
         openInvoiceModal(btn.getAttribute('data-code'), btn.getAttribute('data-amount'), btn.getAttribute('data-date'));
@@ -575,40 +565,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div style="display: flex; justify-content: space-between; border-bottom: 2px solid var(--primary); padding-bottom: 12px; margin-bottom: 16px;">
           <div>
             <h2 style="margin: 0; color: var(--primary); font-size: 1.4rem;">MADHAN MART</h2>
-            <p style="margin: 2px 0 0; font-size: 0.8rem; color: var(--text-muted);">GSTIN: 33AAAAA0000A1Z5 | Chennai, Tamil Nadu</p>
+            <p style="margin: 2px 0 0; font-size: 0.8rem; color: var(--text-muted);">Online E-Commerce Platform</p>
           </div>
           <div style="text-align: right;">
-            <h3 style="margin: 0; font-size: 1.1rem;">TAX INVOICE</h3>
+            <h3 style="margin: 0; font-size: 1.1rem;">ORDER RECEIPT</h3>
             <p style="margin: 2px 0 0; font-weight: 700; color: var(--primary);">${code}</p>
           </div>
         </div>
         <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 20px;">
           <div>
-            <p style="margin: 0; font-weight: 700;">Billed To:</p>
+            <p style="margin: 0; font-weight: 700;">Customer Details:</p>
             <p style="margin: 2px 0 0;">${currentUser.fullName || 'Customer'}</p>
-            <p style="margin: 2px 0 0; color: var(--text-muted);">${currentUser.email || 'customer@madhanmart.com'}</p>
+            <p style="margin: 2px 0 0; color: var(--text-muted);">${currentUser.email}</p>
           </div>
           <div style="text-align: right;">
             <p style="margin: 0;"><strong>Date:</strong> ${date}</p>
-            <p style="margin: 2px 0 0;"><strong>Payment:</strong> Google Pay / UPI (Verified)</p>
+            <p style="margin: 2px 0 0;"><strong>Payment Status:</strong> Confirmed</p>
           </div>
         </div>
         <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 20px;">
           <thead>
             <tr style="background: #f1f5f9;">
-              <th style="padding: 8px; text-align: left; border-bottom: 1px solid var(--border-color);">Description</th>
+              <th style="padding: 8px; text-align: left; border-bottom: 1px solid var(--border-color);">Item Description</th>
               <th style="padding: 8px; text-align: right; border-bottom: 1px solid var(--border-color);">Amount</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td style="padding: 10px 8px; border-bottom: 1px solid var(--border-color);">Official Gaming & Tech Order (${code})</td>
+              <td style="padding: 10px 8px; border-bottom: 1px solid var(--border-color);">Order Package (${code})</td>
               <td style="padding: 10px 8px; text-align: right; font-weight: 700; border-bottom: 1px solid var(--border-color);">₹${parseFloat(amount).toLocaleString()}</td>
             </tr>
           </tbody>
         </table>
         <div style="text-align: right; font-size: 1.1rem; font-weight: 800; color: var(--primary);">
-          Grand Total: ₹${parseFloat(amount).toLocaleString()}
+          Total: ₹${parseFloat(amount).toLocaleString()}
         </div>
       </div>
     `;
@@ -625,19 +615,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (downloadInvoicePdfBtn) {
     downloadInvoicePdfBtn.addEventListener('click', () => {
-      showToast('Generating official PDF invoice...');
+      showToast('Downloading receipt...');
       try {
         if (window.jspdf && window.jspdf.jsPDF) {
           const doc = new window.jspdf.jsPDF();
           doc.setFontSize(20);
           doc.setTextColor(37, 99, 235);
-          doc.text('MADHAN MART - TAX INVOICE', 14, 22);
+          doc.text('MADHAN MART - ORDER RECEIPT', 14, 22);
           doc.setFontSize(10);
           doc.setTextColor(100, 116, 139);
           doc.text(`Customer: ${currentUser.fullName || 'Customer'} (${currentUser.email})`, 14, 32);
-          doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 38);
-          doc.save(`Madhan_Mart_Invoice_${Date.now()}.pdf`);
-          showToast('Invoice PDF downloaded!');
+          doc.text(`Date: ${new Date().toLocaleString()}`, 14, 38);
+          doc.save(`Madhan_Mart_Receipt_${Date.now()}.pdf`);
+          showToast('Receipt PDF downloaded!');
         } else {
           window.print();
         }
@@ -691,7 +681,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const comment = document.getElementById('reviewComment').value.trim();
 
       if (!comment) {
-        alert('Please write a comment for your review.');
+        alert('Please enter your comments for this review.');
         return;
       }
 
@@ -753,31 +743,29 @@ document.addEventListener('DOMContentLoaded', async () => {
           </td>
           <td><span style="text-transform: capitalize;">${p.category || 'tech'}</span></td>
           <td style="font-weight: 700;">₹${parseFloat(p.price).toLocaleString()}</td>
-          <td>${p.stock_quantity || 25} in stock</td>
-          <td><span class="status-badge status-delivered">${p.badge || 'Active'}</span></td>
+          <td>${p.stock_quantity || 20} in stock</td>
+          <td><span class="status-badge status-delivered">${p.badge || 'Available'}</span></td>
           <td>
-            <button type="button" class="btn-action-edit btn-seller-edit" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-stock="${p.stock_quantity || 25}">✏️ Edit</button>
+            <button type="button" class="btn-action-edit btn-seller-edit" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}" data-stock="${p.stock_quantity || 20}">✏️ Edit</button>
             <button type="button" class="btn-action-delete btn-seller-delete" data-id="${p.id}">🗑️ Delete</button>
           </td>
         `;
         sellerProductsTableBody.appendChild(tr);
       });
 
-      // Bind delete buttons
       sellerProductsTableBody.querySelectorAll('.btn-seller-delete').forEach(btn => {
         btn.addEventListener('click', async () => {
           const id = btn.getAttribute('data-id');
-          if (confirm('Are you sure you want to remove this product from the store?')) {
+          if (confirm('Are you sure you want to remove this product?')) {
             if (window.MadhanMartSupabase) {
               await window.MadhanMartSupabase.deleteProduct(id);
             }
-            showToast('Product deleted from store');
+            showToast('Product removed');
             loadSellerDashboard();
           }
         });
       });
 
-      // Bind edit buttons
       sellerProductsTableBody.querySelectorAll('.btn-seller-edit').forEach(btn => {
         btn.addEventListener('click', () => {
           const id = btn.getAttribute('data-id');
@@ -799,18 +787,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (sellerOrdersTableBody) {
       sellerOrdersTableBody.innerHTML = '';
       if (orders.length === 0) {
-        sellerOrdersTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No customer orders received yet.</td></tr>';
+        sellerOrdersTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No orders received yet.</td></tr>';
       } else {
         orders.forEach(o => {
           const tr = document.createElement('tr');
           const statusClass = (o.status || 'Pending').toLowerCase();
           tr.innerHTML = `
             <td style="font-weight: 700; color: var(--primary);">${o.order_code}</td>
-            <td>${o.user_email || 'customer@madhanmart.com'}</td>
-            <td>${o.items ? o.items.map(i => i.name).join(', ') : 'Tech item'}</td>
+            <td>${o.user_email || 'Customer'}</td>
+            <td>${o.items ? o.items.map(i => i.name).join(', ') : 'Ordered item'}</td>
             <td style="font-weight: 700;">₹${parseFloat(o.total_amount).toLocaleString()}</td>
             <td><span class="status-badge status-${statusClass}">${o.status || 'Pending'}</span></td>
-            <td><button type="button" class="btn-secondary btn-seller-status" data-id="${o.id}">Mark Fulfilled</button></td>
+            <td><button type="button" class="btn-secondary btn-seller-status" data-id="${o.id}">Mark Delivered</button></td>
           `;
           sellerOrdersTableBody.appendChild(tr);
         });
@@ -821,7 +809,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (window.MadhanMartSupabase) {
               await window.MadhanMartSupabase.updateOrderStatus(id, 'Delivered');
             }
-            showToast('Order marked as Delivered!');
+            showToast('Order marked as Delivered');
             loadSellerDashboard();
           });
         });
@@ -838,7 +826,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnOpenAddProduct.addEventListener('click', () => {
       document.getElementById('editProductId').value = '';
       document.getElementById('productForm').reset();
-      document.getElementById('productModalTitle').textContent = '📦 Add New Product';
+      document.getElementById('productModalTitle').textContent = '📦 Add Product';
       productModal.classList.add('show');
     });
   }
@@ -859,13 +847,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       const category = document.getElementById('prodCategory').value;
       const badge = document.getElementById('prodBadge').value.trim();
       const price = parseFloat(document.getElementById('prodPrice').value);
-      const origPrice = parseFloat(document.getElementById('prodOrigPrice').value) || price * 1.2;
-      const stock = parseInt(document.getElementById('prodStock').value) || 25;
+      const origPrice = parseFloat(document.getElementById('prodOrigPrice').value) || price * 1.15;
+      const stock = parseInt(document.getElementById('prodStock').value) || 20;
       const emoji = document.getElementById('prodEmoji').value || '📦';
       const image_url = document.getElementById('prodImage').value || 'images/laptop.jpg';
 
       if (!name || isNaN(price)) {
-        alert('Please provide valid product name and price.');
+        alert('Please enter a valid product name and price.');
         return;
       }
 
@@ -878,8 +866,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         stock_quantity: stock,
         emoji,
         image_url,
-        seller_email: currentUser.email || 'seller@madhanmart.com',
-        seller_name: currentUser.fullName || 'Tech Merchant'
+        seller_email: currentUser.email,
+        seller_name: currentUser.fullName
       };
 
       if (window.MadhanMartSupabase) {
@@ -888,7 +876,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           showToast(`Updated product "${name}"!`);
         } else {
           await window.MadhanMartSupabase.addProduct(productPayload);
-          showToast(`Added product "${name}" to store catalog!`);
+          showToast(`Added product "${name}"!`);
         }
       }
 
@@ -901,7 +889,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // --------------------------------------------------------------------------
-  // 11. ADMIN SUPER PANEL MODULE - Users, Orders & Catalog Moderation
+  // 11. ADMIN SUPER PANEL MODULE - Users, Orders & Moderation
   // --------------------------------------------------------------------------
   const adminTotalUsers = document.getElementById('adminTotalUsers');
   const adminTotalOrders = document.getElementById('adminTotalOrders');
@@ -947,7 +935,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
     }
 
-    // Render Master Orders Table with live Status Selector
+    // Render Master Orders Table with Status Selector
     if (adminOrdersTableBody) {
       adminOrdersTableBody.innerHTML = '';
       if (orders.length === 0) {
@@ -960,7 +948,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
           tr.innerHTML = `
             <td style="font-weight: 700; color: var(--primary);">${o.order_code}</td>
-            <td>${o.user_email || 'buyer@madhanmart.com'}</td>
+            <td>${o.user_email || 'Customer'}</td>
             <td>${dateStr}</td>
             <td style="font-weight: 700;">₹${parseFloat(o.total_amount).toLocaleString()}</td>
             <td><span class="status-badge status-${currentStatus.toLowerCase()}">${currentStatus}</span></td>
@@ -983,7 +971,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (window.MadhanMartSupabase) {
               await window.MadhanMartSupabase.updateOrderStatus(orderId, newStatus);
             }
-            showToast(`Order status updated to: ${newStatus}`);
+            showToast(`Order status updated to ${newStatus}`);
             loadAdminDashboard();
           });
         });
@@ -999,7 +987,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <td style="font-weight: 600;">${p.name}</td>
           <td><span style="text-transform: capitalize;">${p.category || 'tech'}</span></td>
           <td style="font-weight: 700;">₹${parseFloat(p.price).toLocaleString()}</td>
-          <td>${p.seller_name || 'Tech Deals Official'}</td>
+          <td>${p.seller_name || 'Seller'}</td>
           <td>
             <button type="button" class="btn-action-delete btn-admin-del-prod" data-id="${p.id}">🗑️ Remove Listing</button>
           </td>
@@ -1014,7 +1002,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (window.MadhanMartSupabase) {
               await window.MadhanMartSupabase.deleteProduct(id);
             }
-            showToast('Admin: Product listing removed');
+            showToast('Product listing removed');
             loadAdminDashboard();
           }
         });
@@ -1028,8 +1016,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (btnAdminExportStats) {
     btnAdminExportStats.addEventListener('click', () => {
-      showToast('Exporting platform report...');
-      setTimeout(() => alert('📊 Platform Report exported successfully with complete Buyer, Seller & Order metrics!'), 300);
+      showToast('Exporting data...');
+      setTimeout(() => alert('Platform data report exported successfully.'), 300);
     });
   }
 
@@ -1062,29 +1050,25 @@ document.addEventListener('DOMContentLoaded', async () => {
       const q = aiChatInput.value.trim();
       if (!q) return;
 
-      // Add user message
       const userDiv = document.createElement('div');
       userDiv.className = 'ai-msg user';
       userDiv.textContent = q;
       aiChatMessages.appendChild(userDiv);
       aiChatInput.value = '';
 
-      // Generate smart response based on query
       const lower = q.toLowerCase();
-      let reply = 'I can assist you with products (Laptops ₹45,000, Mobiles ₹18,000, Consoles), tracking orders, or role switching!';
+      let reply = 'I can help you browse products, check order statuses, or switch account roles.';
 
       if (lower.includes('laptop') || lower.includes('dell')) {
-        reply = '💻 We have the Dell Inspiron 15 Core i5 Laptop for ₹45,000 in stock! You can add it directly to your cart.';
+        reply = '💻 We offer the Dell Inspiron 15 Core i5 Laptop for ₹45,000. You can add it directly to your cart!';
       } else if (lower.includes('mobile') || lower.includes('phone') || lower.includes('samsung')) {
-        reply = '📱 The Samsung Galaxy 5G Mobile is available at a hot deal price of ₹18,000 with instant checkout!';
+        reply = '📱 The Samsung Galaxy 5G Mobile is available for ₹18,000!';
       } else if (lower.includes('ps5') || lower.includes('controller') || lower.includes('playstation')) {
-        reply = '🎮 The PlayStation 5 DualSense Wireless Controller is in stock for ₹5,790!';
+        reply = '🎮 The PlayStation 5 DualSense Wireless Controller is available for ₹5,790!';
       } else if (lower.includes('order') || lower.includes('track') || lower.includes('status')) {
-        reply = '📦 You can track all your live orders in the "My Order History" section below, complete with tax invoices.';
+        reply = '📦 You can review all your placed orders and download receipts in the "My Order History" section.';
       } else if (lower.includes('seller') || lower.includes('admin') || lower.includes('role')) {
-        reply = '🔄 You can switch between Buyer, Seller, and Admin modes using the top navigation switcher buttons!';
-      } else if (lower.includes('discount') || lower.includes('coupon') || lower.includes('offer')) {
-        reply = '🎉 Use code MADHAN2026 at checkout or enjoy up to 20% OFF on select peripherals!';
+        reply = '🔄 You can switch views anytime using the role switcher buttons in the top navbar!';
       }
 
       setTimeout(() => {
@@ -1093,7 +1077,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         botDiv.textContent = reply;
         aiChatMessages.appendChild(botDiv);
         aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
-      }, 400);
+      }, 350);
 
       aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
     });
