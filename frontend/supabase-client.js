@@ -563,6 +563,8 @@ window.MadhanMartSupabase = {
   // --------------------------------------------------------------------------
   // 4. Orders Management
   // --------------------------------------------------------------------------
+  // 4. Orders Management (Direct Supabase Orders & Order Items Sync)
+  // --------------------------------------------------------------------------
   async createOrder(items, totalAmount, targetUser = null, orderDetails = {}) {
     const sb = getSupabase();
 
@@ -585,16 +587,12 @@ window.MadhanMartSupabase = {
 
     const orderCode = '#MM-' + Math.floor(10000 + Math.random() * 90000);
 
+    // Only include columns that exist in Supabase 'orders' table: order_code, user_email, total_amount, status, user_id (if UUID)
     const orderPayload = {
       order_code: orderCode,
       user_email: userEmail,
-      total_amount: totalAmount,
-      status: 'Pending',
-      shipping_address: orderDetails.shipping_address || '',
-      phone_number: orderDetails.phone_number || '',
-      city: orderDetails.city || '',
-      pincode: orderDetails.pincode || '',
-      payment_method: orderDetails.payment_method || 'Google Pay / UPI'
+      total_amount: parseFloat(totalAmount) || 0,
+      status: 'Pending'
     };
 
     if (userId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
@@ -602,33 +600,102 @@ window.MadhanMartSupabase = {
     }
 
     let orderData = null;
+
+    // 1. Insert into Supabase Orders Table via SDK
     if (sb) {
       try {
-        const { data, error } = await sb.from('orders').insert([orderPayload]).select().single();
-        if (!error && data) orderData = data;
-      } catch (orderError) {}
+        const { data, error } = await sb.from('orders').insert([orderPayload]).select();
+        if (!error && data && data.length > 0) {
+          orderData = data[0];
+          console.log('[SUPABASE] Order successfully created via SDK:', orderData);
+        } else if (error) {
+          console.warn('[SUPABASE] SDK order insert notice:', error);
+        }
+      } catch (orderError) {
+        console.warn('[SUPABASE] SDK order insert exception:', orderError);
+      }
     }
 
-    if (sb && items && items.length > 0 && orderData && orderData.id) {
+    // 2. Direct REST API Fallback
+    if (!orderData) {
       try {
-        const orderItemsToInsert = items.map(item => ({
-          order_id: orderData.id,
-          product_name: item.name,
-          quantity: item.quantity || 1,
-          unit_price: item.price
-        }));
-        await sb.from('order_items').insert(orderItemsToInsert);
-      } catch (itemErr) {}
+        const restRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/orders`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_CONFIG.anonKey,
+            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(orderPayload)
+        });
+
+        if (restRes.ok) {
+          const restData = await restRes.json();
+          if (Array.isArray(restData) && restData.length > 0) {
+            orderData = restData[0];
+            console.log('[SUPABASE] Order successfully created via REST API:', orderData);
+          }
+        } else {
+          const errText = await restRes.text();
+          console.error('[SUPABASE] REST API order insert error:', errText);
+        }
+      } catch (restErr) {
+        console.error('[SUPABASE] Direct REST order exception:', restErr);
+      }
     }
 
-    const createdOrder = orderData || {
-      id: 'ord_' + Date.now(),
-      order_code: orderCode,
-      total_amount: totalAmount,
-      user_email: userEmail,
-      status: 'Pending',
-      created_at: new Date().toISOString(),
-      items: items
+    // 3. Insert items into 'order_items' table in Supabase
+    if (orderData && orderData.id && items && items.length > 0) {
+      const orderItemsToInsert = items.map(item => {
+        const itemObj = {
+          order_id: orderData.id,
+          product_name: item.name || 'Product',
+          quantity: parseInt(item.quantity) || 1,
+          unit_price: parseFloat(item.price) || 0
+        };
+        if (item.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(item.id)) {
+          itemObj.product_id = item.id;
+        }
+        return itemObj;
+      });
+
+      // Try SDK
+      let itemsSaved = false;
+      if (sb) {
+        try {
+          const { error: itemErr } = await sb.from('order_items').insert(orderItemsToInsert);
+          if (!itemErr) itemsSaved = true;
+        } catch (e) {}
+      }
+
+      // Try REST API fallback for items
+      if (!itemsSaved) {
+        try {
+          await fetch(`${SUPABASE_CONFIG.url}/rest/v1/order_items`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_CONFIG.anonKey,
+              'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(orderItemsToInsert)
+          });
+        } catch (e) {}
+      }
+    }
+
+    const createdOrder = {
+      ...(orderData || {
+        id: 'ord_' + Date.now(),
+        order_code: orderCode,
+        total_amount: totalAmount,
+        user_email: userEmail,
+        status: 'Pending',
+        created_at: new Date().toISOString()
+      }),
+      items: items,
+      shipping_details: orderDetails
     };
 
     const masterOrders = JSON.parse(localStorage.getItem('madhan_mart_all_orders') || '[]');
@@ -659,9 +726,10 @@ window.MadhanMartSupabase = {
 
     if (!userEmail && !userId) return [];
 
+    // 1. Try SDK query with joined order_items
     if (sb) {
       try {
-        let query = sb.from('orders').select('*');
+        let query = sb.from('orders').select('*, order_items(*)');
         if (userId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
           query = query.or(`user_id.eq.${userId},user_email.eq.${userEmail}`);
         } else if (userEmail) {
@@ -669,9 +737,39 @@ window.MadhanMartSupabase = {
         }
 
         const { data, error } = await query.order('created_at', { ascending: false });
-        if (!error && data && data.length > 0) return data;
-      } catch (e) {}
+        if (!error && data && Array.isArray(data) && data.length > 0) {
+          return data.map(o => ({
+            ...o,
+            items: o.order_items && o.order_items.length > 0
+              ? o.order_items.map(i => ({ name: i.product_name, price: i.unit_price, quantity: i.quantity }))
+              : (o.items || [])
+          }));
+        }
+      } catch (e) {
+        console.warn('[SUPABASE] getUserOrders SDK notice:', e);
+      }
     }
+
+    // 2. Direct REST API Fallback
+    try {
+      const restRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/orders?user_email=eq.${encodeURIComponent(userEmail)}&select=*,order_items(*)&order=created_at.desc`, {
+        headers: {
+          'apikey': SUPABASE_CONFIG.anonKey,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`
+        }
+      });
+      if (restRes.ok) {
+        const data = await restRes.json();
+        if (Array.isArray(data) && data.length > 0) {
+          return data.map(o => ({
+            ...o,
+            items: o.order_items && o.order_items.length > 0
+              ? o.order_items.map(i => ({ name: i.product_name, price: i.unit_price, quantity: i.quantity }))
+              : (o.items || [])
+          }));
+        }
+      }
+    } catch (e) {}
 
     const masterOrders = JSON.parse(localStorage.getItem('madhan_mart_all_orders') || '[]');
     return masterOrders.filter(o => o.user_email && o.user_email.toLowerCase() === userEmail);
@@ -679,21 +777,69 @@ window.MadhanMartSupabase = {
 
   async getAllOrders() {
     const sb = getSupabase();
+
+    // 1. Try SDK
     if (sb) {
       try {
-        const { data, error } = await sb.from('orders').select('*').order('created_at', { ascending: false });
-        if (!error && data && data.length > 0) return data;
+        const { data, error } = await sb.from('orders').select('*, order_items(*)').order('created_at', { ascending: false });
+        if (!error && data && Array.isArray(data) && data.length > 0) {
+          return data.map(o => ({
+            ...o,
+            items: o.order_items && o.order_items.length > 0
+              ? o.order_items.map(i => ({ name: i.product_name, price: i.unit_price, quantity: i.quantity }))
+              : (o.items || [])
+          }));
+        }
       } catch (e) {}
     }
+
+    // 2. Direct REST API Fallback
+    try {
+      const restRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/orders?select=*,order_items(*)&order=created_at.desc`, {
+        headers: {
+          'apikey': SUPABASE_CONFIG.anonKey,
+          'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`
+        }
+      });
+      if (restRes.ok) {
+        const data = await restRes.json();
+        if (Array.isArray(data) && data.length > 0) {
+          return data.map(o => ({
+            ...o,
+            items: o.order_items && o.order_items.length > 0
+              ? o.order_items.map(i => ({ name: i.product_name, price: i.unit_price, quantity: i.quantity }))
+              : (o.items || [])
+          }));
+        }
+      }
+    } catch (e) {}
 
     return JSON.parse(localStorage.getItem('madhan_mart_all_orders') || '[]');
   },
 
   async updateOrderStatus(orderId, newStatus) {
     const sb = getSupabase();
+    let updatedSuccess = false;
+
     if (sb) {
       try {
-        await sb.from('orders').update({ status: newStatus }).eq('id', orderId);
+        const { error } = await sb.from('orders').update({ status: newStatus }).eq('id', orderId);
+        if (!error) updatedSuccess = true;
+      } catch (e) {}
+    }
+
+    if (!updatedSuccess) {
+      try {
+        const restRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/orders?id=eq.${orderId}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_CONFIG.anonKey,
+            'Authorization': `Bearer ${SUPABASE_CONFIG.anonKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ status: newStatus })
+        });
+        if (restRes.ok) updatedSuccess = true;
       } catch (e) {}
     }
 

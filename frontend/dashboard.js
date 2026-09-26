@@ -1095,14 +1095,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // --------------------------------------------------------------------------
-  // 13. Live Supabase Realtime Catalog Synchronization
+  // 13. Live Supabase Realtime Catalog & Orders Synchronization
   // --------------------------------------------------------------------------
   if (window.MadhanMartSupabase && window.MadhanMartSupabase.client) {
     try {
       const sb = window.MadhanMartSupabase.client;
+
+      // Realtime Products Sync
       sb.channel('realtime-products-sync')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
-          console.log('[REALTIME] Product updated in database:', payload);
+          console.log('[REALTIME] Products updated in database:', payload);
           if (activeRole === 'buyer') {
             const activeFilter = document.querySelector('.category-filters .filter-btn.active');
             const cat = activeFilter ? activeFilter.getAttribute('data-cat') : 'all';
@@ -1114,8 +1116,23 @@ document.addEventListener('DOMContentLoaded', async () => {
           }
         })
         .subscribe();
+
+      // Realtime Orders Sync
+      sb.channel('realtime-orders-sync')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
+          console.log('[REALTIME] Orders updated in database:', payload);
+          if (activeRole === 'buyer') {
+            loadBuyerOrders();
+          } else if (activeRole === 'seller') {
+            loadSellerDashboard();
+          } else if (activeRole === 'admin') {
+            loadAdminDashboard();
+          }
+        })
+        .subscribe();
+
     } catch (realtimeErr) {
-      console.warn('[REALTIME] Products subscription notice:', realtimeErr);
+      console.warn('[REALTIME] Subscription notice:', realtimeErr);
     }
   }
 
