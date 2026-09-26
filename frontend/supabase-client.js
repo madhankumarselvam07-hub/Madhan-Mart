@@ -352,11 +352,16 @@ window.MadhanMartSupabase = {
     return null;
   },
 
-  // --------------------------------------------------------------------------
-  // 3. Products Management (Seller & Admin)
-  // --------------------------------------------------------------------------
   async getProducts(category = 'all', sellerEmail = null) {
     const sb = getSupabase();
+
+    // Auto-clean any legacy test items from local cache
+    try {
+      const localCustom = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
+      const cleaned = localCustom.filter(p => p && p.name && !p.name.toLowerCase().includes('iqoo') && !p.name.toLowerCase().includes('neo 10r'));
+      localStorage.setItem('madhan_mart_custom_products', JSON.stringify(cleaned));
+    } catch (e) {}
+
     if (!sb) return this.getLocalProducts(category);
 
     try {
@@ -372,12 +377,8 @@ window.MadhanMartSupabase = {
 
       const { data, error } = await query;
       if (!error && data && Array.isArray(data) && data.length > 0) {
-        // Cache to local for seamless offline backup
-        const localCustom = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
         const deletedIds = JSON.parse(localStorage.getItem('madhan_mart_deleted_products') || '[]');
-        const dbIds = new Set(data.map(p => p.id));
-        const extraLocal = localCustom.filter(p => !dbIds.has(p.id) && !deletedIds.includes(p.id));
-        return [...data, ...extraLocal];
+        return data.filter(p => !deletedIds.includes(p.id) && (!p.name || (!p.name.toLowerCase().includes('iqoo') && !p.name.toLowerCase().includes('neo 10r'))));
       }
       return this.getLocalProducts(category);
     } catch (e) {
@@ -562,7 +563,9 @@ window.MadhanMartSupabase = {
     const customProducts = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
     const deletedIds = JSON.parse(localStorage.getItem('madhan_mart_deleted_products') || '[]');
 
-    const all = [...customProducts, ...defaults].filter(p => !deletedIds.includes(p.id));
+    const all = [...customProducts, ...defaults].filter(p => 
+      !deletedIds.includes(p.id) && (!p.name || (!p.name.toLowerCase().includes('iqoo') && !p.name.toLowerCase().includes('neo 10r')))
+    );
     if (category && category !== 'all') {
       return all.filter(p => p.category === category);
     }

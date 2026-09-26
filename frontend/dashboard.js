@@ -4,6 +4,13 @@
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Auto-clean any legacy test items like IQOO NEO 10R
+  try {
+    const customProds = JSON.parse(localStorage.getItem('madhan_mart_custom_products') || '[]');
+    const filteredProds = customProds.filter(p => p && p.name && !p.name.toLowerCase().includes('iqoo') && !p.name.toLowerCase().includes('neo 10r'));
+    localStorage.setItem('madhan_mart_custom_products', JSON.stringify(filteredProds));
+  } catch (e) {}
+
   // --------------------------------------------------------------------------
   // 1. Authentication & Session Check
   // --------------------------------------------------------------------------
