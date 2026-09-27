@@ -228,20 +228,30 @@ body {
 }
 
 .logo-icon-wrap {
-  width: 36px;
-  height: 36px;
-  background: var(--primary-light);
-  color: var(--primary);
-  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--accent-soft);
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.22);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+  flex-shrink: 0;
 }
 
-.logo-icon {
-  width: 22px;
-  height: 22px;
+.brand-logo:hover .logo-icon-wrap {
+  transform: scale(1.08) rotate(-2deg);
+  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.35);
+}
+
+.brand-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .brand-name {
