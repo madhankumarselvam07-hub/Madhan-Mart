@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="dashboard.css?v=20260928_3">
+  <link rel="stylesheet" href="dashboard.css?v=20260928_4">
 </head>
 <body>
   <!-- Header / Navigation -->
@@ -531,8 +531,44 @@
           </div>
 
           <div class="checkout-field">
-            <label for="prodImage" class="checkout-label">Image Path or URL</label>
-            <input type="text" id="prodImage" class="checkout-input" placeholder="e.g. images/laptop.jpg">
+            <label class="checkout-label">Product Image <span class="req">*</span></label>
+            <div class="file-upload-zone" id="prodFileUploadZone">
+              <input type="file" id="prodImageFile" accept="image/png, image/jpeg, image/webp, image/gif, image/svg+xml" style="display: none;">
+              <input type="hidden" id="prodImage" value="">
+              
+              <!-- Upload Prompt Box -->
+              <div class="file-upload-prompt" id="fileUploadPrompt">
+                <div class="upload-icon-circle">📸</div>
+                <div class="upload-prompt-text">
+                  <span class="upload-primary-text">Click to choose image or drag & drop</span>
+                  <span class="upload-sub-text">PNG, JPG, or WEBP from your computer/device</span>
+                </div>
+                <button type="button" class="btn-choose-file" id="btnChooseFile">Browse Image File</button>
+              </div>
+
+              <!-- Live Image Preview Box -->
+              <div class="file-preview-card" id="filePreviewCard" style="display: none;">
+                <div class="preview-img-wrap">
+                  <img id="prodImagePreview" src="" alt="Product Preview">
+                </div>
+                <div class="preview-info-wrap">
+                  <span class="preview-file-name" id="previewFileName">product-image.jpg</span>
+                  <span class="preview-file-size" id="previewFileSize">Ready to upload</span>
+                  <div class="preview-actions">
+                    <button type="button" class="btn-preview-change" id="btnChangeImage">🔄 Change Image</button>
+                    <button type="button" class="btn-preview-remove" id="btnRemoveImage">🗑️ Remove</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Optional direct URL toggle/input -->
+            <div class="image-url-toggle-wrap">
+              <button type="button" class="btn-toggle-url" id="btnToggleImageUrl">+ Or paste external Image URL</button>
+              <div id="imageUrlInputWrap" style="display: none; margin-top: 8px;">
+                <input type="text" id="prodImageUrlInput" class="checkout-input" placeholder="https://example.com/product.jpg">
+              </div>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -762,7 +798,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-  <script src="supabase-client.js?v=20260928_3"></script>
-  <script src="dashboard.js?v=20260928_3"></script>
+  <script src="supabase-client.js?v=20260928_4"></script>
+  <script src="dashboard.js?v=20260928_4"></script>
 </body>
 </html>

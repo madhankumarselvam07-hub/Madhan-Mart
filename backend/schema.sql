@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS public.products (
     name VARCHAR(200) NOT NULL,
     category VARCHAR(50) NOT NULL,
     badge VARCHAR(50),
-    image_url VARCHAR(500),
+    image_url TEXT,
     emoji VARCHAR(10),
     price NUMERIC(10, 2) NOT NULL,
     original_price NUMERIC(10, 2),
@@ -109,10 +109,8 @@ CREATE TABLE IF NOT EXISTS public.products (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-ALTER TABLE public.products ADD COLUMN IF NOT EXISTS name VARCHAR(200);
-ALTER TABLE public.products ADD COLUMN IF NOT EXISTS category VARCHAR(50);
-ALTER TABLE public.products ADD COLUMN IF NOT EXISTS badge VARCHAR(50);
-ALTER TABLE public.products ADD COLUMN IF NOT EXISTS image_url VARCHAR(500);
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS image_url TEXT;
+ALTER TABLE public.products ALTER COLUMN image_url TYPE TEXT;
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS emoji VARCHAR(10);
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS price NUMERIC(10, 2);
 ALTER TABLE public.products ADD COLUMN IF NOT EXISTS original_price NUMERIC(10, 2);
