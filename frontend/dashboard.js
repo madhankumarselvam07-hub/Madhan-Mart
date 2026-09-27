@@ -751,6 +751,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (window.MadhanMartSupabase) {
       prods = await window.MadhanMartSupabase.getProducts('all');
+      allCatalogProducts = prods;
       orders = await window.MadhanMartSupabase.getAllOrders();
     }
 
@@ -1162,6 +1163,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       users = await window.MadhanMartSupabase.getAllUsers();
       orders = await window.MadhanMartSupabase.getAllOrders();
       prods = await window.MadhanMartSupabase.getProducts('all');
+      allCatalogProducts = prods;
     }
 
     if (adminTotalUsers) adminTotalUsers.textContent = users.length;
@@ -1341,52 +1343,116 @@ document.addEventListener('DOMContentLoaded', async () => {
     showToast(`Showing results for "${productName}"`);
   }
 
-  function generateAiResponse(userQuery) {
+  async function generateAiResponse(userQuery) {
     const q = userQuery.toLowerCase().trim();
-    const prods = Array.isArray(allCatalogProducts) ? allCatalogProducts : [];
 
-    // Helper: Find products matching keyword or category
-    function matchProducts(keyword) {
-      return prods.filter(p => {
-        const name = (p.name || '').toLowerCase();
-        const cat = (p.category || '').toLowerCase();
-        const badge = (p.badge || '').toLowerCase();
-        return name.includes(keyword) || cat.includes(keyword) || badge.includes(keyword);
+    // 1. Always pull the latest live product catalog from Supabase to guarantee 100% updated knowledge
+    let prods = [];
+    if (window.MadhanMartSupabase) {
+      try {
+        prods = await window.MadhanMartSupabase.getProducts('all');
+        allCatalogProducts = prods;
+      } catch (e) {
+        prods = Array.isArray(allCatalogProducts) ? allCatalogProducts : [];
+      }
+    } else {
+      prods = Array.isArray(allCatalogProducts) ? allCatalogProducts : [];
+    }
+
+    // Dynamic intelligent keyword extractor
+    // Strips common filler/question words so ANY newly added or edited product name matches accurately
+    const fillerWords = new Set([
+      'what', 'is', 'the', 'rate', 'of', 'how', 'much', 'cost', 'price', 'tell', 'me', 'about', 
+      'show', 'can', 'you', 'available', 'product', 'item', 'items', 'products', 'give', 'details', 
+      'for', 'any', 'in', 'store', 'stock', 'please', 'do', 'have', 'i', 'want', 'buy', 'need', 'a', 'an',
+      'there', 'new', 'edit', 'edited', 'added', 'latest', 'recent', 'check', 'current', 'live'
+    ]);
+
+    const queryTokens = q.replace(/[^a-z0-9\s]/gi, ' ').split(/\s+/).filter(w => w && !fillerWords.has(w) && w.length >= 2);
+
+    // Dynamic product scoring against live database
+    function scoreProduct(p) {
+      const name = (p.name || '').toLowerCase();
+      const cat = (p.category || '').toLowerCase();
+      const badge = (p.badge || '').toLowerCase();
+      const seller = (p.seller_name || '').toLowerCase();
+      let score = 0;
+
+      // Exact phrase match in name
+      if (queryTokens.length > 0) {
+        const fullTokenQuery = queryTokens.join(' ');
+        if (name.includes(fullTokenQuery)) score += 100;
+      }
+
+      // Check whole clean query in name
+      const cleanQ = q.replace(/^(?:what is the rate of|what is the price of|how much is|price of|rate of|cost of|is|are|tell me about)\s+/i, '').trim();
+      if (cleanQ.length >= 3 && name.includes(cleanQ)) {
+        score += 80;
+      }
+
+      // Token overlap
+      queryTokens.forEach(token => {
+        if (name.includes(token)) score += 30;
+        else if (cat.includes(token)) score += 15;
+        else if (badge.includes(token)) score += 10;
+        else if (seller.includes(token)) score += 8;
       });
+
+      return score;
     }
 
-    // 1. Specific product or category price / rate queries
+    // 1. Check for New / Recently Added Products
+    if (q.includes('new product') || q.includes('latest') || q.includes('recently added') || q.includes('new items') || q.includes("what's new") || q.includes('what is new') || q.includes('new arrival') || q.includes('new arrivals') || q.includes('recent') || q.includes('new added') || q.includes('added product')) {
+      const recentProds = [...prods].slice(0, 4);
+      return {
+        text: `✨ <strong>New & Recently Added Products in Store:</strong><br>Our live database is updated! Here are the newest products added by verified sellers with real-time rates and instant stock availability:`,
+        products: recentProds
+      };
+    }
+
+    // 2. Dynamic Scored Product Matching (Works for ANY newly added or edited product)
     let matchedProducts = [];
+    if (queryTokens.length > 0) {
+      const scored = prods
+        .map(p => ({ product: p, score: scoreProduct(p) }))
+        .filter(item => item.score > 0)
+        .sort((a, b) => b.score - a.score);
 
-    // Check specific keywords
-    if (q.includes('ps5') || q.includes('playstation') || q.includes('dualsense') || q.includes('controller')) {
-      matchedProducts = matchProducts('playstation').concat(matchProducts('controller'));
-    } else if (q.includes('razer') || q.includes('keyboard') || q.includes('huntsman')) {
-      matchedProducts = matchProducts('keyboard').concat(matchProducts('razer'));
-    } else if (q.includes('headset') || q.includes('hyperx') || q.includes('audio') || q.includes('headphone')) {
-      matchedProducts = matchProducts('headset').concat(matchProducts('hyperx')).concat(matchProducts('audio'));
-    } else if (q.includes('mouse') || q.includes('logitech') || q.includes('g502')) {
-      matchedProducts = matchProducts('mouse').concat(matchProducts('logitech'));
-    } else if (q.includes('monitor') || q.includes('oled') || q.includes('rog') || q.includes('display')) {
-      matchedProducts = matchProducts('monitor').concat(matchProducts('rog')).concat(matchProducts('hardware'));
-    } else if (q.includes('quest') || q.includes('vr') || q.includes('meta')) {
-      matchedProducts = matchProducts('quest').concat(matchProducts('vr'));
-    } else if (q.includes('chair') || q.includes('secretlab') || q.includes('titan')) {
-      matchedProducts = matchProducts('chair').concat(matchProducts('secretlab'));
-    } else if (q.includes('stream deck') || q.includes('elgato') || q.includes('macro')) {
-      matchedProducts = matchProducts('stream deck').concat(matchProducts('elgato'));
-    } else if (q.includes('laptop') || q.includes('dell') || q.includes('macbook') || q.includes('notebook')) {
-      matchedProducts = matchProducts('laptop').concat(matchProducts('laptops'));
-    } else if (q.includes('mobile') || q.includes('phone') || q.includes('samsung') || q.includes('iphone')) {
-      matchedProducts = matchProducts('mobile').concat(matchProducts('mobiles')).concat(matchProducts('phone'));
-    } else if (q.includes('console') || q.includes('gaming')) {
-      matchedProducts = matchProducts('consoles').concat(matchProducts('gaming'));
+      matchedProducts = scored.map(item => item.product);
     }
 
-    // Deduplicate
+    // Fallback category alias matching if token scoring yielded nothing
+    if (matchedProducts.length === 0) {
+      const matchCat = (kw) => prods.filter(p => ((p.name || '') + ' ' + (p.category || '')).toLowerCase().includes(kw));
+      if (q.includes('ps5') || q.includes('playstation') || q.includes('dualsense') || q.includes('controller')) {
+        matchedProducts = matchCat('playstation').concat(matchCat('controller'));
+      } else if (q.includes('razer') || q.includes('keyboard') || q.includes('huntsman')) {
+        matchedProducts = matchCat('keyboard').concat(matchCat('razer'));
+      } else if (q.includes('headset') || q.includes('hyperx') || q.includes('audio') || q.includes('headphone') || q.includes('earphone')) {
+        matchedProducts = matchCat('headset').concat(matchCat('hyperx')).concat(matchCat('audio'));
+      } else if (q.includes('mouse') || q.includes('logitech') || q.includes('g502')) {
+        matchedProducts = matchCat('mouse').concat(matchCat('logitech'));
+      } else if (q.includes('monitor') || q.includes('oled') || q.includes('rog') || q.includes('display') || q.includes('screen')) {
+        matchedProducts = matchCat('monitor').concat(matchCat('rog')).concat(matchCat('hardware'));
+      } else if (q.includes('quest') || q.includes('vr') || q.includes('meta')) {
+        matchedProducts = matchCat('quest').concat(matchCat('vr'));
+      } else if (q.includes('chair') || q.includes('secretlab') || q.includes('titan')) {
+        matchedProducts = matchCat('chair').concat(matchCat('secretlab'));
+      } else if (q.includes('stream deck') || q.includes('elgato') || q.includes('macro')) {
+        matchedProducts = matchCat('stream deck').concat(matchCat('elgato'));
+      } else if (q.includes('laptop') || q.includes('dell') || q.includes('macbook') || q.includes('notebook')) {
+        matchedProducts = matchCat('laptop').concat(matchCat('laptops'));
+      } else if (q.includes('mobile') || q.includes('phone') || q.includes('samsung') || q.includes('iphone') || q.includes('iqoo') || q.includes('oneplus')) {
+        matchedProducts = matchCat('mobile').concat(matchCat('mobiles')).concat(matchCat('phone'));
+      } else if (q.includes('console') || q.includes('gaming')) {
+        matchedProducts = matchCat('consoles').concat(matchCat('gaming'));
+      }
+    }
+
+    // Deduplicate matched products
     matchedProducts = Array.from(new Set(matchedProducts));
 
-    // 2. Deals / Discounts query
+    // 3. Deals / Discounts query
     if (q.includes('deal') || q.includes('discount') || q.includes('offer') || q.includes('sale') || q.includes('best deal') || q.includes('trending')) {
       const deals = prods.filter(p => p.badge || (p.original_price && p.original_price > p.price));
       const list = deals.length > 0 ? deals.slice(0, 4) : prods.slice(0, 3);
@@ -1396,7 +1462,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
     }
 
-    // 3. Price threshold query (e.g. "under 10000", "below 5000", "under 50k", "cheapest")
+    // 4. Price threshold query (e.g. "under 10000", "below 5000", "under 50k", "cheapest")
     const priceUnderMatch = q.match(/(?:under|below|less than|within)\s*(?:₹|rs\.?|inr)?\s*(\d+)(?:k)?/i);
     if (priceUnderMatch) {
       let limit = parseInt(priceUnderMatch[1]);
@@ -1409,7 +1475,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
       } else {
         return {
-          text: `No products currently found under ₹${limit.toLocaleString()}. Our starting price is ₹${Math.min(...prods.map(p => parseFloat(p.price))).toLocaleString()}.`
+          text: `No products currently found under ₹${limit.toLocaleString()}. Our starting price in the catalog is ₹${Math.min(...prods.map(p => parseFloat(p.price))).toLocaleString()}.`
         };
       }
     }
@@ -1430,7 +1496,30 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
     }
 
-    // If specific products matched by keyword:
+    // 5. Specific Product Rate / Availability / Details Inquiry
+    const isRateOrPriceQuery = q.includes('rate') || q.includes('price') || q.includes('cost') || q.includes('how much') || q.includes('available') || q.includes('stock') || q.includes('tell me') || q.includes('details');
+
+    if (matchedProducts.length === 1 || (matchedProducts.length > 0 && isRateOrPriceQuery)) {
+      const p = matchedProducts[0];
+      const pPrice = parseFloat(p.price) || 0;
+      const pOrig = parseFloat(p.original_price);
+      const discountPct = (pOrig && pOrig > pPrice) ? Math.round(((pOrig - pPrice) / pOrig) * 100) : 0;
+      const discountNote = discountPct > 0 ? ` <span style="color: #10b981; font-weight:700;">(${discountPct}% OFF, Regular ₹${pOrig.toLocaleString()})</span>` : '';
+      const stock = p.stock_quantity !== undefined ? p.stock_quantity : 20;
+      const stockStatus = stock > 0 ? `🟢 <strong>In Stock</strong> (${stock} units ready for dispatch)` : `🔴 <strong>Out of Stock</strong>`;
+      const sellerStr = p.seller_name ? ` • Sold by: <strong>${p.seller_name}</strong>` : '';
+
+      return {
+        text: `🏷️ <strong>Live Details for ${p.name}:</strong><br><br>
+        • <strong>Live Rate:</strong> <span style="font-size: 1.1rem; font-weight: 800; color: var(--primary);">₹${pPrice.toLocaleString()}</span>${discountNote}<br>
+        • <strong>Stock Status:</strong> ${stockStatus}${sellerStr}<br>
+        • <strong>Category:</strong> <span style="text-transform: capitalize;">${p.category || 'Hardware'}</span><br><br>
+        👇 You can add this item directly to your cart or view it in the store catalog below:`,
+        products: matchedProducts.slice(0, 4)
+      };
+    }
+
+    // If multiple products matched:
     if (matchedProducts.length > 0) {
       const count = matchedProducts.length;
       return {
@@ -1439,7 +1528,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
     }
 
-    // 4. Site Guide & Platform Information Queries
+    // 5. Site Guide & Platform Information Queries
     if (q.includes('site') || q.includes('about') || q.includes('what is madhan mart') || q.includes('how does it work') || q.includes('guide')) {
       return {
         text: `🌟 <strong>About MADHAN MART Commerce Platform:</strong><br><br>
@@ -1520,20 +1609,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
 
-    // Default Fallback
+    // Default Fallback with live products
     const randomSamples = prods.slice(0, 3);
     return {
       text: `👋 I am here to help you shop smart! You can ask me:<br>
       • <em>"What is the rate of PS5 controller?"</em><br>
       • <em>"Show products under ₹10,000"</em><br>
-      • <em>"Do you have gaming laptops?"</em><br>
+      • <em>"What new products are added?"</em><br>
       • <em>"How does delivery and checkout work?"</em><br><br>
-      Here are a few popular items available in our store right now:`,
+      Here are a few popular items available in our live store right now:`,
       products: randomSamples
     };
   }
 
-  function handleAiChatSubmit() {
+  async function handleAiChatSubmit() {
     const q = aiChatInput.value.trim();
     if (!q) return;
 
@@ -1558,11 +1647,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     aiChatMessages.appendChild(typingDiv);
     aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
 
-    // Simulate smart thinking delay
+    // Fetch fresh database knowledge & generate response
+    const response = await generateAiResponse(q);
+
     setTimeout(() => {
       typingDiv.remove();
 
-      const response = generateAiResponse(q);
       const botDiv = document.createElement('div');
       botDiv.className = 'ai-msg bot';
 
@@ -1626,7 +1716,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
       aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
-    }, 400);
+    }, 350);
   }
 
   if (aiChatForm) {
