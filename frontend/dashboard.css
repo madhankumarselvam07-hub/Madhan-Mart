@@ -2087,14 +2087,21 @@ body {
   }
 
   .nav-container {
-    padding: 8px 14px;
+    padding: 8px 12px;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px 12px;
+    justify-content: space-between;
+    align-items: center;
   }
 
   .brand-logo {
     order: 1;
     gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .brand-tagline {
+    display: none;
   }
 
   .logo-icon-wrap {
@@ -2113,13 +2120,14 @@ body {
   }
 
   .portal-badge-indicator {
-    order: 2;
-    padding: 4px 10px;
-    font-size: 0.74rem;
+    display: none;
   }
 
   .nav-actions {
-    order: 3;
+    order: 2;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
     gap: 10px;
   }
 
@@ -2149,14 +2157,17 @@ body {
 
   .dropdown-menu {
     right: 0;
-    width: 250px;
-    max-width: calc(100vw - 28px);
+    left: auto;
+    width: 260px;
+    max-width: calc(100vw - 20px);
+    z-index: 99999;
   }
 
   /* Full-width interactive search bar on mobile */
   .nav-search {
-    order: 4;
+    order: 3;
     width: 100%;
+    flex-basis: 100%;
     max-width: 100%;
     display: flex !important;
     margin-top: 4px;
