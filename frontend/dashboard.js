@@ -46,27 +46,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   const menuFullName = document.getElementById('menuFullName');
   const menuEmail = document.getElementById('menuEmail');
   const userAvatar = document.getElementById('userAvatar');
+  const dropdownAvatar = document.getElementById('dropdownAvatar');
   const navUserRoleBadge = document.getElementById('navUserRoleBadge');
   const menuRoleTag = document.getElementById('menuRoleTag');
+  const menuPortalStatus = document.getElementById('menuPortalStatus');
 
   function updateUserInfoDisplay() {
     const fullName = currentUser.fullName || currentUser.email.split('@')[0];
     const firstName = fullName.split(' ')[0];
     const userEmail = currentUser.email || '';
-    const initial = firstName.charAt(0).toUpperCase();
+    const initial = (firstName && firstName.length > 0) ? firstName.charAt(0).toUpperCase() : 'U';
 
     if (navUserName) navUserName.textContent = fullName;
     if (heroUserName) heroUserName.textContent = firstName;
     if (menuFullName) menuFullName.textContent = fullName;
     if (menuEmail) menuEmail.textContent = userEmail;
     if (userAvatar) userAvatar.textContent = initial;
+    if (dropdownAvatar) dropdownAvatar.textContent = initial;
 
     if (navUserRoleBadge) {
       navUserRoleBadge.textContent = activeRole.toUpperCase();
       navUserRoleBadge.className = `user-role-badge role-badge-${activeRole}`;
     }
     if (menuRoleTag) {
-      menuRoleTag.textContent = `Active Role: ${activeRole.toUpperCase()}`;
+      menuRoleTag.textContent = `Role: ${activeRole.toUpperCase()}`;
+    }
+    if (menuPortalStatus) {
+      menuPortalStatus.textContent = `${activeRole.charAt(0).toUpperCase() + activeRole.slice(1)} Session Active`;
     }
   }
 
