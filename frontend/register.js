@@ -431,4 +431,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const initialTransform = `translate3d(${targetX}px, ${targetY}px, 0) translate(-50%, -50%)`;
   if (cursorHalo) cursorHalo.style.transform = initialTransform;
   if (cursorBeam) cursorBeam.style.transform = initialTransform;
+
+  // GSAP Butter Smooth Card Entrance
+  if (typeof gsap !== 'undefined') {
+    gsap.fromTo('#registerCard', 
+      { opacity: 0, y: 35, scale: 0.95 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: 'power3.out' }
+    );
+    gsap.fromTo('.role-toggle-group .role-tab',
+      { opacity: 0, y: 15 },
+      { opacity: 1, y: 0, duration: 0.5, stagger: 0.08, delay: 0.2, ease: 'power2.out' }
+    );
+  }
 });

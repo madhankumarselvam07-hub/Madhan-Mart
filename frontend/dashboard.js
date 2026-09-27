@@ -122,6 +122,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else if (lockedRole === 'admin') {
       loadAdminDashboard();
     }
+
+    // 5. Trigger GSAP butter smooth portal entrance animations
+    setTimeout(() => {
+      triggerPortalEntranceAnimation(lockedRole);
+    }, 100);
   }
 
   // --------------------------------------------------------------------------
@@ -283,6 +288,37 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       productsGrid.appendChild(card);
     });
+
+    // GSAP Butter Smooth Card Cascade & 3D Magnetic Interactive Tilt
+    if (typeof gsap !== 'undefined') {
+      gsap.fromTo(productsGrid.querySelectorAll('.product-card'), 
+        { opacity: 0, y: 35, scale: 0.94 }, 
+        { opacity: 1, y: 0, scale: 1, duration: 0.5, stagger: 0.05, ease: 'power3.out', overwrite: 'auto' }
+      );
+
+      productsGrid.querySelectorAll('.product-card').forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left - rect.width / 2;
+          const y = e.clientY - rect.top - rect.height / 2;
+          gsap.to(card, {
+            rotationY: x * 0.04,
+            rotationX: -y * 0.04,
+            transformPerspective: 1000,
+            ease: 'power1.out',
+            duration: 0.3
+          });
+        });
+        card.addEventListener('mouseleave', () => {
+          gsap.to(card, {
+            rotationY: 0,
+            rotationX: 0,
+            ease: 'power2.out',
+            duration: 0.5
+          });
+        });
+      });
+    }
 
     // Bind Add to cart buttons
     productsGrid.querySelectorAll('.btn-add-cart').forEach(btn => {
@@ -1293,16 +1329,38 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (aiChatbotToggle && aiChatbotCard) {
     aiChatbotToggle.addEventListener('click', () => {
       const isHidden = aiChatbotCard.style.display === 'none' || !aiChatbotCard.style.display;
-      aiChatbotCard.style.display = isHidden ? 'flex' : 'none';
-      if (isHidden && aiChatInput) {
-        setTimeout(() => aiChatInput.focus(), 150);
+      if (isHidden) {
+        aiChatbotCard.style.display = 'flex';
+        if (typeof gsap !== 'undefined') {
+          gsap.fromTo(aiChatbotCard, 
+            { opacity: 0, scale: 0.82, y: 25, transformOrigin: 'bottom right' },
+            { opacity: 1, scale: 1, y: 0, duration: 0.4, ease: 'back.out(1.4)' }
+          );
+        }
+        if (aiChatInput) setTimeout(() => aiChatInput.focus(), 150);
+      } else {
+        if (typeof gsap !== 'undefined') {
+          gsap.to(aiChatbotCard, {
+            opacity: 0, scale: 0.85, y: 25, duration: 0.25, ease: 'power2.in',
+            onComplete: () => { aiChatbotCard.style.display = 'none'; }
+          });
+        } else {
+          aiChatbotCard.style.display = 'none';
+        }
       }
     });
   }
 
   if (closeAiChatBtn && aiChatbotCard) {
     closeAiChatBtn.addEventListener('click', () => {
-      aiChatbotCard.style.display = 'none';
+      if (typeof gsap !== 'undefined') {
+        gsap.to(aiChatbotCard, {
+          opacity: 0, scale: 0.85, y: 25, duration: 0.25, ease: 'power2.in',
+          onComplete: () => { aiChatbotCard.style.display = 'none'; }
+        });
+      } else {
+        aiChatbotCard.style.display = 'none';
+      }
     });
   }
 
@@ -1765,6 +1823,136 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     } catch (realtimeErr) {
       console.warn('[REALTIME] Subscription notice:', realtimeErr);
+    }
+  }
+
+  // --------------------------------------------------------------------------
+  // 14. GSAP & Lenis Butter Smoother Scrolling Engine & Scroll Animation Suite
+  // --------------------------------------------------------------------------
+  let lenisInstance = null;
+
+  if (typeof Lenis !== 'undefined') {
+    try {
+      lenisInstance = new Lenis({
+        duration: 1.25,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Exponential smooth deceleration curve
+        orientation: 'vertical',
+        gestureOrientation: 'vertical',
+        smoothWheel: true,
+        wheelMultiplier: 0.95,
+        touchMultiplier: 1.5,
+        infinite: false
+      });
+
+      window.lenis = lenisInstance;
+
+      if (typeof gsap !== 'undefined') {
+        if (typeof ScrollTrigger !== 'undefined') {
+          gsap.registerPlugin(ScrollTrigger);
+          lenisInstance.on('scroll', ScrollTrigger.update);
+        }
+
+        gsap.ticker.add((time) => {
+          lenisInstance.raf(time * 1000);
+        });
+
+        gsap.ticker.lagSmoothing(0);
+      } else {
+        function raf(time) {
+          lenisInstance.raf(time);
+          requestAnimationFrame(raf);
+        }
+        requestAnimationFrame(raf);
+      }
+    } catch (lenisErr) {
+      console.warn('[LENIS SMOOTH SCROLL NOTICE]', lenisErr);
+    }
+  }
+
+  // Smooth Back-to-Top Button Integration
+  const btnBackToTop = document.getElementById('btnBackToTop');
+  if (btnBackToTop) {
+    if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+      ScrollTrigger.create({
+        start: 'top -300',
+        onUpdate: (self) => {
+          if (self.scroll() > 350) {
+            gsap.to(btnBackToTop, { opacity: 1, scale: 1, pointerEvents: 'auto', duration: 0.3, ease: 'power2.out', overwrite: 'auto' });
+          } else {
+            gsap.to(btnBackToTop, { opacity: 0, scale: 0.7, pointerEvents: 'none', duration: 0.25, ease: 'power2.in', overwrite: 'auto' });
+          }
+        }
+      });
+    } else {
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 350) {
+          btnBackToTop.style.opacity = '1';
+          btnBackToTop.style.transform = 'scale(1)';
+          btnBackToTop.style.pointerEvents = 'auto';
+        } else {
+          btnBackToTop.style.opacity = '0';
+          btnBackToTop.style.transform = 'scale(0.7)';
+          btnBackToTop.style.pointerEvents = 'none';
+        }
+      });
+    }
+
+    btnBackToTop.addEventListener('click', () => {
+      if (window.lenis) {
+        window.lenis.scrollTo(0, { duration: 1.2, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)) });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+  }
+
+  // Smooth Glassmorphism Navbar Elevation
+  const navbarElem = document.querySelector('.navbar');
+  if (navbarElem && typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+    ScrollTrigger.create({
+      start: 'top -15',
+      onUpdate: (self) => {
+        if (self.scroll() > 15) {
+          navbarElem.classList.add('navbar-scrolled');
+        } else {
+          navbarElem.classList.remove('navbar-scrolled');
+        }
+      }
+    });
+  }
+
+  // Butter Smooth Staggered Reveals for Role Modules & Banners
+  function triggerPortalEntranceAnimation(role) {
+    if (typeof gsap === 'undefined') return;
+
+    const bannerSelector = role === 'buyer' ? '.welcome-banner' : (role === 'seller' ? '.seller-banner' : '.admin-banner');
+    const banner = document.querySelector(bannerSelector);
+    if (banner) {
+      gsap.fromTo(banner.querySelectorAll('.badge-tag, .banner-title, .banner-sub, .banner-action'),
+        { opacity: 0, y: 25 },
+        { opacity: 1, y: 0, duration: 0.6, stagger: 0.08, ease: 'power3.out', overwrite: 'auto' }
+      );
+    }
+
+    const statsGrid = document.querySelector(`#${role}ModuleView .stats-grid`);
+    if (statsGrid) {
+      gsap.fromTo(statsGrid.querySelectorAll('.stat-card'),
+        { opacity: 0, y: 30, scale: 0.94 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.55, stagger: 0.1, ease: 'back.out(1.3)', overwrite: 'auto' }
+      );
+    }
+
+    const filterChips = document.querySelectorAll('.category-filters .filter-btn');
+    if (filterChips.length > 0) {
+      gsap.fromTo(filterChips,
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 0.4, stagger: 0.04, ease: 'power2.out', overwrite: 'auto' }
+      );
+    }
+
+    // ScrollTrigger refresh
+    if (typeof ScrollTrigger !== 'undefined') {
+      setTimeout(() => { ScrollTrigger.refresh(); }, 400);
     }
   }
 
