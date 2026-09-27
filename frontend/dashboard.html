@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <link rel="stylesheet" href="dashboard.css?v=20260928_4">
+  <link rel="stylesheet" href="dashboard.css?v=20260928_5">
 </head>
 <body>
   <!-- Header / Navigation -->
@@ -777,19 +777,39 @@
     <div class="ai-chatbot-card" id="aiChatbotCard" style="display: none;">
       <div class="ai-chat-header">
         <div class="ai-chat-title-wrap">
-          <span class="ai-badge">AI Assistant</span>
-          <span class="ai-status">Online</span>
+          <span class="ai-badge">🤖 Madhan Mart AI Advisor</span>
+          <span class="ai-status">🟢 Live Catalog</span>
         </div>
-        <button type="button" class="btn-chat-close" id="closeAiChatBtn">✕</button>
+        <button type="button" class="btn-chat-close" id="closeAiChatBtn" aria-label="Close Chat">✕</button>
       </div>
+
+      <!-- Quick Suggestion Chips -->
+      <div class="ai-quick-chips" id="aiQuickChips">
+        <button type="button" class="ai-chip" data-query="Show best deals and discounts">🔥 Best Deals</button>
+        <button type="button" class="ai-chip" data-query="What is the price of PS5 controller?">🎮 PS5 Rate</button>
+        <button type="button" class="ai-chip" data-query="Show products under 10000">💰 Under ₹10k</button>
+        <button type="button" class="ai-chip" data-query="Show all available gaming laptops">💻 Laptops</button>
+        <button type="button" class="ai-chip" data-query="How does Madhan Mart work?">ℹ️ Site Guide</button>
+        <button type="button" class="ai-chip" data-query="How can I become a seller?">🏪 Seller Info</button>
+        <button type="button" class="ai-chip" data-query="Where can I track my order?">📦 Order Status</button>
+      </div>
+
       <div class="ai-chat-messages" id="aiChatMessages">
         <div class="ai-msg bot">
-          👋 Hello! I am your Shopping Assistant. Ask me about products (Laptops, Mobiles, Consoles), order tracking, or assistance!
+          <p><strong>👋 Welcome to Madhan Mart AI Shopping Guide!</strong></p>
+          <p style="margin-top: 4px;">I have real-time access to our live store database. Ask me about:</p>
+          <ul style="margin: 4px 0 0 16px; padding: 0; line-height: 1.4;">
+            <li>Current product prices, discounts & stock availability</li>
+            <li>Direct product links and adding items to cart</li>
+            <li>How to order, delivery times & payment options</li>
+            <li>Seller portal registration & product uploads</li>
+          </ul>
         </div>
       </div>
+
       <form class="ai-chat-input-bar" id="aiChatForm">
-        <input type="text" id="aiChatInput" placeholder="Type your question..." autocomplete="off">
-        <button type="submit" class="btn-send-chat">➤</button>
+        <input type="text" id="aiChatInput" placeholder="Ask about product rates, stock, or guide..." autocomplete="off">
+        <button type="submit" class="btn-send-chat" aria-label="Send Message">➤</button>
       </form>
     </div>
   </div>
@@ -798,7 +818,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-  <script src="supabase-client.js?v=20260928_4"></script>
-  <script src="dashboard.js?v=20260928_4"></script>
+  <script src="supabase-client.js?v=20260928_5"></script>
+  <script src="dashboard.js?v=20260928_5"></script>
 </body>
 </html>

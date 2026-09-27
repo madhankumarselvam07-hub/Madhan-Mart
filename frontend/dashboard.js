@@ -1278,7 +1278,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // --------------------------------------------------------------------------
-  // 12. Floating AI Assistant Chatbot
+  // 12. Intelligent Floating AI Shopping Assistant & Platform Guide
   // --------------------------------------------------------------------------
   const aiChatbotToggle = document.getElementById('aiChatbotToggle');
   const aiChatbotCard = document.getElementById('aiChatbotCard');
@@ -1286,11 +1286,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   const aiChatForm = document.getElementById('aiChatForm');
   const aiChatInput = document.getElementById('aiChatInput');
   const aiChatMessages = document.getElementById('aiChatMessages');
+  const aiQuickChips = document.getElementById('aiQuickChips');
 
   if (aiChatbotToggle && aiChatbotCard) {
     aiChatbotToggle.addEventListener('click', () => {
       const isHidden = aiChatbotCard.style.display === 'none' || !aiChatbotCard.style.display;
       aiChatbotCard.style.display = isHidden ? 'flex' : 'none';
+      if (isHidden && aiChatInput) {
+        setTimeout(() => aiChatInput.focus(), 150);
+      }
     });
   }
 
@@ -1300,42 +1304,335 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  if (aiChatForm && aiChatInput && aiChatMessages) {
-    aiChatForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const q = aiChatInput.value.trim();
-      if (!q) return;
+  // Bind Quick Suggestion Chips
+  if (aiQuickChips) {
+    aiQuickChips.querySelectorAll('.ai-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const q = chip.getAttribute('data-query');
+        if (q && aiChatInput) {
+          aiChatInput.value = q;
+          handleAiChatSubmit();
+        }
+      });
+    });
+  }
 
-      const userDiv = document.createElement('div');
-      userDiv.className = 'ai-msg user';
-      userDiv.textContent = q;
-      aiChatMessages.appendChild(userDiv);
-      aiChatInput.value = '';
+  // Scroll to and highlight a product on the storefront
+  function jumpToStoreProduct(productName) {
+    if (activeRole !== 'buyer') {
+      showToast('Switch to Buyer Storefront to view catalog products.');
+      return;
+    }
+    const catBtns = document.querySelectorAll('.category-filters .filter-btn');
+    catBtns.forEach(b => b.classList.remove('active'));
+    const allBtn = document.querySelector('.category-filters .filter-btn[data-cat="all"]');
+    if (allBtn) allBtn.classList.add('active');
 
-      const lower = q.toLowerCase();
-      let reply = 'I can help you browse products, check order statuses, or switch account roles.';
+    loadProducts('all', productName);
 
-      if (lower.includes('laptop') || lower.includes('dell')) {
-        reply = '💻 We offer the Dell Inspiron 15 Core i5 Laptop for ₹45,000. You can add it directly to your cart!';
-      } else if (lower.includes('mobile') || lower.includes('phone') || lower.includes('samsung')) {
-        reply = '📱 The Samsung Galaxy 5G Mobile is available for ₹18,000!';
-      } else if (lower.includes('ps5') || lower.includes('controller') || lower.includes('playstation')) {
-        reply = '🎮 The PlayStation 5 DualSense Wireless Controller is available for ₹5,790!';
-      } else if (lower.includes('order') || lower.includes('track') || lower.includes('status')) {
-        reply = '📦 You can review all your placed orders and download receipts in the "My Order History" section.';
-      } else if (lower.includes('seller') || lower.includes('admin') || lower.includes('role')) {
-        reply = `🔒 You are logged in as a ${activeRole.toUpperCase()}. Account roles are locked for security. To switch roles, log out and sign in with that role's account.`;
+    if (window.innerWidth <= 768 && aiChatbotCard) {
+      aiChatbotCard.style.display = 'none';
+    }
+
+    const catalogSection = document.getElementById('productsSection');
+    if (catalogSection) {
+      catalogSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    showToast(`Showing results for "${productName}"`);
+  }
+
+  function generateAiResponse(userQuery) {
+    const q = userQuery.toLowerCase().trim();
+    const prods = Array.isArray(allCatalogProducts) ? allCatalogProducts : [];
+
+    // Helper: Find products matching keyword or category
+    function matchProducts(keyword) {
+      return prods.filter(p => {
+        const name = (p.name || '').toLowerCase();
+        const cat = (p.category || '').toLowerCase();
+        const badge = (p.badge || '').toLowerCase();
+        return name.includes(keyword) || cat.includes(keyword) || badge.includes(keyword);
+      });
+    }
+
+    // 1. Specific product or category price / rate queries
+    let matchedProducts = [];
+
+    // Check specific keywords
+    if (q.includes('ps5') || q.includes('playstation') || q.includes('dualsense') || q.includes('controller')) {
+      matchedProducts = matchProducts('playstation').concat(matchProducts('controller'));
+    } else if (q.includes('razer') || q.includes('keyboard') || q.includes('huntsman')) {
+      matchedProducts = matchProducts('keyboard').concat(matchProducts('razer'));
+    } else if (q.includes('headset') || q.includes('hyperx') || q.includes('audio') || q.includes('headphone')) {
+      matchedProducts = matchProducts('headset').concat(matchProducts('hyperx')).concat(matchProducts('audio'));
+    } else if (q.includes('mouse') || q.includes('logitech') || q.includes('g502')) {
+      matchedProducts = matchProducts('mouse').concat(matchProducts('logitech'));
+    } else if (q.includes('monitor') || q.includes('oled') || q.includes('rog') || q.includes('display')) {
+      matchedProducts = matchProducts('monitor').concat(matchProducts('rog')).concat(matchProducts('hardware'));
+    } else if (q.includes('quest') || q.includes('vr') || q.includes('meta')) {
+      matchedProducts = matchProducts('quest').concat(matchProducts('vr'));
+    } else if (q.includes('chair') || q.includes('secretlab') || q.includes('titan')) {
+      matchedProducts = matchProducts('chair').concat(matchProducts('secretlab'));
+    } else if (q.includes('stream deck') || q.includes('elgato') || q.includes('macro')) {
+      matchedProducts = matchProducts('stream deck').concat(matchProducts('elgato'));
+    } else if (q.includes('laptop') || q.includes('dell') || q.includes('macbook') || q.includes('notebook')) {
+      matchedProducts = matchProducts('laptop').concat(matchProducts('laptops'));
+    } else if (q.includes('mobile') || q.includes('phone') || q.includes('samsung') || q.includes('iphone')) {
+      matchedProducts = matchProducts('mobile').concat(matchProducts('mobiles')).concat(matchProducts('phone'));
+    } else if (q.includes('console') || q.includes('gaming')) {
+      matchedProducts = matchProducts('consoles').concat(matchProducts('gaming'));
+    }
+
+    // Deduplicate
+    matchedProducts = Array.from(new Set(matchedProducts));
+
+    // 2. Deals / Discounts query
+    if (q.includes('deal') || q.includes('discount') || q.includes('offer') || q.includes('sale') || q.includes('best deal') || q.includes('trending')) {
+      const deals = prods.filter(p => p.badge || (p.original_price && p.original_price > p.price));
+      const list = deals.length > 0 ? deals.slice(0, 4) : prods.slice(0, 3);
+      return {
+        text: `🔥 <strong>Here are our Top Deals & Featured Discounts today!</strong> All items are verified in stock with express delivery:`,
+        products: list
+      };
+    }
+
+    // 3. Price threshold query (e.g. "under 10000", "below 5000", "under 50k", "cheapest")
+    const priceUnderMatch = q.match(/(?:under|below|less than|within)\s*(?:₹|rs\.?|inr)?\s*(\d+)(?:k)?/i);
+    if (priceUnderMatch) {
+      let limit = parseInt(priceUnderMatch[1]);
+      if (q.includes(priceUnderMatch[1] + 'k')) limit *= 1000;
+      const budgetProds = prods.filter(p => parseFloat(p.price) <= limit).sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+      if (budgetProds.length > 0) {
+        return {
+          text: `💰 <strong>Found ${budgetProds.length} product(s) under ₹${limit.toLocaleString()}:</strong>`,
+          products: budgetProds.slice(0, 4)
+        };
+      } else {
+        return {
+          text: `No products currently found under ₹${limit.toLocaleString()}. Our starting price is ₹${Math.min(...prods.map(p => parseFloat(p.price))).toLocaleString()}.`
+        };
+      }
+    }
+
+    if (q.includes('cheapest') || q.includes('lowest price') || q.includes('least expensive')) {
+      const sorted = [...prods].sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+      return {
+        text: `🏷️ <strong>Our most affordable product is:</strong>`,
+        products: sorted.slice(0, 2)
+      };
+    }
+
+    if (q.includes('expensive') || q.includes('costliest') || q.includes('premium') || q.includes('flagship')) {
+      const sorted = [...prods].sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+      return {
+        text: `💎 <strong>Our top-tier premium hardware listing is:</strong>`,
+        products: sorted.slice(0, 2)
+      };
+    }
+
+    // If specific products matched by keyword:
+    if (matchedProducts.length > 0) {
+      const count = matchedProducts.length;
+      return {
+        text: `📦 <strong>Found ${count} matching product(s) in our live catalog:</strong> Check live rates, stock status, and add directly to your cart below!`,
+        products: matchedProducts.slice(0, 4)
+      };
+    }
+
+    // 4. Site Guide & Platform Information Queries
+    if (q.includes('site') || q.includes('about') || q.includes('what is madhan mart') || q.includes('how does it work') || q.includes('guide')) {
+      return {
+        text: `🌟 <strong>About MADHAN MART Commerce Platform:</strong><br><br>
+        • <strong>Multi-Role Ecosystem:</strong> Dedicated interfaces for 🛒 <strong>Buyers</strong>, 🏪 <strong>Sellers</strong>, and 🛡️ <strong>Admins</strong>.<br>
+        • <strong>Live Supabase Cloud Database:</strong> Real-time product inventory sync, order state updates, and instant receipts.<br>
+        • <strong>Instant Checkout & Invoices:</strong> Support for COD, UPI, Cards, plus automated 1-click PDF invoices with GST calculations.<br>
+        • <strong>Seller Portal:</strong> Multi-seller inventory dashboard with camera image uploads and sales analytics.`
+      };
+    }
+
+    if (q.includes('how to order') || q.includes('how to buy') || q.includes('order process') || q.includes('checkout')) {
+      return {
+        text: `🛒 <strong>How to Place an Order on MADHAN MART:</strong><br><br>
+        1. <strong>Browse Products:</strong> Filter by categories (Laptops, Mobiles, Consoles, Audio, Peripherals) or search above.<br>
+        2. <strong>Add to Cart:</strong> Click <strong>"Add +"</strong> on any item card or from this chat.<br>
+        3. <strong>Open Shopping Cart:</strong> Tap the cart icon at the top right.<br>
+        4. <strong>Checkout & Confirm:</strong> Choose COD, UPI, or Card, enter shipping details, and confirm.<br>
+        5. <strong>Download Invoice:</strong> Receive instant order confirmation with a downloadable PDF invoice!`
+      };
+    }
+
+    if (q.includes('payment') || q.includes('cod') || q.includes('upi') || q.includes('card') || q.includes('pay')) {
+      return {
+        text: `💳 <strong>Accepted Payment Methods:</strong><br><br>
+        • <strong>Cash on Delivery (COD):</strong> Pay in cash upon doorstep delivery.<br>
+        • <strong>UPI (GPay / PhonePe / Paytm):</strong> Instant QR / UPI ID transactions.<br>
+        • <strong>Credit / Debit Cards:</strong> Visa, MasterCard, RuPay with secure 256-bit encryption.<br>
+        • <strong>Net Banking:</strong> All major Indian banks supported.`
+      };
+    }
+
+    if (q.includes('delivery') || q.includes('shipping') || q.includes('how long') || q.includes('courier')) {
+      return {
+        text: `🚚 <strong>Shipping & Delivery Information:</strong><br><br>
+        • <strong>Standard Delivery:</strong> 2 to 4 business days across India.<br>
+        • <strong>Express Delivery:</strong> Available for Metro cities (Next-day delivery).<br>
+        • <strong>Shipping Fee:</strong> Free shipping on orders above ₹1,000!`
+      };
+    }
+
+    if (q.includes('seller') || q.includes('how to sell') || q.includes('vendor') || q.includes('upload product')) {
+      return {
+        text: `🏪 <strong>Seller Center Guide:</strong><br><br>
+        • <strong>Register as Seller:</strong> Create a seller account with your store name.<br>
+        • <strong>Upload Products:</strong> Click <strong>"📦 Add Product"</strong> to set title, category, price, stock, and upload product photos directly from your device.<br>
+        • <strong>Order Management:</strong> Real-time orders table where sellers can process orders and mark them as <em>Delivered</em>.<br>
+        • <strong>Revenue Analytics:</strong> Live dashboard showing total inventory count and gross revenue earned.`
+      };
+    }
+
+    if (q.includes('admin') || q.includes('moderation') || q.includes('super admin')) {
+      return {
+        text: `🛡️ <strong>Admin Super Panel Guide:</strong><br><br>
+        • Full platform visibility over all Registered Users, Gross Merchandise Value (GMV), and Master Orders.<br>
+        • Global Catalog Moderation: Ability to inspect seller listings and remove unauthorized products.<br>
+        • Global Order Status Overrides: Update any customer order to Processing, Delivered, or Cancelled.`
+      };
+    }
+
+    if (q.includes('role') || q.includes('switch') || q.includes('login') || q.includes('account')) {
+      return {
+        text: `🔒 <strong>Role-Locking Security Policy:</strong><br><br>
+        You are currently active as <strong>${activeRole.toUpperCase()}</strong> (${currentUser.email || 'User'}).<br>
+        For platform security, role switching inside the same session is prevented. To switch between Buyer, Seller, or Admin portals, click your <strong>Profile Avatar (top-right)</strong> -> <strong>"Sign Out / Switch Role"</strong>, and log in with that specific account.`
+      };
+    }
+
+    if (q.includes('order') || q.includes('track') || q.includes('history') || q.includes('my order') || q.includes('receipt') || q.includes('invoice')) {
+      if (activeRole === 'buyer') {
+        return {
+          text: `📦 <strong>Track Orders & Invoices:</strong><br><br>
+          Scroll down to the <strong>"📦 My Order History"</strong> section to see all your active and past orders, live delivery tracking statuses (Pending, Processing, Delivered), and click <strong>"📥 Download Invoice"</strong> to generate official PDF receipts anytime!`
+        };
+      } else {
+        return {
+          text: `📦 <strong>Order Tracking:</strong> You are currently on the ${activeRole.toUpperCase()} dashboard. Check your orders table in the main panel above!`
+        };
+      }
+    }
+
+    // Default Fallback
+    const randomSamples = prods.slice(0, 3);
+    return {
+      text: `👋 I am here to help you shop smart! You can ask me:<br>
+      • <em>"What is the rate of PS5 controller?"</em><br>
+      • <em>"Show products under ₹10,000"</em><br>
+      • <em>"Do you have gaming laptops?"</em><br>
+      • <em>"How does delivery and checkout work?"</em><br><br>
+      Here are a few popular items available in our store right now:`,
+      products: randomSamples
+    };
+  }
+
+  function handleAiChatSubmit() {
+    const q = aiChatInput.value.trim();
+    if (!q) return;
+
+    // Append User Message
+    const userDiv = document.createElement('div');
+    userDiv.className = 'ai-msg user';
+    userDiv.textContent = q;
+    aiChatMessages.appendChild(userDiv);
+    aiChatInput.value = '';
+    aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+
+    // Append Typing Indicator
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'ai-msg bot ai-typing-wrap';
+    typingDiv.innerHTML = `
+      <div class="ai-typing">
+        <span class="ai-dot"></span>
+        <span class="ai-dot"></span>
+        <span class="ai-dot"></span>
+      </div>
+    `;
+    aiChatMessages.appendChild(typingDiv);
+    aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+
+    // Simulate smart thinking delay
+    setTimeout(() => {
+      typingDiv.remove();
+
+      const response = generateAiResponse(q);
+      const botDiv = document.createElement('div');
+      botDiv.className = 'ai-msg bot';
+
+      let innerHtml = `<div>${response.text}</div>`;
+
+      // Render product cards if matched
+      if (response.products && Array.isArray(response.products) && response.products.length > 0) {
+        response.products.forEach(p => {
+          const imgSrc = getProductImage(p);
+          const price = parseFloat(p.price) || 0;
+          const origPrice = parseFloat(p.original_price);
+          const origHtml = (origPrice && origPrice > price) ? `<span class="ai-prod-orig-price">₹${origPrice.toLocaleString()}</span>` : '';
+          const stock = p.stock_quantity !== undefined ? p.stock_quantity : 20;
+          const stockText = stock > 0 ? `🟢 ${stock} in stock` : `🔴 Out of stock`;
+
+          innerHtml += `
+            <div class="ai-product-card" data-id="${p.id}">
+              <div class="ai-prod-header">
+                <img src="${imgSrc}" class="ai-prod-thumb" alt="${p.name}" onerror="this.src='images/ps5-controller.jpg'">
+                <div class="ai-prod-info">
+                  <span class="ai-prod-title" title="${p.name}">${p.name}</span>
+                  <div class="ai-prod-price-box">
+                    <span class="ai-prod-price">₹${price.toLocaleString()}</span>
+                    ${origHtml}
+                  </div>
+                  <span class="ai-prod-stock">${stockText}</span>
+                </div>
+              </div>
+              <div class="ai-prod-actions">
+                <button type="button" class="ai-btn-add-cart" data-id="${p.id}" data-name="${p.name}" data-price="${price}" data-img="${imgSrc}">🛒 Add to Cart</button>
+                <button type="button" class="ai-btn-view-store" data-name="${p.name}">🔍 View in Store</button>
+              </div>
+            </div>
+          `;
+        });
       }
 
-      setTimeout(() => {
-        const botDiv = document.createElement('div');
-        botDiv.className = 'ai-msg bot';
-        botDiv.textContent = reply;
-        aiChatMessages.appendChild(botDiv);
-        aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
-      }, 350);
+      botDiv.innerHTML = innerHtml;
+      aiChatMessages.appendChild(botDiv);
+
+      // Bind interactive buttons inside the newly created bot message
+      botDiv.querySelectorAll('.ai-btn-add-cart').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const id = btn.getAttribute('data-id');
+          const name = btn.getAttribute('data-name');
+          const price = parseFloat(btn.getAttribute('data-price'));
+          const img = btn.getAttribute('data-img');
+          addToCart({ id, name, price, img, quantity: 1 });
+          btn.textContent = '✅ Added!';
+          setTimeout(() => { btn.textContent = '🛒 Add to Cart'; }, 1500);
+        });
+      });
+
+      botDiv.querySelectorAll('.ai-btn-view-store').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const name = btn.getAttribute('data-name');
+          jumpToStoreProduct(name);
+        });
+      });
 
       aiChatMessages.scrollTop = aiChatMessages.scrollHeight;
+    }, 400);
+  }
+
+  if (aiChatForm) {
+    aiChatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      handleAiChatSubmit();
     });
   }
 
